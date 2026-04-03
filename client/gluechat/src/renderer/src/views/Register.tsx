@@ -1,5 +1,9 @@
 import {Box} from "@renderer/components/auth/box";
+import {useState} from "react";
 export function Register() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [nickname, setNickname] = useState("");
   return (
     <>
       <div className=' w-full h-full flex items-center justify-center flex-col '>
@@ -12,7 +16,7 @@ export function Register() {
           </p>
         </div>
         <div className=' mt-30 w-full h-full flex items-center justify-center flex-col '>
-          <Box isLogin={false} />
+          <Box isLogin={false} email={email} password={password} setPassword={setPassword} setEmail={setEmail} setNickname={setNickname} nickname={nickname} />
         </div>
       </div>
     </>

@@ -1,5 +1,9 @@
 import {Box} from "@renderer/components/auth/box";
+import {useState} from "react";
 export function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   return (
     <>
       <div className=' w-full h-full flex items-center justify-center flex-col '>
@@ -12,7 +16,7 @@ export function Login() {
           </p>
         </div>
         <div className=' mt-30 w-full h-full flex items-center justify-center flex-col '>
-          <Box isLogin={true} />
+          <Box isLogin={true} email={email} password={password} setPassword={setPassword} setEmail={setEmail} />
         </div>
       </div>
     </>

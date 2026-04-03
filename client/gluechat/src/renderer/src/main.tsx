@@ -5,11 +5,16 @@ import { createRoot } from 'react-dom/client'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import {Login} from "@renderer/views/Login";
+import {Register} from "@renderer/views/Register";
 
 const router = createHashRouter([
   {
     path: '/',
     element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <Register />,
   },
 ])
 

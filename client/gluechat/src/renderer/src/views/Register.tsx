@@ -1,5 +1,5 @@
 import {Box} from "@renderer/components/auth/box";
-export function Login() {
+export function Register() {
   return (
     <>
       <div className=' w-full h-full flex items-center justify-center flex-col '>
@@ -12,7 +12,7 @@ export function Login() {
           </p>
         </div>
         <div className=' mt-30 w-full h-full flex items-center justify-center flex-col '>
-          <Box isLogin={true} />
+          <Box isLogin={false} />
         </div>
       </div>
     </>

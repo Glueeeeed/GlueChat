@@ -4,7 +4,7 @@ import {validate} from "@renderer/assets/utils";
 
 interface Props {
   isLogin: boolean;
-  nickname?: string;
+  nickname: string | null;
   email: string;
   password: string;
   setNickname?: (newNickname: string) => void;

@@ -16,7 +16,7 @@ export function Login() {
           </p>
         </div>
         <div className=' mt-30 w-full h-full flex items-center justify-center flex-col '>
-          <Box isLogin={true} email={email} password={password} setPassword={setPassword} setEmail={setEmail} />
+          <Box isLogin={true} email={email} password={password} setPassword={setPassword} setEmail={setEmail} nickname={null} />
         </div>
       </div>
     </>

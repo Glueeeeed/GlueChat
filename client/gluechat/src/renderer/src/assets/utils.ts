@@ -36,10 +36,10 @@ export function validatePassword (password : string) {
   return true;
 }
 
-export function validate(email : string, password : string, nickname? : string)
+export function validate(email : string, password : string, nickname : string | null)
 {
   let isNicknameValid;
-  if (nickname) {
+  if (nickname !== null) {
     isNicknameValid = validateNickname(nickname);
     if (isNicknameValid !== true ) {
       return isNicknameValid

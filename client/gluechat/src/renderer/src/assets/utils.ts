@@ -1,67 +1,37 @@
 import validator from 'validator';
-import {register} from "@renderer/assets/register";
 
-export function validateNickname (nickname: string) : String | boolean {
+
+export function validateNickname (nickname: string) : void {
     if (validator.isEmpty(nickname)) {
-       return "Nickname is empty";
+       throw new Error('Nickname is required');
     }
     if (validator.isEmail(nickname)) {
-      return "Nickname cannot be email";
+      throw new Error('Nickname cannot be email');
     }
 
     if (!validator.isLength(nickname, {min: 4 , max: 20})) {
-      return "Nickname must be between 4 and 20 characters";
+      throw new Error('Nickname must be between 4 and 20 characters long');
     }
-
-    return true;
 
 }
 
-export function validateEmail(email : string) {
+export function validateEmail(email : string) : void {
     if (validator.isEmpty(email)) {
-      return "Email is empty";
+      throw new Error('Email is required');
    }
     if (!validator.isEmail(email)) {
-     return "Email address is invalid";
+     throw new Error('Invalid email address');
     }
-    return true;
 }
 
-export function validatePassword (password : string) {
+export function validatePassword (password : string) : void {
   if (validator.isEmpty(password)) {
-    return "Password is empty";
+    throw new Error('Password is required');
   }
   if (!validator.isStrongPassword(password)) {
-    return "Password is too weak. It must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character.";
+    throw new Error('Password is too weak. It must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character.');
   }
-  return true;
+
 }
 
-export function  validate(email : string, password : string, nickname : string | null, operation : string) : String | boolean
-{
-  let isNicknameValid;
-  if (nickname !== null) {
-    isNicknameValid = validateNickname(nickname);
-    if (isNicknameValid !== true ) {
-      return isNicknameValid
-    }
-  }
-  const isEmailValid = validateEmail(email);
-  const isPasswordValid = validatePassword(password);
-  if (isEmailValid !== true) {
-    return isEmailValid
-  }
-  if (isPasswordValid !== true) {
-    return isPasswordValid
-  }
 
-  if (operation === "register") {
-    register(nickname as string,email , password).then(result => {
-      if (!result) {
-        return result;
-      }
-    });
-  }
-
-  return true;
-}

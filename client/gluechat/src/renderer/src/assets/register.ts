@@ -19,11 +19,12 @@ export async function register(nickname: string, email: string, password: string
 
   const json = await response.json();
 
-  if (!response.ok || response.status !== 201) {
-    return {success: false, message: json.message}
+  if (response.status === 201) {
+    return {success: true, message: json.message}
   }
 
-  return {success: true, message: json.message}
+  return {success: false, message: json.message}
+
 
 
 }

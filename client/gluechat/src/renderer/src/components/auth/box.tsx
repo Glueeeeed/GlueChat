@@ -1,6 +1,7 @@
 import {Link} from "react-router-dom";
 import {useState} from "react";
-import {validate} from "@renderer/assets/utils";
+import {validateEmail, validateNickname, validatePassword} from "@renderer/assets/utils";
+import {register} from "@renderer/assets/register";
 
 interface Props {
   isLogin: boolean;
@@ -13,18 +14,61 @@ interface Props {
 
 }
 
+interface result {
+  success: boolean;
+  message: string;
+}
+
+
+
 
 export function Box({ isLogin, nickname, email, password, setNickname,setPassword,setEmail }: Props) {
 
   const [errorMsg, setErrorMsg] = useState("");
+  const [registered, setRegistered] = useState(false);
   const text = isLogin ? "Login" : "Register";
 
-  function setError(msg: string): void {
-    setTimeout(() => [
-      setErrorMsg("")
-    ], 5000)
-    setErrorMsg(msg)
+  const handleRegister = async () : Promise<void> => {
+    const registrationResult : result = await register(nickname as string, email, password);
+    if (registrationResult.success) {
+      setTimeout(() => {
+        setRegistered(false);
+      },5000)
+      setRegistered(true);
+    } else {
+      setTimeout(() => {
+        setErrorMsg("");
+      },5000)
+      setErrorMsg(registrationResult.message);
+    }
   }
+
+
+  const handleSubmit = async (op : string) : Promise<void> => {
+
+    try {
+      if (op === "register") {
+        validateNickname(nickname as string);
+      }
+      validateEmail(email);
+      validatePassword(password);
+
+    } catch (err: any) {
+        setTimeout(() => {
+          setErrorMsg("");
+        },5000)
+        setErrorMsg(err.message);
+        return;
+
+    }
+
+    if (op === "register") {
+      await handleRegister();
+    }
+
+  }
+
+
 
   return (
     <div className="  bg-[#EAEAEA] p-8 rounded-2xl shadow-xl w-full max-w-md mx-auto border border-[#404E7C]/10">
@@ -76,7 +120,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
         {isLogin ? (
           <div className="flex items-center justify-between">
             <button
-              onClick={() => {validate(email,password,nickname, "login") !== true ?  setError(validate(email,password,nickname,"login") as string) : setErrorMsg("")}}
+              onClick={() => {handleSubmit("login")}}
               className="bg-[#404E7C] hover:bg-[#343e63] text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-[#404E7C]/30 w-full transition-all cursor-pointer"
               type="button"
             >
@@ -88,7 +132,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
           <div className="flex items-center justify-between">
 
           <button
-            onClick={() => {validate(email,password,nickname,"register") !== true ? setError(validate(email,password,nickname,"register") as string) : setErrorMsg("")}}
+            onClick={() => {handleSubmit("register")}}
           className="bg-[#404E7C] hover:bg-[#343e63] text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-[#404E7C]/30 w-full transition-all cursor-pointer"
           type="button"
           >
@@ -102,6 +146,14 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
           <div className="mt-6 text-center">
             <p className={"text-red-500 text-sm font-bold"}>{errorMsg}</p>
           </div>
+
+
+        {registered && (
+          <div className="mt-6 text-center">
+            <p className={"text-green-400 text-sm font-bold"}>{"Successfully registered!"}</p>
+          </div>
+        )}
+
 
 
 

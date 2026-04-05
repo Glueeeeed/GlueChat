@@ -1,4 +1,5 @@
 import validator from 'validator';
+import {register} from "@renderer/assets/register";
 
 export function validateNickname (nickname: string) : String | boolean {
     if (validator.isEmpty(nickname)) {
@@ -36,7 +37,7 @@ export function validatePassword (password : string) {
   return true;
 }
 
-export function validate(email : string, password : string, nickname : string | null)
+export function  validate(email : string, password : string, nickname : string | null, operation : string) : String | boolean
 {
   let isNicknameValid;
   if (nickname !== null) {
@@ -53,4 +54,14 @@ export function validate(email : string, password : string, nickname : string | 
   if (isPasswordValid !== true) {
     return isPasswordValid
   }
+
+  if (operation === "register") {
+    register(nickname as string,email , password).then(result => {
+      if (!result) {
+        return result;
+      }
+    });
+  }
+
+  return true;
 }

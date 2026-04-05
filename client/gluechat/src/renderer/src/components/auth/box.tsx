@@ -76,7 +76,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
         {isLogin ? (
           <div className="flex items-center justify-between">
             <button
-              onClick={() => {validate(email,password,nickname) !== true ?  setError(validate(email,password,nickname)) : setErrorMsg("")}}
+              onClick={() => {validate(email,password,nickname, "login") !== true ?  setError(validate(email,password,nickname,"login") as string) : setErrorMsg("")}}
               className="bg-[#404E7C] hover:bg-[#343e63] text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-[#404E7C]/30 w-full transition-all cursor-pointer"
               type="button"
             >
@@ -88,7 +88,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
           <div className="flex items-center justify-between">
 
           <button
-            onClick={() => {validate(email,password,nickname) !== true ? setError(validate(email,password,nickname)) : setErrorMsg("")}}
+            onClick={() => {validate(email,password,nickname,"register") !== true ? setError(validate(email,password,nickname,"register") as string) : setErrorMsg("")}}
           className="bg-[#404E7C] hover:bg-[#343e63] text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-[#404E7C]/30 w-full transition-all cursor-pointer"
           type="button"
           >

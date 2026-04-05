@@ -7,7 +7,9 @@ export const authModel = {
         nickname: t.Optional(
             t.String(),
         ),
-        email: t.String(),
+        email: t.String({
+            format: 'email'
+        }),
         password: t.String(),
 
     }),

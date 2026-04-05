@@ -1,11 +1,9 @@
-import {prismaClient} from "../../utils/db";
+import { prisma } from "../../lib/prisma";
 
 export abstract class AuthService {
 
-
-
     static  async checkIfNicknameExists(nickname: string): Promise<boolean> {
-        const isExists = await prismaClient.users.findFirst({
+        const isExists = await prisma.user.findFirst({
             where: {
                 nickname: nickname,
             }
@@ -19,11 +17,13 @@ export abstract class AuthService {
 
     static async checkIfAccountExists(email: string): Promise<boolean> {
 
-        const isExists = await prismaClient.users.findFirst({
+        const isExists = await prisma.user.findFirst({
             where: {
                 email: email
             }
         })
+
+        console.log(isExists);
 
         if (isExists) {
             return true;
@@ -37,7 +37,7 @@ export abstract class AuthService {
         const passwordHash = await Bun.password.hash(password);
 
 
-        await prismaClient.users.create({
+        await prisma.user.create({
             data: {
                 nickname: nickname,
                 email: email,

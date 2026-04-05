@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -12,9 +7,45 @@ datasource db {
   provider = "mysql"
 }
 
-model users {
-  id    Int     @id @default(autoincrement())
-  nickname String @unique
-  email String @unique
-  password String
+model User {
+  id        String   @id @default(cuid())
+  nickname  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sentMessages       Message[]
+  privateRoomsAsFirst  PrivateRoom[] @relation("PrivateRoomUser1")
+  privateRoomsAsSecond PrivateRoom[] @relation("PrivateRoomUser2")
+}
+
+model PrivateRoom {
+  id        String   @id @default(cuid())
+  userId    String
+  userId2   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+
+  user1 User @relation("PrivateRoomUser1", fields: [userId],   references: [id], onDelete: Cascade)
+  user2 User @relation("PrivateRoomUser2", fields: [userId2], references: [id], onDelete: Cascade)
+
+  @@unique([userId, userId2])
+  @@index([userId])
+  @@index([userId2])
+}
+
+model Message {
+  id            String      @id @default(cuid())
+  privateRoomId String
+  senderId      String
+  content       String
+  createdAt     DateTime    @default(now())
+
+  privateRoom PrivateRoom @relation(fields: [privateRoomId], references: [id], onDelete: Cascade)
+  sender      User        @relation(fields: [senderId], references: [id])
+
+  @@index([privateRoomId])
 }

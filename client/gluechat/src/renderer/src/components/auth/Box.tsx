@@ -88,17 +88,17 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
 
 
   return (
-    <div className="  bg-[#EAEAEA] p-8 rounded-2xl shadow-xl w-full max-w-md mx-auto border border-[#404E7C]/10">
-      <h2 className="text-2xl font-bold mb-6 text-center text-[#404E7C] font-['Oswald']">{text}</h2>
+    <div className="bg-gray-900/60 backdrop-blur-xl p-8 rounded-3xl shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] w-full max-w-md mx-auto border border-white/10">
+      <h2 className="text-2xl font-black mb-8 text-center text-white uppercase tracking-wider">{text}</h2>
       <form>
 
         {!isLogin && (
-          <div className="mb-4">
-            <label className="block text-[#404E7C] text-sm font-semibold mb-2">
+          <div className="mb-5">
+            <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
               Nickname
             </label>
             <input
-              className="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#404E7C] focus:border-[#404E7C] block w-full p-2.5 outline-none transition-all"
+              className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
               id="nickname"
               type="text"
               onChange={(e) => setNickname ? setNickname(e.target.value) : ""}
@@ -107,24 +107,24 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
           </div>
         )}
 
-        <div className="mb-4">
-          <label className="block text-[#404E7C] text-sm font-semibold mb-2">
+        <div className="mb-5">
+          <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
             Email
           </label>
           <input
-            className="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#404E7C] focus:border-[#404E7C] block w-full p-2.5 outline-none transition-all"
+            className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
             id="email"
             type="email"
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Your email"
           />
         </div>
-        <div className="mb-6">
-          <label className="block text-[#404E7C] text-sm font-semibold mb-2" >
+        <div className="mb-8">
+          <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1" >
             Password
           </label>
           <input
-            className="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#404E7C] focus:border-[#404E7C] block w-full p-2.5 outline-none transition-all"
+            className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
             id="password"
             type="password"
             onChange={(e) => setPassword(e.target.value)}
@@ -138,7 +138,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
           <div className="flex items-center justify-between">
             <button
               onClick={() => {handleSubmit("login")}}
-              className="bg-[#404E7C] hover:bg-[#343e63] text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-[#404E7C]/30 w-full transition-all cursor-pointer"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 w-full transition-all cursor-pointer"
               type="button"
             >
               Log in
@@ -150,7 +150,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
 
           <button
             onClick={() => {handleSubmit("register")}}
-          className="bg-[#404E7C] hover:bg-[#343e63] text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-[#404E7C]/30 w-full transition-all cursor-pointer"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 w-full transition-all cursor-pointer"
           type="button"
           >
           Sign up
@@ -161,7 +161,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
 
 
           <div className="mt-6 text-center">
-            <p className={"text-red-500 text-sm font-bold"}>{errorMsg}</p>
+            <p className={"text-red-400 text-sm font-bold"}>{errorMsg}</p>
           </div>
 
 
@@ -178,13 +178,13 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
 
         {isLogin ? (
           <div className="mt-6 text-center">
-            <Link to="/register" className="inline-block align-baseline font-semibold text-sm text-[#404E7C] hover:text-[#343e63] transition-colors">
+            <Link to="/register" className="inline-block align-baseline font-semibold text-sm text-blue-400 hover:text-blue-300 transition-colors">
               Don't have an account? Sign up
             </Link>
           </div>
         ) : (
           <div className="mt-6 text-center">
-            <Link  to="/login" className="inline-block align-baseline font-semibold text-sm text-[#404E7C] hover:text-[#343e63] transition-colors" >
+            <Link  to="/login" className="inline-block align-baseline font-semibold text-sm text-blue-400 hover:text-blue-300 transition-colors" >
               You have an account? Log in
             </Link>
           </div>

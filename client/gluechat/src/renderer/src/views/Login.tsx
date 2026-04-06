@@ -6,17 +6,24 @@ export function Login() {
 
   return (
     <>
-      <div className=' w-full h-full flex items-center justify-center flex-col '>
-        <div className=' font-["Oswald"] mt-50'>
-          <h1 className='text-5xl font-bold  text-center text-[#404E7C]'>
+      <div className="w-full h-full flex items-center justify-center flex-col">
+        <div className={'mt-10'}>
+          <h1 className=' text-center text-5xl mt-5 mb-5 font-["Pacifico"] text-[#eff1ed]'>
             GlueChat
           </h1>
-          <p className="opacity-80 text-sm text-[#404E7C] mt-3 text-center max-w-md">
-            Quantum-resistant • End-to-End Encrypted • Private by design
+          <p className="text-white opacity-60 text-[10px] uppercase tracking-[0.4em] font-medium mt-6 text-center max-w-md">
+            Quantum-resistant • Private by design
           </p>
         </div>
-        <div className=' mt-30 w-full h-full flex items-center justify-center flex-col '>
-          <Box isLogin={true} email={email} password={password} setPassword={setPassword} setEmail={setEmail} nickname={null} />
+        <div className=" mt-30 w-full h-full flex items-center justify-center flex-col ">
+          <Box
+            isLogin={true}
+            email={email}
+            password={password}
+            setPassword={setPassword}
+            setEmail={setEmail}
+            nickname={null}
+          />
         </div>
       </div>
     </>

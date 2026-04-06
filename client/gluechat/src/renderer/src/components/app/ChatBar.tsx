@@ -9,7 +9,7 @@ interface ChatBarProps {
 
 export function ChatBar({ activeTab, setActiveTab }: ChatBarProps) {
   return (
-    <div className="w-17.5 bg-gray-900 flex flex-col items-center py-4 gap-4 shadow-xl">
+    <div className="w-17.5 bg-gray-950 flex flex-col items-center py-4 gap-4 shadow-xl">
       <button
         onClick={() => setActiveTab('chats')}
         className={`p-3 rounded-xl transition-all duration-200 cursor-pointer group ${

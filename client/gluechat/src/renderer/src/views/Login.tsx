@@ -1,4 +1,4 @@
-import {Box} from "@renderer/components/auth/box";
+import {Box} from "@renderer/components/auth/Box";
 import {useState} from "react";
 export function Login() {
   const [email, setEmail] = useState("");

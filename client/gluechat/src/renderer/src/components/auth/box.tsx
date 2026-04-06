@@ -2,6 +2,7 @@ import {Link} from "react-router-dom";
 import {useState} from "react";
 import {validateEmail, validateNickname, validatePassword} from "@renderer/assets/utils";
 import {register} from "@renderer/assets/register";
+import {login} from "@renderer/assets/login";
 
 interface Props {
   isLogin: boolean;
@@ -44,6 +45,19 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
   }
 
 
+  const handleLogin = async () : Promise<void> => {
+    const loginResult = await login(email,password);
+    if (loginResult.success) {
+
+    } else {
+      setTimeout(() => {
+        setErrorMsg("");
+      },5000)
+      setErrorMsg(loginResult.message);
+    }
+  }
+
+
   const handleSubmit = async (op : string) : Promise<void> => {
 
     try {
@@ -64,6 +78,8 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
 
     if (op === "register") {
       await handleRegister();
+    } else {
+      await handleLogin();
     }
 
   }

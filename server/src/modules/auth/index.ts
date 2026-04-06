@@ -1,7 +1,7 @@
 import {Elysia,status} from "elysia";
 import {authModel} from "./model";
 import {AuthService} from "./service";
-import {AlreadyExistsError, InvalidDataFormatError} from "../../utils/exceptions";
+import {AlreadyExistsError, InvalidDataFormatError, NotFoundError, InvalidCredentialsError} from "../../utils/exceptions";
 
 
 export const auth = new Elysia({ prefix: '/auth' })
@@ -10,8 +10,9 @@ export const auth = new Elysia({ prefix: '/auth' })
     try {
         const {nickname, email, password} = body;
 
+        AuthService.validate(nickname as string, email, password);
         await AuthService.checkIfNicknameExists(nickname as string);
-        await AuthService.checkIfAccountExists(email as string);
+        await AuthService.checkIfAccountExists(email as string,false);
         await AuthService.registerUser(nickname as string, email, password);
 
         return status(201, {
@@ -21,7 +22,7 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 
     } catch (e) {
-        if (e instanceof InvalidDataFormatError || e instanceof AlreadyExistsError) {
+        if (e instanceof InvalidDataFormatError || e instanceof AlreadyExistsError || e instanceof NotFoundError ) {
             return status(e.statusCode, {
                 success: false,
                 message: e.message
@@ -40,6 +41,38 @@ export const auth = new Elysia({ prefix: '/auth' })
         201: authModel.authResponse,
     }
 
+})
+
+
+.post('/login', async ({body}) =>  {
+    try {
+        const {email, password} = body;
+        AuthService.validate(null, email, password);
+        await AuthService.checkIfAccountExists(email as string, true);
+        await AuthService.loginUser(email, password);
+    } catch (e) {
+        if (e instanceof InvalidDataFormatError || e instanceof NotFoundError || e instanceof InvalidCredentialsError) {
+            return status(e.statusCode, {
+                success: false,
+                message: e.message
+            })
+        }
+        return status(500, {
+            success: false,
+            message: "Something went wrong",
+        })
+    }
+
+
+
+
+
+
+}, {
+    body: authModel.authBody,
+    response: {
+        201: authModel.authResponse,
+    }
 })
 
 

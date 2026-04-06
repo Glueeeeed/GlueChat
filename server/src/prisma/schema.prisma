@@ -18,6 +18,7 @@ model User {
   sentMessages       Message[]
   privateRoomsAsFirst  PrivateRoom[] @relation("PrivateRoomUser1")
   privateRoomsAsSecond PrivateRoom[] @relation("PrivateRoomUser2")
+  sessions Sessions[]
 }
 
 model PrivateRoom {
@@ -48,4 +49,11 @@ model Message {
   sender      User        @relation(fields: [senderId], references: [id])
 
   @@index([privateRoomId])
+}
+
+model Sessions {
+  sessionID String @id
+  userID String
+
+  loggedUser User @relation(fields: [userID], references: [id])
 }

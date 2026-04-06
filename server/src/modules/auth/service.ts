@@ -4,6 +4,7 @@ import validator from 'validator';
 
 interface UserData {
     password: string;
+    id: string;
 }
 
 export abstract class AuthService {
@@ -35,7 +36,7 @@ export abstract class AuthService {
             }
         } else {
             if (!isExists) {
-                throw new NotFoundError('Account not found');
+                throw new InvalidCredentialsError("Invalid password or email");
             }
         }
 
@@ -60,7 +61,7 @@ export abstract class AuthService {
     }
 
 
-    static async loginUser(email: string, password: string): Promise<void> {
+    static async loginUser(email: string, password: string): Promise<string> {
 
 
         const userPasswordHash : UserData | null = await prisma.user.findFirst({
@@ -68,7 +69,8 @@ export abstract class AuthService {
                 email: email
             },
             select: {
-                password: true
+                password: true,
+                id: true
             }
         })
 
@@ -78,9 +80,8 @@ export abstract class AuthService {
         const isValid = await Bun.password.verify(password, userPasswordHash.password as string);
         if (!isValid) {
             throw new InvalidCredentialsError("Invalid password or email");
-        } else {
-            console.log(isValid);
         }
+        return userPasswordHash.id;
 
     }
 

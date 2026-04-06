@@ -23,6 +23,10 @@ export const authModel = {
         refreshToken: t.Optional(
             t.String(),
         ),
+    }),
+
+    refreshBody: t.Object({
+        refreshToken: t.String(),
     })
 
 }

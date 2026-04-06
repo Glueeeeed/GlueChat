@@ -17,13 +17,10 @@ export async function login(email: string, password: string) : Promise<result> {
       password: password,
     })
   })
-  if (response.ok) {
-    console.log(response.body);
-  }
   const json = await response.json();
   if (!response.ok) {
     return {success: false, message: json.message };
   }
-
-  return {success: true, message: "ok", authToken: json.authToken, refreshToken: json.refreshToken};
+  await window.auth.setRefreshToken(json.refreshToken);
+  return {success: true, message: "ok"};
 }

@@ -1,5 +1,6 @@
 import {Box} from "@renderer/components/auth/box";
 import {useState} from "react";
+
 export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

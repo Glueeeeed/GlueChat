@@ -2,6 +2,8 @@ import {Elysia,status} from "elysia";
 import {authModel} from "./model";
 import {AuthService} from "./service";
 import {AlreadyExistsError, InvalidDataFormatError, NotFoundError, InvalidCredentialsError} from "../../utils/exceptions";
+import { jwt } from '@elysiajs/jwt'
+import {generateAuthToken, generateRefreshToken, verifyRefreshToken} from "../../utils/jwt";
 
 
 export const auth = new Elysia({ prefix: '/auth' })
@@ -49,7 +51,17 @@ export const auth = new Elysia({ prefix: '/auth' })
         const {email, password} = body;
         AuthService.validate(null, email, password);
         await AuthService.checkIfAccountExists(email as string, true);
-        await AuthService.loginUser(email, password);
+        const userID : string = await AuthService.loginUser(email, password);
+        const authToken : string = generateAuthToken(userID);
+        const refreshToken : string = await generateRefreshToken(userID);
+        console.log(refreshToken);
+        return {
+            success: true,
+            message: 'Logged in successfully',
+            authToken: authToken,
+            refreshToken: refreshToken
+        }
+
     } catch (e) {
         if (e instanceof InvalidDataFormatError || e instanceof NotFoundError || e instanceof InvalidCredentialsError) {
             return status(e.statusCode, {
@@ -57,15 +69,12 @@ export const auth = new Elysia({ prefix: '/auth' })
                 message: e.message
             })
         }
+        console.error(e);
         return status(500, {
             success: false,
             message: "Something went wrong",
         })
     }
-
-
-
-
 
 
 }, {
@@ -74,6 +83,42 @@ export const auth = new Elysia({ prefix: '/auth' })
         201: authModel.authResponse,
     }
 })
+
+.post('/refresh', async ({body} ) =>  {
+        const {refreshToken} = body;
+        try {
+            const userID : string | undefined = await verifyRefreshToken(refreshToken);
+            const authToken : string = generateAuthToken(userID as string);
+            const newRefreshToken : string = await generateRefreshToken(userID as string);
+
+            return {
+                success: true,
+                message: 'Generated new tokens',
+                authToken: authToken,
+                refreshToken: newRefreshToken
+            }
+
+        } catch (e) {
+            if (e instanceof Error) {
+                return status(403, {
+                    success: false,
+                    message: e.message,
+                })
+            }
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: "Something went wrong",
+            })
+        }
+
+}, {
+    body: authModel.refreshBody,
+    response: {
+        201: authModel.authResponse,
+    }
+})
+
 
 
 

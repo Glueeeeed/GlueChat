@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import keytar from "keytar";
 
 function createWindow(): void {
   // Create the browser window.
@@ -72,3 +73,16 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+
+ipcMain.handle("get-refresh-token", async () => {
+  return await keytar.getPassword("gluechat", "refreshToken");
+});
+
+ipcMain.handle("set-refresh-token", async (_, token) => {
+  return await keytar.setPassword("gluechat", "refreshToken", token);
+});
+
+ipcMain.handle("delete-refresh-token", async () => {
+  return await keytar.deletePassword("gluechat", "refreshToken");
+});

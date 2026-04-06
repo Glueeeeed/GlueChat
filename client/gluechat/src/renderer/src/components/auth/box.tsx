@@ -1,4 +1,4 @@
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {useState} from "react";
 import {validateEmail, validateNickname, validatePassword} from "@renderer/assets/utils";
 import {register} from "@renderer/assets/register";
@@ -28,6 +28,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
   const [errorMsg, setErrorMsg] = useState("");
   const [registered, setRegistered] = useState(false);
   const text = isLogin ? "Login" : "Register";
+  const navigate = useNavigate();
 
   const handleRegister = async () : Promise<void> => {
     const registrationResult : result = await register(nickname as string, email, password);
@@ -48,7 +49,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
   const handleLogin = async () : Promise<void> => {
     const loginResult = await login(email,password);
     if (loginResult.success) {
-
+      navigate("/");
     } else {
       setTimeout(() => {
         setErrorMsg("");
@@ -183,7 +184,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
           </div>
         ) : (
           <div className="mt-6 text-center">
-            <Link  to="/" className="inline-block align-baseline font-semibold text-sm text-[#404E7C] hover:text-[#343e63] transition-colors" >
+            <Link  to="/login" className="inline-block align-baseline font-semibold text-sm text-[#404E7C] hover:text-[#343e63] transition-colors" >
               You have an account? Log in
             </Link>
           </div>

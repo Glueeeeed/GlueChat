@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
@@ -20,3 +20,10 @@ if (process.contextIsolated) {
   // @ts-ignore (define in dts)
   window.api = api
 }
+
+
+contextBridge.exposeInMainWorld("auth", {
+  getRefreshToken: () => ipcRenderer.invoke("get-refresh-token"),
+  setRefreshToken: (t) => ipcRenderer.invoke("set-refresh-token", t),
+  deleteRefreshToken: () => ipcRenderer.invoke("delete-refresh-token"),
+});

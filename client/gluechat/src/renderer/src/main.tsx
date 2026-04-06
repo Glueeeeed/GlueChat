@@ -6,10 +6,15 @@ import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import {Login} from "@renderer/views/Login";
 import {Register} from "@renderer/views/Register";
+import {App} from "@renderer/views/App";
 
 const router = createHashRouter([
   {
     path: '/',
+    element: <App />,
+  },
+  {
+    path: '/login',
     element: <Login />,
   },
   {

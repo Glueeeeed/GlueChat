@@ -1,8 +1,7 @@
 import {Elysia,status} from "elysia";
 import {authModel} from "./model";
 import {AuthService} from "./service";
-import {AlreadyExistsError, InvalidDataFormatError, NotFoundError, InvalidCredentialsError} from "../../utils/exceptions";
-import { jwt } from '@elysiajs/jwt'
+import {AlreadyExistsError, InvalidDataFormatError, InvalidCredentialsError} from "../../utils/exceptions";
 import {generateAuthToken, generateRefreshToken, verifyRefreshToken} from "../../utils/jwt";
 
 
@@ -10,12 +9,11 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/register', async ({body}) =>  {
     try {
-        const {nickname, email, password} = body;
+        const {nickname, password} = body;
 
-        AuthService.validate(nickname as string, email, password);
-        await AuthService.checkIfNicknameExists(nickname as string);
-        await AuthService.checkIfAccountExists(email as string,false);
-        await AuthService.registerUser(nickname as string, email, password);
+        AuthService.validate(nickname, password, false);
+        await AuthService.checkIfNicknameExists(nickname, false);
+        await AuthService.registerUser(nickname, password);
 
         return status(201, {
             success: true,
@@ -24,7 +22,7 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 
     } catch (e) {
-        if (e instanceof InvalidDataFormatError || e instanceof AlreadyExistsError || e instanceof NotFoundError ) {
+        if (e instanceof InvalidDataFormatError || e instanceof AlreadyExistsError) {
             return status(e.statusCode, {
                 success: false,
                 message: e.message
@@ -48,13 +46,12 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/login', async ({body}) =>  {
     try {
-        const {email, password} = body;
-        AuthService.validate(null, email, password);
-        await AuthService.checkIfAccountExists(email as string, true);
-        const userID : string = await AuthService.loginUser(email, password);
+        const {nickname,password} = body;
+        AuthService.validate(nickname, password,true);
+        await AuthService.checkIfNicknameExists(nickname, true);
+        const userID : string = await AuthService.loginUser(nickname, password);
         const authToken : string = generateAuthToken(userID);
         const refreshToken : string = await generateRefreshToken(userID);
-        console.log(refreshToken);
         return {
             success: true,
             message: 'Logged in successfully',
@@ -63,7 +60,7 @@ export const auth = new Elysia({ prefix: '/auth' })
         }
 
     } catch (e) {
-        if (e instanceof InvalidDataFormatError || e instanceof NotFoundError || e instanceof InvalidCredentialsError) {
+        if (e instanceof InvalidDataFormatError  || e instanceof InvalidCredentialsError) {
             return status(e.statusCode, {
                 success: false,
                 message: e.message

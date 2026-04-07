@@ -16,14 +16,6 @@ export function validateNickname (nickname: string) : void {
 
 }
 
-export function validateEmail(email : string) : void {
-    if (validator.isEmpty(email)) {
-      throw new Error('Email is required');
-   }
-    if (!validator.isEmail(email)) {
-     throw new Error('Invalid email address');
-    }
-}
 
 export function validatePassword (password : string) : void {
   if (validator.isEmpty(password)) {

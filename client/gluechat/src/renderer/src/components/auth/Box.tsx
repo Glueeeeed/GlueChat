@@ -1,16 +1,14 @@
 import {Link, useNavigate} from "react-router-dom";
 import {useState} from "react";
-import {validateEmail, validateNickname, validatePassword} from "@renderer/assets/utils";
+import { validateNickname, validatePassword} from "@renderer/assets/utils";
 import {register} from "@renderer/assets/register";
 import {login} from "@renderer/assets/login";
 
 interface Props {
   isLogin: boolean;
-  nickname: string | null;
-  email: string;
+  nickname: string;
   password: string;
   setNickname?: (newNickname: string) => void;
-  setEmail: (newEmail: string) => void;
   setPassword: (newPassword: string) => void;
 
 }
@@ -23,7 +21,7 @@ interface result {
 
 
 
-export function Box({ isLogin, nickname, email, password, setNickname,setPassword,setEmail }: Props) {
+export function Box({ isLogin, nickname, password, setNickname,setPassword }: Props) {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [registered, setRegistered] = useState(false);
@@ -31,7 +29,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
   const navigate = useNavigate();
 
   const handleRegister = async () : Promise<void> => {
-    const registrationResult : result = await register(nickname as string, email, password);
+    const registrationResult : result = await register(nickname, password);
     if (registrationResult.success) {
       setTimeout(() => {
         setRegistered(false);
@@ -47,7 +45,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
 
 
   const handleLogin = async () : Promise<void> => {
-    const loginResult = await login(email,password);
+    const loginResult = await login(nickname,password);
     if (loginResult.success) {
       navigate("/");
     } else {
@@ -62,10 +60,7 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
   const handleSubmit = async (op : string) : Promise<void> => {
 
     try {
-      if (op === "register") {
-        validateNickname(nickname as string);
-      }
-      validateEmail(email);
+      validateNickname(nickname);
       validatePassword(password);
 
     } catch (err: any) {
@@ -92,12 +87,12 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
       <h2 className="text-2xl font-black mb-8 text-center text-white uppercase tracking-wider">{text}</h2>
       <form>
 
-        {!isLogin && (
           <div className="mb-5">
             <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
               Nickname
             </label>
             <input
+              maxLength={20}
               className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
               id="nickname"
               type="text"
@@ -105,25 +100,13 @@ export function Box({ isLogin, nickname, email, password, setNickname,setPasswor
               placeholder="Your Nickname"
             />
           </div>
-        )}
 
-        <div className="mb-5">
-          <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
-            Email
-          </label>
-          <input
-            className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
-            id="email"
-            type="email"
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Your email"
-          />
-        </div>
         <div className="mb-8">
           <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1" >
             Password
           </label>
           <input
+            maxLength={32}
             className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
             id="password"
             type="password"

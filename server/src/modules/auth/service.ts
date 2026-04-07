@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma";
-import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError, NotFoundError} from "../../utils/exceptions";
+import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
 import validator from 'validator';
+import {isForbiddenNick} from "../../utils/validation";
 
 interface UserData {
     password: string;
@@ -11,39 +12,26 @@ export abstract class AuthService {
 
 
 
-    static  async checkIfNicknameExists(nickname: string): Promise<void> {
+    static  async checkIfNicknameExists(nickname: string,loginOption: boolean): Promise<void> {
         const isExists = await prisma.user.findFirst({
             where: {
                 nickname: nickname,
             }
         })
-        if (isExists) {
-            throw new AlreadyExistsError('Nickname already exists');
-        }
-    }
-
-    static async checkIfAccountExists(email: string, loginOption: boolean): Promise<void> {
-
-        const isExists = await prisma.user.findFirst({
-            where: {
-                email: email
-            }
-        })
-
         if (!loginOption) {
             if (isExists) {
-                throw new AlreadyExistsError('Email already exists');
+                throw new AlreadyExistsError('Nickname already exists');
             }
         } else {
             if (!isExists) {
-                throw new InvalidCredentialsError("Invalid password or email");
+                throw new InvalidCredentialsError("Invalid password or nickname");
             }
         }
-
-
     }
 
-    static async registerUser(nickname: string , email: string , password: string): Promise<void> {
+
+
+    static async registerUser(nickname: string , password: string): Promise<void> {
 
         const passwordHash = await Bun.password.hash(password);
 
@@ -51,7 +39,6 @@ export abstract class AuthService {
         await prisma.user.create({
             data: {
                 nickname: nickname,
-                email: email,
                 password: passwordHash
             }
         })
@@ -61,12 +48,12 @@ export abstract class AuthService {
     }
 
 
-    static async loginUser(email: string, password: string): Promise<string> {
+    static async loginUser(nickname: string, password: string): Promise<string> {
 
 
         const userPasswordHash : UserData | null = await prisma.user.findFirst({
             where: {
-                email: email
+                nickname: nickname
             },
             select: {
                 password: true,
@@ -79,34 +66,35 @@ export abstract class AuthService {
         }
         const isValid = await Bun.password.verify(password, userPasswordHash.password as string);
         if (!isValid) {
-            throw new InvalidCredentialsError("Invalid password or email");
+            throw new InvalidCredentialsError("Invalid password or nickname");
         }
         return userPasswordHash.id;
 
     }
 
-    static validate(nickname: string|null , email : string , password: string) : void {
+    static validate(nickname: string , password: string, isLogin : boolean) : void {
 
+        if (validator.isEmail(nickname as string)) {
+            throw new InvalidDataFormatError("Nickname cannot be an email address");
+        }
+        if (!validator.isLength(nickname as string, { min: 4, max: 20 })) {
+            throw new InvalidDataFormatError("Nickname must be between 4 and 20 characters");
+        }
+        if (!validator.isAlphanumeric(nickname as string)) {
+            throw new InvalidDataFormatError("Nickname can only contain letters and numbers");
+        }
 
-        if (nickname != null) {
-            if (validator.isEmail(nickname as string)) {
-                throw new InvalidDataFormatError("Nickname cannot be an email address");
-            }
-            if (!validator.isLength(nickname as string, { min: 4, max: 20 })) {
-                throw new InvalidDataFormatError("Nickname must be between 4 and 20 characters");
-            }
-            if (!validator.isAlphanumeric(nickname as string)) {
-                throw new InvalidDataFormatError("Nickname can only contain letters and numbers");
+        if (!isLogin) {
+            if (isForbiddenNick(nickname)) {
+                throw new InvalidDataFormatError("This nickname is not allowed");
             }
         }
 
 
-        if (!validator.isEmail(email)) {
-            throw new InvalidDataFormatError("Invalid email format");
-        }
 
-        if (!validator.isLength(password, { min: 8 })) {
-            throw new InvalidDataFormatError("Password must be at least 8 characters long");
+
+        if (!validator.isLength(password, { min: 8, max: 32 })) {
+            throw new InvalidDataFormatError("Password must be between 8 and 32 characters long.");
         }
         if (!validator.isStrongPassword(password)) {
             throw new InvalidDataFormatError("Password is too weak (must include uppercase, lowercase, number and symbol)");

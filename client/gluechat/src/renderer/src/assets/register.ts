@@ -3,7 +3,7 @@ interface result {
   message: string;
 }
 
-export async function register(nickname: string, email: string, password: string) : Promise<result> {
+export async function register(nickname: string, password: string) : Promise<result> {
   const response = await fetch(`http://localhost:3000/api/auth/register`, {
     method: 'POST',
     headers: {
@@ -12,7 +12,6 @@ export async function register(nickname: string, email: string, password: string
     },
     body: JSON.stringify({
       nickname: nickname,
-      email: email,
       password: password,
     })
   })

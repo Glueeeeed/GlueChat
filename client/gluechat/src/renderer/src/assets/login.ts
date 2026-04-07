@@ -5,7 +5,7 @@ interface result {
   refreshToken?: string;
 }
 
-export async function login(email: string, password: string) : Promise<result> {
+export async function login(nickname: string, password: string) : Promise<result> {
   const response = await fetch('http://localhost:3000/api/auth/login', {
     method: 'POST',
     headers: {
@@ -13,7 +13,7 @@ export async function login(email: string, password: string) : Promise<result> {
       'Accept': 'application/json',
     },
     body: JSON.stringify({
-      email: email,
+      nickname: nickname,
       password: password,
     })
   })

@@ -62,7 +62,7 @@ export function App() {
             {selectedFriend ? (
               <div className="text-center space-y-4">
                 <div className="w-24 h-24 bg-gray-800 rounded-full mx-auto flex items-center justify-center border border-white/10 shadow-2xl">
-                   <span className="text-3xl font-black text-blue-500">{selectedFriend.nickname[0]}</span>
+                   <span className="text-3xl font-black text-violet-500">{selectedFriend.nickname[0]}</span>
                 </div>
                 <h2 className="text-3xl font-black tracking-tighter">{selectedFriend.nickname}</h2>
                 <p className="text-gray-500 uppercase tracking-[0.2em] text-xs">{selectedFriend.status} • Friend Profile coming soon</p>

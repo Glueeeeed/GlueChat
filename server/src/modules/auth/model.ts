@@ -4,14 +4,8 @@ export const authModel = {
 
 
     authBody: t.Object({
-        nickname: t.Optional(
-            t.String(),
-        ),
-        email: t.String({
-            format: 'email'
-        }),
+        nickname: t.String(),
         password: t.String(),
-
     }),
 
     authResponse: t.Object({

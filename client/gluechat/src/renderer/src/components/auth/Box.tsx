@@ -93,7 +93,7 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword }: Pr
             </label>
             <input
               maxLength={20}
-              className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
+              className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
               id="nickname"
               type="text"
               onChange={(e) => setNickname ? setNickname(e.target.value) : ""}
@@ -107,7 +107,7 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword }: Pr
           </label>
           <input
             maxLength={32}
-            className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
+            className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
             id="password"
             type="password"
             onChange={(e) => setPassword(e.target.value)}
@@ -121,7 +121,7 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword }: Pr
           <div className="flex items-center justify-between">
             <button
               onClick={() => {handleSubmit("login")}}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 w-full transition-all cursor-pointer"
+              className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-violet-500/30 w-full transition-all cursor-pointer"
               type="button"
             >
               Log in
@@ -133,7 +133,7 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword }: Pr
 
           <button
             onClick={() => {handleSubmit("register")}}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 w-full transition-all cursor-pointer"
+          className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-violet-500/30 w-full transition-all cursor-pointer"
           type="button"
           >
           Sign up
@@ -161,13 +161,13 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword }: Pr
 
         {isLogin ? (
           <div className="mt-6 text-center">
-            <Link to="/register" className="inline-block align-baseline font-semibold text-sm text-blue-400 hover:text-blue-300 transition-colors">
+            <Link to="/register" className="inline-block align-baseline font-semibold text-sm text-violet-400 hover:text-violet-300 transition-colors">
               Don't have an account? Sign up
             </Link>
           </div>
         ) : (
           <div className="mt-6 text-center">
-            <Link  to="/login" className="inline-block align-baseline font-semibold text-sm text-blue-400 hover:text-blue-300 transition-colors" >
+            <Link  to="/login" className="inline-block align-baseline font-semibold text-sm text-violet-400 hover:text-violet-300 transition-colors" >
               You have an account? Log in
             </Link>
           </div>

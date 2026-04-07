@@ -19,12 +19,13 @@ const MOCK_FRIENDS: Friend[] = [
 interface FriendsListProps {
   onSelectFriend?: (friend: Friend) => void
   selectedFriendId?: string
+  addFriendOption: boolean
+  setAddFriendOption: (newFriend: boolean) => void
 }
 
-export function FriendsList({ onSelectFriend, selectedFriendId }: FriendsListProps): React.JSX.Element {
+export function FriendsList({ onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption }: FriendsListProps): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('')
-  const [filter, setFilter] = useState<'all' | 'online' | "null">('all')
-  const [addFriendOption, setAddFriendOption] = useState<boolean>(false)
+  const [filter, setFilter] = useState<'all' | 'online' | 'null'>('all')
 
   const setAddFriend = (): void => {
     setAddFriendOption(!addFriendOption)
@@ -82,12 +83,12 @@ export function FriendsList({ onSelectFriend, selectedFriendId }: FriendsListPro
               addFriendOption ? 'bg-violet-800 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
           >
-            ADD FRIEND
+            FRIENDS PANEL
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 pb-4 scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+      <div className="flex-1 overflow-y-auto px-2 pb-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-900/50 [&::-webkit-scrollbar-thumb]:bg-violet-950 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-violet-900">
 
 
         {filteredFriends.length > 0 ? (

@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import {initAuthToken} from "@renderer/assets/utils";
 import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
+import {AddFriend} from "@renderer/components/friends/AddFriend";
+import {FriendsRequests} from "@renderer/components/friends/FriendsRequests";
+import {SentRequests} from "@renderer/components/friends/SentRequests";
 
 export type Tab = 'chats' | 'friends';
 
@@ -17,6 +20,7 @@ export function App() {
   const [authToken , setAuthToken] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('chats');
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+  const [addFriendOption, setAddFriendOption] = useState<boolean>(false)
   const navigate = useNavigate();
 
 
@@ -46,6 +50,8 @@ export function App() {
           </div>
         ) : (
           <FriendsList
+            addFriendOption={addFriendOption}
+            setAddFriendOption={setAddFriendOption}
             onSelectFriend={setSelectedFriend}
             selectedFriendId={selectedFriend?.id}
           />
@@ -55,26 +61,36 @@ export function App() {
       <div className="flex-1 flex flex-col bg-gray-950/50">
         {activeTab === 'chats' ? (
           <div className="flex-1 flex items-center justify-center">
-             <p className="text-gray-600 uppercase tracking-[0.3em] text-sm">Select a chat to start messaging</p>
+            <p className="text-gray-600 uppercase tracking-[0.3em] text-sm">Select a chat to start messaging</p>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
-            {selectedFriend ? (
-              <div className="text-center space-y-4">
-                <div className="w-24 h-24 bg-gray-800 rounded-full mx-auto flex items-center justify-center border border-white/10 shadow-2xl">
-                   <span className="text-3xl font-black text-violet-500">{selectedFriend.nickname[0]}</span>
+          <div className={`flex-1 flex ${addFriendOption ? "items-start" : "items-center justify-center"} `}>
+            {addFriendOption ? (
+              <div className="flex h-screen justify-between">
+                <div className="flex h-full flex-col max-w-[65%] ">
+                  <AddFriend />
+                  <SentRequests />
                 </div>
-                <h2 className="text-3xl font-black tracking-tighter">{selectedFriend.nickname}</h2>
-                <p className="text-gray-500 uppercase tracking-[0.2em] text-xs">{selectedFriend.status} • Friend Profile coming soon</p>
+                <div className={"mt-5 h-full max-w-[35%]"}>
+                  <FriendsRequests/>
+                </div>
+
+              </div>
+            ) : selectedFriend ? (
+              <div className="flex justify-center text-center opacity-40">
+                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">Select a friend</p>
               </div>
             ) : (
               <div className="text-center opacity-40">
-                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">Select a friend to view profile</p>
+                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">Select a friend</p>
               </div>
             )}
           </div>
         )}
       </div>
-    </div>
+
+
+      </div>
+
   )
 }

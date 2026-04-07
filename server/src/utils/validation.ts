@@ -1,13 +1,12 @@
 const leetMap: Record<string, string[]> = {
-    'a': ['a', '4', '@'],
+    'a': ['a', '4'],
     'b': ['b', '8'],
-    'c': ['c', '('],
     'e': ['e', '3'],
     'g': ['g', '9', '6'],
-    'i': ['i', '1', '!', 'l'],
-    'l': ['l', '1', '|'],
+    'i': ['i', '1', 'l'],
+    'l': ['l', '1'],
     'o': ['o', '0'],
-    's': ['s', '5', '$'],
+    's': ['s', '5'],
     't': ['t', '7'],
     'z': ['z', '2'],
 };
@@ -36,11 +35,7 @@ function normalizeNick(nick: string): string {
 
 
 const forbiddenWords = [
-    "glued","fuck", "shit", "bitch", "asshole", "pussy", "dick", "cunt", "ass", "fag", "faggot",
-    "nigger", "nigga", "retard", "slut", "whore", "cock", "cum", "porn", "niger",
-    "kurwa", "chuj", "pizda", "jebac", "pierdol", "suka", "dupa", "cwel", "pedal",
-    "czarnuch", "zyd", "szmata", "dziwka", "spierdalaj", "wypierdalaj", "pojeb", "deb",
-    "huj", "kutas", "cipa", "cipka", "dupek", "skurwysyn", "skurwiel",
+    "glued"
 ];
 
 export function isForbiddenNick(nick: string): boolean {

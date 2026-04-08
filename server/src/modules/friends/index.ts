@@ -30,6 +30,21 @@ export const friends = new Elysia({ prefix: '/friends' })
         try {
             const {nickname}  = body;
             console.log(nickname)
+            const friendID : string = await  FriendsService.findFriend(nickname);
+            const areFriends : boolean = await FriendsService.checkIfTheyAreFriends(user.id,friendID);
+            const requestExists : boolean = await FriendsService.checkIfFriendRequestExists(user.id,friendID );
+            if (areFriends) {
+                return status(409, {
+                    success: false,
+                    message: 'You are already a friend with this user!'
+                })
+            }
+            if (requestExists) {
+                return status(409, {
+                    success: false,
+                    message: 'You\'ve already sent an invitation to this friend'
+                })
+            }
             await FriendsService.addFriend(user.id,nickname);
             return status(200, {
                 success: true,

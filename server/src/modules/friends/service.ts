@@ -4,7 +4,7 @@ import {NotFoundError} from "../../utils/exceptions";
 
 export abstract class FriendsService {
 
-     static async findFriend(nickname : string) : Promise<string> {
+    static async findFriend(nickname: string): Promise<string> {
         const friendID = await prisma.user.findFirst({
             where: {
                 nickname: nickname,
@@ -19,7 +19,7 @@ export abstract class FriendsService {
         return friendID.id;
     }
 
-     static async addFriend(userID : string, friendID : string) : Promise<void> {
+    static async addFriend(userID: string, friendID: string): Promise<void> {
         try {
             await prisma.friendship.create({
                 data: {
@@ -28,14 +28,11 @@ export abstract class FriendsService {
                 }
             })
         } catch (e: any) {
-            if (e instanceof NotFoundError) {
-                throw new NotFoundError(e.message);
-            }
             throw new Error(e);
         }
     }
 
-    static async checkIfFriendRequestExists(userID : string, friendID : string) : Promise<boolean> {
+    static async checkIfFriendRequestExists(userID: string, friendID: string): Promise<boolean> {
         const request = await prisma.friendship.findFirst({
             where: {
                 OR: [
@@ -72,6 +69,33 @@ export abstract class FriendsService {
             return false;
         }
         return true;
+    }
+
+    static async getAllFriend(userID: string) {
+        const data = await prisma.friendship.findMany({
+            where: {
+                OR: [
+                    {
+                        senderId: userID,
+                    },
+                    {
+                        receiverId: userID,
+                    },
+                ],
+                status: 'ACCEPTED'
+            },
+        })
+        return data
+    }
+
+    static async getAllRequests(userID: string) {
+        const data = await prisma.friendship.findMany({
+            where: {
+                receiverId: userID,
+                status: 'PENDING'
+            }
+        })
+        return data
     }
 
 

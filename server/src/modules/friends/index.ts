@@ -72,3 +72,19 @@ export const friends = new Elysia({ prefix: '/friends' })
             201: friendsModel.responseBody,
         }
     })
+
+
+    .get('/', async ({user}) => {
+        const friend = await FriendsService.getAllFriend(user.id);
+        return status(200, {
+            success: true,
+            message: 'Friend request sent successfully.'
+        })
+
+
+    }, {
+        response: {
+            201: friendsModel.responseBody,
+        }
+    })
+

@@ -5,7 +5,6 @@ interface Friend {
   id: string
   nickname: string
   status: 'online' | 'offline'
-  avatar?: string
 }
 
 const MOCK_FRIENDS: Friend[] = [

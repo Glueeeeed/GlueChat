@@ -4,6 +4,7 @@ import { cors } from '@elysiajs/cors'
 
 import {test} from './modules/test'
 import {auth} from "./modules/auth";
+import {friends} from "./modules/friends";
 
 const app = new Elysia({
     name: 'glue-chat backend server',
@@ -12,6 +13,7 @@ const app = new Elysia({
     .use(cors())
     .use(test)
     .use(auth)
+    .use(friends)
 
 app.listen(3000)
 

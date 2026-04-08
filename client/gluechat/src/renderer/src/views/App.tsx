@@ -29,7 +29,9 @@ export function App() {
     const checkAuth = async () => {
       try {
         const token = await initAuthToken();
-        if (isMounted) setAuthToken(token);
+        if (isMounted) {
+          setAuthToken(token);
+        }
       } catch (e) {
         if (isMounted) navigate("/login");
       }
@@ -68,7 +70,7 @@ export function App() {
             {addFriendOption ? (
               <div className="flex h-screen justify-between">
                 <div className="flex h-full flex-col max-w-[65%] ">
-                  <AddFriend />
+                  <AddFriend authToken={authToken} />
                   <SentRequests />
                 </div>
                 <div className={"mt-5 h-full max-w-[35%]"}>

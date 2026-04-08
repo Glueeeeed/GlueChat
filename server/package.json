@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@elysiajs/bearer": "^1.4.3",
     "@elysiajs/cors": "^1.4.1",
     "@elysiajs/jwt": "^1.4.1",
     "@prisma/adapter-mariadb": "^7.6.0",

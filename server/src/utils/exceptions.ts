@@ -25,4 +25,12 @@ export class AlreadyExistsError extends Error {
     }
 }
 
+export class NotFoundError extends Error {
+    public statusCode: number;
+    constructor(message: string) {
+        super();
+        this.statusCode = 404;
+    }
+}
+
 

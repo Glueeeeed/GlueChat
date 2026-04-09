@@ -75,28 +75,62 @@ export abstract class FriendsService {
         const data = await prisma.friendship.findMany({
             where: {
                 OR: [
-                    {
-                        senderId: userID,
-                    },
-                    {
-                        receiverId: userID,
-                    },
+                    { senderId: userID },
+                    { receiverId: userID },
                 ],
                 status: 'ACCEPTED'
             },
-        })
-        return data
-    }
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        nickname: true
+                    }
+                },
+                receiver: {
+                    select: {
+                        id: true,
+                        nickname: true
+                    }
+                }
+            }
+        });
 
+        return data.map(friendship => {
+            if (friendship.senderId === userID) {
+                return {
+                    id: friendship.receiver.id,
+                    nickname: friendship.receiver.nickname,
+                    status: 'offline'
+                };
+            } else {
+                return {
+                    id: friendship.sender.id,
+                    nickname: friendship.sender.nickname,
+                    status: 'offline'
+                };
+            }
+        });
+    }
     static async getAllRequests(userID: string) {
         const data = await prisma.friendship.findMany({
             where: {
                 receiverId: userID,
                 status: 'PENDING'
+            },
+            include: {
+                sender: {
+                    select: {
+                        nickname: true
+                    }
+                }
             }
-        })
-        return data
-    }
+        });
 
+        return data.map(request => ({
+            id: request.id,
+            nickname: request.sender.nickname
+        }));
+    }
 
 }

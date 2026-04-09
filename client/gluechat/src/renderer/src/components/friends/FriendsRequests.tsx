@@ -1,4 +1,6 @@
 import {FaUserCircle, FaCheck, FaTimes } from "react-icons/fa";
+import {useEffect, useState} from "react";
+import {loadRequests} from "@renderer/assets/friends";
 
 
 interface Friend {
@@ -6,14 +8,33 @@ interface Friend {
   nickname: string
 }
 
-const friends: Friend[] = [
-  { id: '54mnhgmghjmmfhm', nickname: 'Alice',},
-  { id: '688mnhgmghjmdfgmfhm', nickname: 'Danylo',},
-]
+
+
+interface friendsRequestsProps {
+  authToken: string | null
+}
 
 
 
-export function FriendsRequests(){
+export function FriendsRequests({authToken} : friendsRequestsProps) {
+
+  const [requests, setRequets] = useState<Friend[]>([])
+
+
+  useEffect(() => {
+    const fetchFriendsRequests = async () => {
+      if (authToken) {
+        try {
+          const data = await loadRequests(authToken);
+          setRequets(data as Friend[]);
+        } catch (error) {
+          console.error("Failed to load friends", error);
+        }
+      }
+    };
+    fetchFriendsRequests();
+  }, [authToken]);
+
   return (
     <>
       <div className="flex flex-col h-full">
@@ -24,8 +45,8 @@ export function FriendsRequests(){
 
       <div className="flex-1 flex-col mt-10 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900/50 [&::-webkit-scrollbar-thumb]:bg-violet-950 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-violet-900">
 
-        {friends.length > 0 ? (
-          friends.map((friend) => (
+        {requests.length > 0 ? (
+          requests.map((friend) => (
             <button
               key={friend.id}
               className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 group mb-1

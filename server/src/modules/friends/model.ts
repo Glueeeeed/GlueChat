@@ -15,6 +15,9 @@ export const friendsModel = {
             t.Object({
                 nickname: t.String(),
                 id: t.Number(),
+                status: t.Optional(
+                    t.String(),
+                ),
             })
         )
     })

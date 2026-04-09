@@ -4,7 +4,8 @@ import { jwt } from '@elysiajs/jwt'
 import {friendsModel} from "./model";
 import {NotFoundError} from "../../utils/exceptions";
 import {FriendsService} from "./service"
-
+import {join} from "path";
+require("dotenv").config({ path: join(__dirname, "../.env") });
 export const friends = new Elysia({ prefix: '/friends' })
     .use(bearer())
     .use(jwt({ name: 'jwt',
@@ -15,6 +16,7 @@ export const friends = new Elysia({ prefix: '/friends' })
             set.status = 401
             throw new Error('Unauthorized: No token provided')
         }
+        console.log(bearer)
 
         const payload = await jwt.verify(bearer)
         if (!payload) {
@@ -45,7 +47,7 @@ export const friends = new Elysia({ prefix: '/friends' })
                     message: 'You\'ve already sent an invitation to this friend'
                 })
             }
-            await FriendsService.addFriend(user.id,nickname);
+            await FriendsService.addFriend(user.id,friendID);
             return status(200, {
                 success: true,
                 message: 'Friend request sent successfully.'
@@ -76,9 +78,28 @@ export const friends = new Elysia({ prefix: '/friends' })
 
     .get('/', async ({user}) => {
         const friend = await FriendsService.getAllFriend(user.id);
+        console.log(friend)
         return status(200, {
             success: true,
-            message: 'Friend request sent successfully.'
+            message: 'Get friends successfully.',
+            data: friend
+        })
+
+
+    }, {
+        response: {
+            201: friendsModel.responseBody,
+        }
+    })
+
+
+    .get('/requests', async ({user}) => {
+        const friend = await FriendsService.getAllRequests(user.id);
+        console.log(friend)
+        return status(200, {
+            success: true,
+            message: 'Get requests successfully.',
+            data: friend
         })
 
 

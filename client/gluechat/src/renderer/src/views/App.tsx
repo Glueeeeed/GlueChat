@@ -52,6 +52,7 @@ export function App() {
           </div>
         ) : (
           <FriendsList
+            authToken={authToken}
             addFriendOption={addFriendOption}
             setAddFriendOption={setAddFriendOption}
             onSelectFriend={setSelectedFriend}
@@ -69,12 +70,12 @@ export function App() {
           <div className={`flex-1 flex ${addFriendOption ? "items-start" : "items-center justify-center"} `}>
             {addFriendOption ? (
               <div className="flex h-screen w-full justify-between">
-                <div className="flex h-full flex-col max-w-[65%] ">
+                <div className="flex h-full flex-col w-full max-w-[35%]">
                   <AddFriend authToken={authToken} />
                   <SentRequests />
                 </div>
-                <div className={"mt-5 h-full w-full max-w-[53%]"}>
-                  <FriendsRequests/>
+                <div className={"mt-5 h-full w-full max-lg:w-[75%]"}>
+                  <FriendsRequests authToken={authToken}/>
                 </div>
 
               </div>

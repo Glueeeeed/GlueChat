@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState,useEffect } from 'react'
 import { FaSearch, FaUserCircle } from 'react-icons/fa'
+import { loadFriend } from '@renderer/assets/friends'
 
 interface Friend {
   id: string
@@ -7,24 +8,35 @@ interface Friend {
   status: 'online' | 'offline'
 }
 
-const MOCK_FRIENDS: Friend[] = [
-  { id: '1', nickname: 'Alice', status: 'online' },
-  { id: '2', nickname: 'Bob', status: 'offline' },
-  { id: '3', nickname: 'Charlie', status: 'online' },
-  { id: '4', nickname: 'David', status: 'offline' },
-  { id: '5', nickname: 'Eve', status: 'online' }
-]
 
 interface FriendsListProps {
+  authToken: string | null
   onSelectFriend?: (friend: Friend) => void
   selectedFriendId?: string
   addFriendOption: boolean
   setAddFriendOption: (newFriend: boolean) => void
 }
 
-export function FriendsList({ onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption }: FriendsListProps): React.JSX.Element {
+
+export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption }: FriendsListProps): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'online' | 'null'>('all')
+  const [friends, setFriends] = useState<Friend[]>([])
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      if (authToken) {
+        try {
+          const data = await loadFriend(authToken);
+          setFriends(data as Friend[]);
+        } catch (error) {
+          console.error("Failed to load friends", error);
+        }
+      }
+    };
+    fetchFriends();
+  }, [authToken]);
+
 
   const setAddFriend = (): void => {
     setAddFriendOption(!addFriendOption)
@@ -33,7 +45,7 @@ export function FriendsList({ onSelectFriend, selectedFriendId, setAddFriendOpti
 
   let filteredFriends: Friend[] = []
   if (!addFriendOption) {
-    filteredFriends = MOCK_FRIENDS.filter((friend) => {
+    filteredFriends = friends.filter((friend) => {
       const matchesSearch = friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesFilter = filter === 'all' || friend.status === 'online'
       return matchesSearch && matchesFilter

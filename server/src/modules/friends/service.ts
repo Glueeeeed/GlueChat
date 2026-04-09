@@ -21,12 +21,22 @@ export abstract class FriendsService {
 
     static async addFriend(userID: string, friendID: string): Promise<void> {
         try {
-            await prisma.friendship.create({
-                data: {
+            await prisma.friendship.upsert({
+                where: {
+                    senderId_receiverId: {
+                        senderId: userID,
+                        receiverId: friendID
+                    }
+                },
+                update: {
+                    status: 'PENDING'
+                },
+                create: {
                     senderId: userID,
                     receiverId: friendID,
+                    status: 'PENDING'
                 }
-            })
+            });
         } catch (e: any) {
             throw new Error(e);
         }

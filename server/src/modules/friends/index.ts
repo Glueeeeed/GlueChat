@@ -16,7 +16,6 @@ export const friends = new Elysia({ prefix: '/friends' })
             set.status = 401
             throw new Error('Unauthorized: No token provided')
         }
-        console.log(bearer)
 
         const payload = await jwt.verify(bearer)
         if (!payload) {
@@ -31,9 +30,9 @@ export const friends = new Elysia({ prefix: '/friends' })
     .post('/add-friend', async ({user,body}) => {
         try {
             const {nickname}  = body;
-            console.log(nickname)
             const friendID : string = await  FriendsService.findFriend(nickname);
             const areFriends : boolean = await FriendsService.checkIfTheyAreFriends(user.id,friendID);
+            const isRejected : boolean = await FriendsService.checkIfFriendRequestRejected(user.id,friendID);
             const requestExists : boolean = await FriendsService.checkIfFriendRequestExists(user.id,friendID );
             if (areFriends) {
                 return status(409, {
@@ -41,6 +40,11 @@ export const friends = new Elysia({ prefix: '/friends' })
                     message: 'You are already a friend with this user!'
                 })
             }
+
+            if (isRejected) {
+                throw new NotFoundError("User not found.");
+            }
+
             if (requestExists) {
                 return status(409, {
                     success: false,
@@ -77,13 +81,21 @@ export const friends = new Elysia({ prefix: '/friends' })
 
 
     .get('/', async ({user}) => {
-        const friend = await FriendsService.getAllFriend(user.id);
-        console.log(friend)
-        return status(200, {
-            success: true,
-            message: 'Get friends successfully.',
-            data: friend
-        })
+       try {
+           const friend = await FriendsService.getAllFriend(user.id);
+           return status(200, {
+               success: true,
+               message: 'Get friends successfully.',
+               data: friend
+           })
+       } catch (e) {
+           console.error(e);
+           return status(500, {
+               success: false,
+               message: "Something went wrong"
+           })
+       }
+
 
 
     }, {
@@ -94,18 +106,53 @@ export const friends = new Elysia({ prefix: '/friends' })
 
 
     .get('/requests', async ({user}) => {
-        const friend = await FriendsService.getAllRequests(user.id);
-        console.log(friend)
-        return status(200, {
-            success: true,
-            message: 'Get requests successfully.',
-            data: friend
-        })
-
-
+        try {
+            const friend = await FriendsService.getAllRequests(user.id);
+            return status(200, {
+                success: true,
+                message: 'Get requests successfully.',
+                data: friend
+            })
+        } catch (e) {
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
     }, {
         response: {
             201: friendsModel.responseBody,
         }
     })
+
+    .post('/requests', async ({user,body}) => {
+        try {
+            const {requestID, accept} = body;
+            await FriendsService.manageRequest(user.id, requestID, accept);
+            return status(200, {
+                success: true,
+            })
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                return status(e.statusCode, {
+                    success: false,
+                    message: e.message
+                })
+            }
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
+    }, {
+        body: friendsModel.manageRequestBody,
+        response: {
+            201: friendsModel.responseBody,
+        }
+    })
+
+
+
 

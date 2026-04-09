@@ -1,6 +1,6 @@
 import {FaUserCircle, FaCheck, FaTimes } from "react-icons/fa";
 import {useEffect, useState} from "react";
-import {loadRequests} from "@renderer/assets/friends";
+import {loadRequests, request} from "@renderer/assets/friends";
 
 
 interface Friend {
@@ -17,8 +17,9 @@ interface friendsRequestsProps {
 
 
 export function FriendsRequests({authToken} : friendsRequestsProps) {
-
   const [requests, setRequets] = useState<Friend[]>([])
+  const [error, setError] = useState("");
+
 
 
   useEffect(() => {
@@ -28,12 +29,24 @@ export function FriendsRequests({authToken} : friendsRequestsProps) {
           const data = await loadRequests(authToken);
           setRequets(data as Friend[]);
         } catch (error) {
-          console.error("Failed to load friends", error);
+          console.error("Failed to load friends");
         }
       }
     };
     fetchFriendsRequests();
   }, [authToken]);
+
+  async function manageRequest(requestID: string, accepted: boolean, authToken: string | null) {
+    if (!authToken) return;
+    setError("");
+    try {
+      await request(requestID, accepted, authToken);
+      setRequets((prev) => prev.filter((r) => r.id !== requestID));
+    } catch (e: any) {
+      setError(e?.message || "Failed to manage request");
+      setTimeout(() => setError(""), 5000);
+    }
+  }
 
   return (
     <>
@@ -66,13 +79,18 @@ export function FriendsRequests({authToken} : friendsRequestsProps) {
               </div>
 
               <div className="flex gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="mt-3 text-center">
+                  <p className={"text-red-400 text-sm font-bold"}>{error}</p>
+                </div>
                 <button
+                  onClick={() => manageRequest(friend.id, true, authToken)}
                   className="p-2  bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-lg transition-all duration-200"
                   title="Accept"
                 >
                   <FaCheck size={14} />
                 </button>
                 <button
+                  onClick={() => manageRequest(friend.id, false, authToken)}
                   className="p-2  bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all duration-200"
                   title="Decline"
                 >

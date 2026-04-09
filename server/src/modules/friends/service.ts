@@ -32,6 +32,21 @@ export abstract class FriendsService {
         }
     }
 
+    static async checkIfFriendRequestRejected(userID: string, friendID: string): Promise<boolean> {
+        const request = await prisma.friendship.findFirst({
+            where: {
+                OR: [
+                    {senderId: userID, receiverId: friendID},
+                ],
+                status: 'REJECTED'
+            },
+        });
+        if (!request) {
+            return false;
+        }
+        return true;
+    }
+
     static async checkIfFriendRequestExists(userID: string, friendID: string): Promise<boolean> {
         const request = await prisma.friendship.findFirst({
             where: {
@@ -131,6 +146,29 @@ export abstract class FriendsService {
             id: request.id,
             nickname: request.sender.nickname
         }));
+    }
+
+    static async manageRequest(userID: string, requestID : string, accepted : boolean): Promise<void> {
+        const receiver = await prisma.friendship.findFirst({
+            where: {
+                AND: {
+                    receiverId: userID,
+                    id: requestID
+                }
+            }
+        })
+        if (!receiver) {
+            throw new NotFoundError("You can't manage this request");
+        }
+        await prisma.friendship.update({
+            where: {
+                id: requestID
+            },
+            data: {
+                status: accepted ? "ACCEPTED" : "REJECTED",
+            },
+        });
+
     }
 
 }

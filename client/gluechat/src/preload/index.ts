@@ -23,7 +23,7 @@ if (process.contextIsolated) {
 
 
 contextBridge.exposeInMainWorld("auth", {
-  getRefreshToken: () => ipcRenderer.invoke("get-refresh-token"),
-  setRefreshToken: (t) => ipcRenderer.invoke("set-refresh-token", t),
-  deleteRefreshToken: () => ipcRenderer.invoke("delete-refresh-token"),
+  getRefreshToken: (accountName: string) => ipcRenderer.invoke("get-refresh-token", accountName),
+  setRefreshToken: (accountName: string, token: string) => ipcRenderer.invoke("set-refresh-token", accountName, token),
+  deleteRefreshToken: (accountName: string) => ipcRenderer.invoke("delete-refresh-token", accountName),
 });

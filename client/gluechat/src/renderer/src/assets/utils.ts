@@ -27,7 +27,13 @@ export function validatePassword (password : string) : void {
 }
 
 export async function initAuthToken(): Promise<string> {
-  const refreshToken = await window.auth.getRefreshToken();
+  const nickname = localStorage.getItem("nickname");
+
+  if (!nickname) {
+    throw new Error('Nickname not found in local storage.');
+  }
+
+  const refreshToken = await window.auth.getRefreshToken(nickname);
 
   if (!refreshToken) {
     throw new Error('Refresh token not found.');
@@ -49,12 +55,12 @@ export async function initAuthToken(): Promise<string> {
   const json = await response.json();
 
   if (response.status === 200) {
-    await window.auth.deleteRefreshToken();
-    await window.auth.setRefreshToken(json.refreshToken);
+    await window.auth.deleteRefreshToken(nickname);
+    await window.auth.setRefreshToken(nickname, json.refreshToken);
     return json.authToken;
   }
 
-  await window.auth.deleteRefreshToken();
+  await window.auth.deleteRefreshToken(nickname);
   throw new Error('Refresh token is not valid');
 }
 

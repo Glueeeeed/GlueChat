@@ -21,6 +21,14 @@ export async function login(nickname: string, password: string) : Promise<result
   if (!response.ok) {
     return {success: false, message: json.message };
   }
-  await window.auth.setRefreshToken(json.refreshToken);
+  await window.auth.setRefreshToken(nickname, json.refreshToken);
+  localStorage.setItem("nickname", nickname);
+
+  const savedAccounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+  if (!savedAccounts.includes(nickname)) {
+    savedAccounts.push(nickname);
+    localStorage.setItem("accounts", JSON.stringify(savedAccounts));
+  }
+
   return {success: true, message: "ok"};
 }

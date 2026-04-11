@@ -77,14 +77,14 @@ app.on('window-all-closed', () => {
 // code. You can also put them in separate files and require them here.
 
 
-ipcMain.handle("get-refresh-token", async () => {
-  return await keytar.getPassword("gluechat", "refreshToken");
+ipcMain.handle("get-refresh-token", async (_, accountName: string) => {
+  return await keytar.getPassword("gluechat", accountName);
 });
 
-ipcMain.handle("set-refresh-token", async (_, token) => {
-  return await keytar.setPassword("gluechat", "refreshToken", token);
+ipcMain.handle("set-refresh-token", async (_, accountName: string, token: string) => {
+  return await keytar.setPassword("gluechat", accountName, token);
 });
 
-ipcMain.handle("delete-refresh-token", async () => {
-  return await keytar.deletePassword("gluechat", "refreshToken");
+ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
+  return await keytar.deletePassword("gluechat", accountName);
 });

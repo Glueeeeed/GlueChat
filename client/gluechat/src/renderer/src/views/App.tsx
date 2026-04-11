@@ -33,7 +33,14 @@ export function App() {
           setAuthToken(token);
         }
       } catch (e) {
-        if (isMounted) navigate("/login");
+        if (isMounted) {
+          const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+          if (accounts.length > 0) {
+            navigate("/select-account");
+          } else {
+            navigate("/login");
+          }
+        }
       }
     };
 

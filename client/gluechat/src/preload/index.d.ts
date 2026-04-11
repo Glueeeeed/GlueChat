@@ -5,9 +5,9 @@ declare global {
     electron: ElectronAPI
     api: unknown
     auth: {
-      getRefreshToken: () => Promise<string | null>;
-      setRefreshToken: (token: string) => Promise<void>;
-      deleteRefreshToken: () => Promise<void>;
+      getRefreshToken: (accountName: string) => Promise<string | null>;
+      setRefreshToken: (accountName: string, token: string) => Promise<void>;
+      deleteRefreshToken: (accountName: string) => Promise<void>;
     };
   }
 }

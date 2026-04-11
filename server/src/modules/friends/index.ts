@@ -31,6 +31,12 @@ export const friends = new Elysia({ prefix: '/friends' })
         try {
             const {nickname}  = body;
             const friendID : string = await  FriendsService.findFriend(nickname);
+            if (friendID === user.id) {
+                return  status(400, {
+                    success: false,
+                    message: "You can't send friend request to yourself"
+                })
+            }
             const areFriends : boolean = await FriendsService.checkIfTheyAreFriends(user.id,friendID);
             const isRejected : boolean = await FriendsService.checkIfFriendRequestRejected(user.id,friendID);
             const requestExists : boolean = await FriendsService.checkIfFriendRequestExists(user.id,friendID );
@@ -130,7 +136,9 @@ export const friends = new Elysia({ prefix: '/friends' })
         try {
             const {requestID, accept} = body;
             await FriendsService.manageRequest(user.id, requestID, accept);
-            await FriendsService.createRoom(user.id,requestID)
+            if (accept) {
+                await FriendsService.createRoom(user.id,requestID)
+            }
             return status(200, {
                 success: true,
             })

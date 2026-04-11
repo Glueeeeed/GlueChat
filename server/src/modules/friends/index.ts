@@ -130,6 +130,7 @@ export const friends = new Elysia({ prefix: '/friends' })
         try {
             const {requestID, accept} = body;
             await FriendsService.manageRequest(user.id, requestID, accept);
+            await FriendsService.createRoom(user.id,requestID)
             return status(200, {
                 success: true,
             })

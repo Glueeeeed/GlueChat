@@ -181,4 +181,25 @@ export abstract class FriendsService {
 
     }
 
+
+    static async createRoom(targetID: string,requestID : string): Promise<void> {
+        const data = await prisma.friendship.findFirst({
+            where: {
+                id: requestID,
+            },
+            select: {
+                senderId: true
+            }
+        })
+        if (!data) {
+            throw new NotFoundError("You can't manage this request");
+        }
+        await prisma.privateRoom.create({
+            data: {
+                userId: data.senderId as string,
+                userId2: targetID
+            }
+        })
+    }
+
 }

@@ -4,6 +4,7 @@ interface result {
 }
 
 export async function register(nickname: string, password: string) : Promise<result> {
+  const publicKey = await window.e2ee.generatePairKeys(nickname);
   const response = await fetch(`http://localhost:3000/api/auth/register`, {
     method: 'POST',
     headers: {
@@ -13,6 +14,7 @@ export async function register(nickname: string, password: string) : Promise<res
     body: JSON.stringify({
       nickname: nickname,
       password: password,
+      publicKey: publicKey,
     })
   })
 

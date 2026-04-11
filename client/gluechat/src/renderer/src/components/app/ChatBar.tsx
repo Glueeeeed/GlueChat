@@ -1,4 +1,4 @@
-import { FaUsers, FaSignOutAlt, FaUserFriends } from 'react-icons/fa';
+import { FaUsers, FaSignOutAlt } from 'react-icons/fa';
 import { BiSolidMessageSquareDetail } from "react-icons/bi";
 import { Tab } from "../../views/App";
 import { useNavigate } from 'react-router-dom';
@@ -52,7 +52,7 @@ export function ChatBar({ activeTab, setActiveTab }: ChatBarProps) {
         <button
           onClick={handleLogout}
           className="p-3 rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-all duration-200 cursor-pointer group"
-          title="Przełącz konto / Wyloguj"
+          title="Switch Account / Logout"
         >
           <FaSignOutAlt
             size={24}

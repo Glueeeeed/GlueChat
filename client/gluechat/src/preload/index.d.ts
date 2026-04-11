@@ -9,5 +9,8 @@ declare global {
       setRefreshToken: (accountName: string, token: string) => Promise<void>;
       deleteRefreshToken: (accountName: string) => Promise<void>;
     };
+    e2ee: {
+      generatePairKeys: (accountName: string) => Promise<string>;
+    }
   }
 }

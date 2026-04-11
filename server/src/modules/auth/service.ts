@@ -31,7 +31,7 @@ export abstract class AuthService {
 
 
 
-    static async registerUser(nickname: string , password: string): Promise<void> {
+    static async registerUser(nickname: string , password: string, publicKey : string): Promise<void> {
 
         const passwordHash = await Bun.password.hash(password);
 
@@ -39,7 +39,8 @@ export abstract class AuthService {
         await prisma.user.create({
             data: {
                 nickname: nickname,
-                password: passwordHash
+                password: passwordHash,
+                publicKey: publicKey
             }
         })
 

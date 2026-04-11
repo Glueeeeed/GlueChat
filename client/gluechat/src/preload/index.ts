@@ -27,3 +27,7 @@ contextBridge.exposeInMainWorld("auth", {
   setRefreshToken: (accountName: string, token: string) => ipcRenderer.invoke("set-refresh-token", accountName, token),
   deleteRefreshToken: (accountName: string) => ipcRenderer.invoke("delete-refresh-token", accountName),
 });
+
+contextBridge.exposeInMainWorld("e2ee", {
+  generatePairKeys: (accountName: string) => ipcRenderer.invoke("generate-xwing-pair-keys", accountName)
+})

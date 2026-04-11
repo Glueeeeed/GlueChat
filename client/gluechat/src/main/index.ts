@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import keytar from "keytar";
+import {CryptoService, KeyPair} from "./Services/CryptoService";
 
 function createWindow(): void {
   // Create the browser window.
@@ -88,3 +89,14 @@ ipcMain.handle("set-refresh-token", async (_, accountName: string, token: string
 ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
   return await keytar.deletePassword("gluechat", accountName);
 });
+
+ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) => {
+  const pairKey : KeyPair =  CryptoService.generateNewKeyPair();
+  const pubStr : string = Buffer.from(pairKey.publicKey).toString('base64');
+  const privStr : string = Buffer.from(pairKey.secretKey).toString('base64');
+  const privKeyID : string = accountName + '-' + "private-key";
+  const pubKeyID : string = accountName + '-' + "public-key";
+  await keytar.setPassword("gluechat", privKeyID, privStr);
+  await keytar.setPassword("gluechat", pubKeyID, pubStr);
+  return pubStr;
+})

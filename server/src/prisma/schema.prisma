@@ -13,6 +13,7 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  publicKey String @db.Text
 
   sentMessages       Message[]
   privateRoomsAsFirst  PrivateRoom[] @relation("PrivateRoomUser1")
@@ -45,7 +46,7 @@ model Message {
   id            String      @id @default(cuid())
   privateRoomId String
   senderId      String
-  content       String
+  content       String @db.LongText
   createdAt     DateTime    @default(now())
 
   privateRoom PrivateRoom @relation(fields: [privateRoomId], references: [id], onDelete: Cascade)

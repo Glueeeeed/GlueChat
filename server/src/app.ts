@@ -3,6 +3,7 @@ import { cors } from '@elysiajs/cors'
 
 
 import {test} from './modules/test'
+import {chats} from "./modules/chats";
 import {auth} from "./modules/auth";
 import {friends} from "./modules/friends";
 import {prisma} from "./lib/prisma";
@@ -15,6 +16,7 @@ const app = new Elysia({
     .use(test)
     .use(auth)
     .use(friends)
+    .use(chats)
 
 app.listen(3000)
 

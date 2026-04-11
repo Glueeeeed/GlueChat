@@ -1,5 +1,5 @@
 import React, { useState,useEffect } from 'react'
-import { FaSearch, FaUserCircle } from 'react-icons/fa'
+import { FaSearch } from 'react-icons/fa'
 import { loadFriend } from '@renderer/assets/friends'
 
 interface Friend {
@@ -54,7 +54,7 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
 
 
   return (
-    <div className="flex flex-col h-full w-80 bg-gray-900/40 border-r border-white/5 ">
+    <div className="flex flex-col h-full w-full">
       <div className="p-4 space-y-4">
         <h2 className="text-xl font-bold tracking-tight text-white uppercase">Friends</h2>
 
@@ -62,7 +62,7 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-violet-900 transition-colors" size={14} />
           <input
             type="text"
-            placeholder="Search friends..."
+            placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-gray-950/50 border border-white/5 text-sm text-white pl-10 pr-4 py-2 rounded-xl focus:ring-2 focus:ring-violet-500/30 outline-none transition-all placeholder-gray-600 shadow-inner"
@@ -114,7 +114,9 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
               }`}
             >
               <div className="relative">
-                <FaUserCircle size={40} className="text-gray-700 group-hover:text-gray-600 transition-colors" />
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
+                  {friend.nickname.substring(0, 2)}
+                </div>
                 <div
                   className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${
                     friend.status === 'online' ? 'bg-violet-500' : 'bg-gray-500'
@@ -142,6 +144,7 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
           )
         )}
       </div>
+
     </div>
   )
 }

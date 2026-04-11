@@ -36,6 +36,54 @@ Your private keys never leave your machine. GlueChat leverages **Keytar** to sto
 
 ---
 
+### 🖥️ Client Setup (Electron + React) 
+
+#### 1. Install Dependencies
+Navigate to the client directory and install the necessary packages:
+```bash
+cd client/gluechat
+npm install
+```
+
+#### 2. Run in Development Mode
+Start the Vite development server and launch the Electron window:
+```bash
+npm run dev
+```
+
+---
+
+
+### ⚙️ Backend Setup (Bun + Elysia)
+
+#### 1. Environment Variables
+Create a `.env` file in the `server` directory and configure your database connection string (required by Prisma) and any necessary secrets:
+```env
+DATABASE_URL="mysql://user:password@localhost:3306/gluechat"
+DATABASE_USER="username"
+DATABASE_PASSWORD="password"
+DATABASE_NAME="gluechat"
+DATABASE_HOST="localhost"
+DATABASE_PORT=3306
+JWT_SECRET="your_super_secret_key"
+```
+
+#### 2. Install Dependencies
+Use **Bun** to install the server-side packages:
+```bash
+cd server
+bun install
+```
+
+#### 3. Start the Server
+Run the server in watch mode for development:
+```bash
+bun run dev
+```
+
+
+---
+
 ### 🛠️ Prisma Setup Guide
 
 To prepare the database for GlueChat's encryption features (storing public keys and long encrypted blobs), follow these steps:

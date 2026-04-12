@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import {NotFoundError} from "../../utils/exceptions";
+import {InvalidCredentialsError, NotFoundError} from "../../utils/exceptions";
 
 
 export abstract class FriendsService {
@@ -163,21 +163,25 @@ export abstract class FriendsService {
             where: {
                 AND: {
                     receiverId: userID,
-                    id: requestID
+                    id: requestID,
+                    status: "PENDING"
                 }
             }
         })
         if (!receiver) {
-            throw new NotFoundError("You can't manage this request");
+            throw new NotFoundError("Request not found");
         }
-        await prisma.friendship.update({
+        const result = await prisma.friendship.update({
             where: {
-                id: requestID
+                id: requestID,
             },
             data: {
                 status: accepted ? "ACCEPTED" : "REJECTED",
             },
         });
+        if (!result) {
+            throw new NotFoundError("Request Not Found");
+        }
 
     }
 

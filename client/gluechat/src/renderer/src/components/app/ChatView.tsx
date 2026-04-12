@@ -11,11 +11,13 @@ interface Message {
 }
 
 interface ChatViewProps {
-  chatId: string;
+  chatID: string;
   chatName: string;
+  authKey: string;
+  chatPublicKey: string;
 }
 
-export function ChatView({ chatId, chatName }: ChatViewProps) {
+export function ChatView({  chatPublicKey, authKey, chatID, chatName }: ChatViewProps) {
   const messages: Message[] = [
     {
       id: "5",
@@ -34,7 +36,10 @@ export function ChatView({ chatId, chatName }: ChatViewProps) {
 ]
 
   const handleSendMessage = (message: string) => {
-    // Message handler
+    window.e2ee.initializeEncryptMessage(chatPublicKey,message,chatID).then(result  => {
+      console.log(result);
+    })
+
   };
 
   return (

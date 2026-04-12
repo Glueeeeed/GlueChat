@@ -27,6 +27,7 @@ export function App() {
   const [addFriendOption, setAddFriendOption] = useState<boolean>(false);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [selectedChatName, setSelectedChatName] = useState<string | null>(null);
+  const [selectedChatPublicKey, setSelectedChatPublicKey] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string>('User');
   const navigate = useNavigate();
 
@@ -67,7 +68,7 @@ export function App() {
       <div className="flex flex-col w-80 bg-gray-900/40 border-r border-white/5 backdrop-blur-sm h-full">
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chats' ? (
-            <ChatList selectedChat={selectedChat as string} setSelectedChatName={setSelectedChatName} setSelectedChat={setSelectedChat} authToken={authToken} />
+            <ChatList selectedChat={selectedChat as string} setSelectedPublicKey={setSelectedChatPublicKey}  setSelectedChatName={setSelectedChatName} setSelectedChat={setSelectedChat} authToken={authToken} />
           ) : (
             <FriendsList
               authToken={authToken}
@@ -99,7 +100,9 @@ export function App() {
         {activeTab === 'chats' ? (
           selectedChat ? (
             <ChatView
-              chatId={selectedChat}
+              chatPublicKey={selectedChatPublicKey as string}
+              authKey={authToken as string}
+              chatID={selectedChat}
               chatName={selectedChatName as string}
             />
           ) : (

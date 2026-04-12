@@ -100,3 +100,19 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) => {
   await keytar.setPassword("gluechat", pubKeyID, pubStr);
   return pubStr;
 })
+
+ipcMain.handle("initializeEncryptMessage", async (_, publicKey: string, content: string, roomID: string) => {
+  const publicKeyBytes = Buffer.from(publicKey, 'base64');
+  const data : any = CryptoService.initializeEncrypt(publicKeyBytes,content,roomID);
+  CryptoService.messageCounter++
+  return data
+})
+
+ipcMain.handle("decryptMessage", async (_, encryptedPackage: any, accountName: string) => {
+  const privKeyID : string = accountName + '-' + "private-key";
+  const privStr = await keytar.getPassword("gluechat", privKeyID);
+  if (!privStr) throw new Error("Private key not found");
+
+  const privateKey = Buffer.from(privStr, 'base64');
+  return await CryptoService.initializeDecrypt(encryptedPackage, privateKey);
+});

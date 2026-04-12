@@ -146,10 +146,9 @@ export const friends = new Elysia({ prefix: '/friends' })
             if (e instanceof NotFoundError) {
                 return status(e.statusCode, {
                     success: false,
-                    message: e.message
+                    message: "Request Not Found"
                 })
             }
-            console.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"

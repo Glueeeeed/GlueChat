@@ -3,9 +3,10 @@ import { Send } from "lucide-react";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
+
 }
 
-export function ChatInput({ onSendMessage }: ChatInputProps) {
+export function ChatInput({onSendMessage }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 

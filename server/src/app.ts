@@ -7,6 +7,7 @@ import {chats} from "./modules/chats";
 import {auth} from "./modules/auth";
 import {friends} from "./modules/friends";
 import {prisma} from "./lib/prisma";
+import {e2ee} from "./modules/e2ee";
 
 const app = new Elysia({
     name: 'glue-chat backend server',
@@ -17,6 +18,7 @@ const app = new Elysia({
     .use(auth)
     .use(friends)
     .use(chats)
+    .use(e2ee)
 
 app.listen(3000)
 

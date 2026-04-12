@@ -8,6 +8,7 @@ interface ChatInfo {
   status: "online" | "offline";
   unread: boolean;
   unreadCount: number;
+  publicKey: string;
 }
 
 
@@ -17,9 +18,10 @@ interface ChatProps {
   selectedChat: string;
   setSelectedChat: (selectedChat: string) => void;
   setSelectedChatName: (name: string) => void;
+  setSelectedPublicKey: (publicKey: string) => void;
 }
 
-export function ChatList({authToken, selectedChat, setSelectedChat, setSelectedChatName}: ChatProps) {
+export function ChatList({authToken, selectedChat, setSelectedChat, setSelectedChatName, setSelectedPublicKey}: ChatProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [chats, setChats] = useState<ChatInfo[]>([])
 
@@ -39,9 +41,10 @@ export function ChatList({authToken, selectedChat, setSelectedChat, setSelectedC
     fetchChats();
   }, [authToken]);
 
-  const setSelectedChatData = (selectedChat: string , selectedChatName) => {
+  const setSelectedChatData = (selectedChat: string , selectedChatName: string , publicKey : string) => {
     setSelectedChat(selectedChat);
     setSelectedChatName(selectedChatName);
+    setSelectedPublicKey(publicKey);
   }
 
   const filteredChats = chats.filter((chat) => {
@@ -73,7 +76,7 @@ export function ChatList({authToken, selectedChat, setSelectedChat, setSelectedC
           filteredChats.map((chat) => (
             <button
               key={chat.id}
-              onClick={() => setSelectedChatData(chat.id, chat.name) }
+              onClick={() => setSelectedChatData(chat.id, chat.name, chat.publicKey) }
               className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group mb-1 ${
                 selectedChat === chat.id
                   ? 'bg-violet-500/10 border border-violet-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)]'

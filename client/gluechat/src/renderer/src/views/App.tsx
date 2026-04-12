@@ -7,6 +7,7 @@ import {AddFriend} from "@renderer/components/friends/AddFriend";
 import {FriendsRequests} from "@renderer/components/friends/FriendsRequests";
 import {SentRequests} from "@renderer/components/friends/SentRequests";
 import {ChatList} from "@renderer/components/app/ChatList";
+import {ChatView} from "@renderer/components/app/ChatView";
 
 export type Tab = 'chats' | 'friends';
 
@@ -25,6 +26,7 @@ export function App() {
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [addFriendOption, setAddFriendOption] = useState<boolean>(false);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [selectedChatName, setSelectedChatName] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string>('User');
   const navigate = useNavigate();
 
@@ -65,7 +67,7 @@ export function App() {
       <div className="flex flex-col w-80 bg-gray-900/40 border-r border-white/5 backdrop-blur-sm h-full">
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chats' ? (
-            <ChatList selectedChat={selectedChat as string} setSelectedChat={setSelectedChat} authToken={authToken} />
+            <ChatList selectedChat={selectedChat as string} setSelectedChatName={setSelectedChatName} setSelectedChat={setSelectedChat} authToken={authToken} />
           ) : (
             <FriendsList
               authToken={authToken}
@@ -95,9 +97,16 @@ export function App() {
 
       <div className="flex-1 flex flex-col bg-gray-950/50">
         {activeTab === 'chats' ? (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-600 uppercase tracking-[0.3em] text-sm">Select a chat to start messaging</p>
-          </div>
+          selectedChat ? (
+            <ChatView
+              chatId={selectedChat}
+              chatName={selectedChatName as string}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-center opacity-40">
+              <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">Select a chat to start messaging</p>
+            </div>
+          )
         ) : (
           <div className={`flex-1 flex ${addFriendOption ? "items-start" : "items-center justify-center"} `}>
             {addFriendOption ? (

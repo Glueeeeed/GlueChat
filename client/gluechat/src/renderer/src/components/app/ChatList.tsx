@@ -16,9 +16,10 @@ interface ChatProps {
   authToken : string | null;
   selectedChat: string;
   setSelectedChat: (selectedChat: string) => void;
+  setSelectedChatName: (name: string) => void;
 }
 
-export function ChatList({authToken, selectedChat, setSelectedChat}: ChatProps) {
+export function ChatList({authToken, selectedChat, setSelectedChat, setSelectedChatName}: ChatProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [chats, setChats] = useState<ChatInfo[]>([])
 
@@ -37,6 +38,11 @@ export function ChatList({authToken, selectedChat, setSelectedChat}: ChatProps) 
     };
     fetchChats();
   }, [authToken]);
+
+  const setSelectedChatData = (selectedChat: string , selectedChatName) => {
+    setSelectedChat(selectedChat);
+    setSelectedChatName(selectedChatName);
+  }
 
   const filteredChats = chats.filter((chat) => {
     return chat.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -67,7 +73,7 @@ export function ChatList({authToken, selectedChat, setSelectedChat}: ChatProps) 
           filteredChats.map((chat) => (
             <button
               key={chat.id}
-              onClick={() => setSelectedChat(chat.id)}
+              onClick={() => setSelectedChatData(chat.id, chat.name) }
               className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group mb-1 ${
                 selectedChat === chat.id
                   ? 'bg-violet-500/10 border border-violet-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)]'

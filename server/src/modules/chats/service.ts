@@ -37,6 +37,7 @@ export abstract class ChatService {
                     unread: false,
                     unreadCount: 0,
                     publicKey: chat.user2.publicKey,
+                    senderID: userID,
                 };
             } else {
                 return {
@@ -46,6 +47,7 @@ export abstract class ChatService {
                     unread: false,
                     unreadCount: 0,
                     publicKey: chat.user1.publicKey,
+                    senderID: userID,
                 };
             }
         });

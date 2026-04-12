@@ -3,6 +3,7 @@ import { Info, MoreVertical } from "lucide-react";
 import {ChatMessage} from "@renderer/components/app/ChatMessage";
 import {useEffect, useRef, useState} from "react";
 
+
 interface Message {
   id: string;
   sender: string;
@@ -16,13 +17,17 @@ interface ChatViewProps {
   chatName: string;
   authKey: string;
   chatPublicKey: string;
+  senderID: string;
 }
 
-export function ChatView({  chatPublicKey, authKey, chatID, chatName }: ChatViewProps) {
+export function ChatView({senderID,  chatPublicKey, authKey, chatID, chatName }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
 
+
   useEffect(() => {
+
+
     const ws = new WebSocket("ws://localhost:3000/api/ws");
     socketRef.current = ws;
 
@@ -44,7 +49,7 @@ export function ChatView({  chatPublicKey, authKey, chatID, chatName }: ChatView
         if (decryptedText) {
           setMessages(prev => [...prev, {
             id: Math.random().toString(),
-            sender: "Other",
+            sender: chatName,
             content: decryptedText,
             timestamp: new Date().toLocaleTimeString(),
             isAuthor: false
@@ -60,7 +65,7 @@ export function ChatView({  chatPublicKey, authKey, chatID, chatName }: ChatView
 
 
   const handleSendMessage = async (message: string) => {
-    const result = await window.e2ee.initializeEncryptMessage(chatPublicKey, message, chatID);
+    const result = await window.e2ee.initializeEncryptMessage(chatPublicKey, message, chatID, senderID);
 
     if (result && socketRef.current?.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({

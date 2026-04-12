@@ -11,6 +11,8 @@ export const chatsModel = {
                 status: t.String(),
                 unread: t.Boolean(),
                 unreadCount: t.Number(),
+                publicKey: t.String(),
+                senderID: t.String(),
             })
         ),
     })

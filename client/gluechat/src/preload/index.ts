@@ -30,6 +30,6 @@ contextBridge.exposeInMainWorld("auth", {
 
 contextBridge.exposeInMainWorld("e2ee", {
   generatePairKeys: (accountName: string) => ipcRenderer.invoke("generate-xwing-pair-keys", accountName),
-  initializeEncryptMessage: (publicKey: string, content: string, roomID: string)=> ipcRenderer.invoke("initializeEncryptMessage", publicKey, content, roomID),
+  initializeEncryptMessage: (publicKey: string, content: string, roomID: string,senderID: string)=> ipcRenderer.invoke("initializeEncryptMessage", publicKey, content, roomID,senderID),
   decryptMessage: (encryptedPackage: any, accountName: string) => ipcRenderer.invoke("decryptMessage", encryptedPackage, accountName),
 })

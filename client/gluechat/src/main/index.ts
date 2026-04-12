@@ -101,9 +101,9 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) => {
   return pubStr;
 })
 
-ipcMain.handle("initializeEncryptMessage", async (_, publicKey: string, content: string, roomID: string) => {
+ipcMain.handle("initializeEncryptMessage", async (_, publicKey: string, content: string, roomID: string,senderID : string) => {
   const publicKeyBytes = Buffer.from(publicKey, 'base64');
-  const data : any = CryptoService.initializeEncrypt(publicKeyBytes,content,roomID);
+  const data : any = CryptoService.initializeEncrypt(publicKeyBytes,content,roomID,senderID);
   CryptoService.messageCounter++
   return data
 })

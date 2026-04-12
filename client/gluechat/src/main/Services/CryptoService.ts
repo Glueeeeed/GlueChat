@@ -31,6 +31,8 @@ interface EncryptedPackage {
 export abstract class CryptoService {
 
   static activeSession = new Map<string,Uint8Array<ArrayBufferLike>>
+  static sessionCounters = new Map<string, number>();
+  static lastSender = new Map<string, string>();
   static messageCounter : number = 0;
 
   static generateNewKeyPair() : KeyPair {
@@ -45,11 +47,18 @@ export abstract class CryptoService {
     return {nonce, cipherText};
   }
 
-  static initializeEncrypt(publicKey: Uint8Array,content: string, roomID: string) : EncryptedPackage {
-    if (!this.activeSession.has(roomID)) {
-      return this.prepareEncryptedPackage(publicKey,content, roomID, "123");
+  static initializeEncrypt(publicKey: Uint8Array,content: string, roomID: string, senderID : string) : EncryptedPackage {
+
+    const currentCounter = this.sessionCounters.get(roomID) || 0;
+    const previousSender = this.lastSender.get(roomID);
+    if (!this.activeSession.has(roomID) || currentCounter >= 10 || previousSender !== senderID) {
+      this.lastSender.set(roomID, senderID);
+      this.sessionCounters.set(roomID, 1);
+
+      return this.prepareEncryptedPackage(publicKey, content, roomID, senderID);
     } else {
-      return this.prepareEncryptedMessage(content, roomID, "123");
+      this.sessionCounters.set(roomID, currentCounter + 1);
+      return this.prepareEncryptedMessage(content, roomID, senderID);
     }
   }
 
@@ -102,6 +111,7 @@ export abstract class CryptoService {
       const capsuleBytes = Buffer.from(encryptedPackage.capsule, 'base64');
       sharedSecret = xwing.decapsulate(capsuleBytes, privateKey);
       this.activeSession.set(encryptedPackage.roomID, sharedSecret);
+      this.lastSender.set(encryptedPackage.roomID, encryptedPackage.senderID);
     }
 
     if (!sharedSecret) {

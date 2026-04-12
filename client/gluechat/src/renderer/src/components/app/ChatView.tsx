@@ -1,6 +1,7 @@
 import { ChatInput } from "./ChatInput";
 import { Info, MoreVertical } from "lucide-react";
 import {ChatMessage} from "@renderer/components/app/ChatMessage";
+import {useEffect, useRef, useState} from "react";
 
 interface Message {
   id: string;
@@ -18,28 +19,64 @@ interface ChatViewProps {
 }
 
 export function ChatView({  chatPublicKey, authKey, chatID, chatName }: ChatViewProps) {
-  const messages: Message[] = [
-    {
-      id: "5",
-      sender: "Glue",
-      content: "Example",
-      timestamp: "4:45 PM",
-      isAuthor: true,
-    },
-    {
-      id: "6",
-      sender: "Glue",
-      content: "Example",
-      timestamp: "4:46 PM",
-      isAuthor: false
+  const [messages, setMessages] = useState<Message[]>([]);
+  const socketRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:3000/api/ws");
+    socketRef.current = ws;
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        type: 'join-chat',
+        chatID: chatID,
+        payload: {}
+      }));
+    };
+
+    ws.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'receive-message') {
+        const currentNickname = localStorage.getItem('nickname') || 'User';
+        const decryptedText = await window.e2ee.decryptMessage(data.payload, currentNickname);
+
+        if (decryptedText) {
+          setMessages(prev => [...prev, {
+            id: Math.random().toString(),
+            sender: "Other",
+            content: decryptedText,
+            timestamp: new Date().toLocaleTimeString(),
+            isAuthor: false
+          }]);
+        }
+      }
+    };
+
+    return () => ws.close();
+  }, [chatID]);
+
+
+
+
+  const handleSendMessage = async (message: string) => {
+    const result = await window.e2ee.initializeEncryptMessage(chatPublicKey, message, chatID);
+
+    if (result && socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        type: 'send-message',
+        chatID: chatID,
+        payload: result
+      }));
+
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        sender: localStorage.getItem('nickname') || 'Me',
+        content: message,
+        timestamp: new Date().toLocaleTimeString(),
+        isAuthor: true
+      }]);
     }
-]
-
-  const handleSendMessage = (message: string) => {
-    window.e2ee.initializeEncryptMessage(chatPublicKey,message,chatID).then(result  => {
-      console.log(result);
-    })
-
   };
 
   return (

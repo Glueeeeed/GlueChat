@@ -31,7 +31,6 @@ export const chats = new Elysia({ prefix: '/chats' })
     .get('/', async ({user}) => {
         try {
             const chats =  await ChatService.getAllChats(user.id)
-            console.log(chats)
             return status(200, {
                 success: true,
                 message: "Get all chats",

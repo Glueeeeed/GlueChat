@@ -50,14 +50,19 @@ export abstract class CryptoService {
   static activeSession = new Map<string,SessionState>
   static sessionCounters = new Map<string, number>();
   static lastSender = new Map<string, string>();
+  static currentMessageKey : Uint8Array | null = null ;
   static messageCounter : number = 0;
 
   static generateNewKeyPair() : KeyPair {
     return xwing.keygen();
   }
 
-  private static mixKeys(newKey : Uint8Array, oldKey: Uint8Array, message : Uint8Array) : Uint8Array {
-    return hkdf(sha256,newKey,oldKey,message,32);
+  private static mixKeys(newKey: Uint8Array, oldKey: Uint8Array, message: Uint8Array): { nextChainKey: Uint8Array, messageKey: Uint8Array } {
+    const derived = hkdf(sha256, newKey, oldKey, message, 64);
+    return {
+      nextChainKey: derived.slice(0, 32),
+      messageKey: derived.slice(32, 64)
+    };
   }
 
   private static encryptData(content: string, key: Uint8Array<ArrayBufferLike>) : EncryptedData {
@@ -104,22 +109,20 @@ export abstract class CryptoService {
       console.log("using random generated salt");
     }
     const info = new TextEncoder().encode(roomID);
-    const newRootKey = this.mixKeys(networkSecret, oldRootKey, info);
+    const { nextChainKey, messageKey } = this.mixKeys(networkSecret, oldRootKey, info);
     const nextEphemeral = xwing.keygen();
 
     this.activeSession.set(roomID, {
-      rootKey: newRootKey,
+      rootKey: nextChainKey,
       alicePrivateKey: nextEphemeral.secretKey,
       bobPublicKey:  pubKey,
     });
 
-    const encrypted = this.encryptData(content, newRootKey);
+    const encrypted = this.encryptData(content, messageKey);
 
-    console.log("actually root key:", Buffer.from(newRootKey).toString("base64"));
-    console.log("actually public key:", Buffer.from(nextEphemeral.publicKey).toString("base64") );
 
     const dataToSave : DataToSave = {
-      rootKey: Buffer.from(newRootKey).toString("base64"),
+      rootKey: Buffer.from(nextChainKey).toString("base64"),
       alicePrivateKey: Buffer.from(nextEphemeral.publicKey).toString("base64"),
       bobPublicKey: Buffer.from(pubKey).toString("base64"),
     }
@@ -147,12 +150,12 @@ export abstract class CryptoService {
     const info = new TextEncoder().encode(roomID);
 
     const salt = randomBytes(32);
-    const nextRootKey = this.mixKeys(session.rootKey, salt, info);
-    session.rootKey = nextRootKey;
+    const { nextChainKey, messageKey } = this.mixKeys(session.rootKey, salt, info);
+    session.rootKey = nextChainKey;
     console.log("new key" + Buffer.from(session.rootKey).toString("base64") );
     this.activeSession.set(roomID, session);
 
-    const encrypted = this.encryptData(content, session.rootKey);
+    const encrypted = this.encryptData(content, messageKey);
 
     const dataToSave: DataToSave = {
       rootKey: Buffer.from(session.rootKey).toString("base64"),
@@ -189,21 +192,19 @@ export abstract class CryptoService {
       const alicePrivateKey = existingSession ? existingSession.alicePrivateKey : identityPrivKey;
 
       const networkSecret = xwing.decapsulate(capsuleBytes, alicePrivateKey);
-      console.log("Get capsule" + networkSecret);
 
       const oldRootKey : Uint8Array = existingSession ? existingSession.rootKey : Buffer.from(pkg.salt as string ,'base64')
 
       if (!oldRootKey) throw new Error("No salt or old root key available");
 
       const info = new TextEncoder().encode(pkg.roomID);
-      const newRootKey = this.mixKeys(networkSecret, oldRootKey as Uint8Array, info);
-
-      console.log("new root key", Buffer.from(newRootKey).toString("base64"));
+      const { nextChainKey, messageKey } = this.mixKeys(networkSecret, oldRootKey as Uint8Array, info);
+      this.currentMessageKey = messageKey;
 
       const bobPublicKey = pkg.ephemeralPubKey ? Buffer.from(pkg.ephemeralPubKey, 'base64') : new Uint8Array();
 
       const sessionData = {
-        rootKey: newRootKey,
+        rootKey: nextChainKey,
         alicePrivateKey: existingSession ? existingSession.alicePrivateKey : identityPrivKey,
         bobPublicKey: bobPublicKey,
       };
@@ -215,9 +216,10 @@ export abstract class CryptoService {
       const info = new TextEncoder().encode(pkg.roomID);
       const salt = Buffer.from(pkg.salt as string ,'base64');
 
-      const nextRootKey = this.mixKeys(existingSession.rootKey, salt, info);
-      console.log("new root key", Buffer.from(nextRootKey).toString("base64"));
-      existingSession.rootKey = nextRootKey;
+      const { nextChainKey, messageKey } = this.mixKeys(existingSession.rootKey, salt, info);
+      this.currentMessageKey = messageKey;
+      existingSession.rootKey = nextChainKey;
+
       this.activeSession.set(pkg.roomID, existingSession);
     } else {
       console.error("Received message without capsule, but no active session found.");
@@ -239,7 +241,9 @@ export abstract class CryptoService {
     };
     await keytar.setPassword('gluechat', pkg.roomID, JSON.stringify(dataToSave));
 
-    return this.decryptData(cipherText, nonce, existingSession.rootKey as Uint8Array);
+    const data =  this.decryptData(cipherText, nonce, this.currentMessageKey as Uint8Array);
+    this.currentMessageKey = null;
+    return data;
   }
 
 

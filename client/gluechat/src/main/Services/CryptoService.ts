@@ -11,10 +11,6 @@ export interface KeyPair {
   publicKey: Uint8Array<ArrayBufferLike>
 }
 
-interface xwingEncapsulation {
-  cipherText: Uint8Array<ArrayBufferLike>,
-  sharedSecret: Uint8Array<ArrayBufferLike>
-}
 
 interface EncryptedData {
   nonce: Uint8Array<ArrayBufferLike>,
@@ -53,6 +49,28 @@ export abstract class CryptoService {
   static currentMessageKey : Uint8Array | null = null ;
   static messageCounter : number = 0;
 
+
+  // soon
+
+  // private static async loadSession(roomID: string): Promise<boolean> {
+  //   const savedData = await keytar.getPassword('gluechat', roomID);
+  //   if (savedData) {
+  //     try {
+  //       const data: DataToSave = JSON.parse(savedData);
+  //       this.activeSession.set(roomID, {
+  //         rootKey: Buffer.from(data.rootKey, 'base64'),
+  //         alicePrivateKey: Buffer.from(data.alicePrivateKey, 'base64'),
+  //         bobPublicKey: Buffer.from(data.bobPublicKey, 'base64'),
+  //       });
+  //       return true;
+  //     } catch (e) {
+  //       console.error("Failed to parse session data from keytar", e);
+  //     }
+  //   }
+  //   return false;
+  // }
+
+
   static generateNewKeyPair() : KeyPair {
     return xwing.keygen();
   }
@@ -80,12 +98,12 @@ export abstract class CryptoService {
 
 
     if (!this.activeSession.has(roomID) || currentCounter >= 10 || previousSender !== senderID) {
+      // await this.loadSession(roomID); // soon
       this.lastSender.set(roomID, senderID);
       this.sessionCounters.set(roomID, 1);
 
       return await this.prepareEncryptedPackage(publicKey, content, roomID, senderID);
     } else {
-      console.log("Current session exits")
       this.sessionCounters.set(roomID, currentCounter + 1);
 
       return await this.prepareEncryptedMessage(content, roomID, senderID);
@@ -99,7 +117,6 @@ export abstract class CryptoService {
 
     const pubKey = existingSession ? existingSession.bobPublicKey : publicKey;
     const { cipherText, sharedSecret: networkSecret } = xwing.encapsulate(pubKey);
-    console.log("Created capsule" + networkSecret);
 
     // If old root Key doesn't exist, we use random generated salt
     const salt : Uint8Array = randomBytes(32);
@@ -184,7 +201,11 @@ export abstract class CryptoService {
   }
 
   static async initializeDecrypt(pkg: EncryptedPackage, identityPrivKey: Uint8Array): Promise<string | null> {
-    let existingSession = this.activeSession.get(pkg.roomID);
+    // if (!this.activeSession.has(pkg.roomID)) {
+    //   await this.loadSession(pkg.roomID);   // soon
+    // }
+    let existingSession : any = this.activeSession.get(pkg.roomID);
+
 
     if (pkg.capsule) {
       const capsuleBytes = Buffer.from(pkg.capsule, 'base64');
@@ -229,10 +250,10 @@ export abstract class CryptoService {
     if (!pkg.content || !pkg.nonce) return null;
 
     existingSession = this.activeSession.get(pkg.roomID);
-    console.log(existingSession);
 
     const cipherText = Buffer.from(pkg.content, 'base64');
     const nonce = Buffer.from(pkg.nonce, 'base64');
+
 
     const dataToSave: DataToSave = {
       rootKey: Buffer.from(existingSession.rootKey).toString("base64"),

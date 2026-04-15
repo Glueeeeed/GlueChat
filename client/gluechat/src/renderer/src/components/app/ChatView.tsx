@@ -10,6 +10,7 @@ interface Message {
   content: string;
   timestamp: string;
   isAuthor: boolean;
+  isSeen: boolean;
 }
 
 interface ChatViewProps {
@@ -23,6 +24,7 @@ interface ChatViewProps {
 export function ChatView({senderID,  chatPublicKey, authKey, chatID, chatName }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
+  const [isSeen, setIsSeen] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -37,23 +39,40 @@ export function ChatView({senderID,  chatPublicKey, authKey, chatID, chatName }:
         chatID: chatID,
         payload: {}
       }));
+
+      ws.send(JSON.stringify({
+        type: 'mark-as-read',
+        chatID: chatID,
+        payload: {}
+      }));
     };
 
-    ws.onmessage = async (event) => {
+    ws.onmessage = async (event ) => {
       const data = JSON.parse(event.data);
+
+      if (data.type === 'messages-seen') {
+        setMessages((prev) => prev.map((msg) => (msg.isAuthor ? { ...msg, isSeen: true } : msg)))
+      }
 
       if (data.type === 'receive-message') {
         const currentNickname = localStorage.getItem('nickname') || 'User';
         const decryptedText = await window.e2ee.decryptMessage(data.payload, currentNickname);
-
+        console.log(data.messageID);
         if (decryptedText) {
           setMessages(prev => [...prev, {
-            id: Math.random().toString(),
+            id: data.messageID,
             sender: chatName,
             content: decryptedText,
             timestamp: new Date().toLocaleTimeString(),
-            isAuthor: false
+            isAuthor: false,
+            isSeen: false
           }]);
+
+          ws.send(JSON.stringify({
+            type: 'mark-as-read',
+            chatID: chatID,
+            payload: {}
+          }));
         }
       }
     };
@@ -79,7 +98,8 @@ export function ChatView({senderID,  chatPublicKey, authKey, chatID, chatName }:
         sender: localStorage.getItem('nickname') || 'Me',
         content: message,
         timestamp: new Date().toLocaleTimeString(),
-        isAuthor: true
+        isAuthor: true,
+        isSeen: false
       }]);
     }
   };
@@ -116,7 +136,7 @@ export function ChatView({senderID,  chatPublicKey, authKey, chatID, chatName }:
         ) : (
           <div className="flex flex-col">
             {messages.map((m) => (
-               <ChatMessage key={m.id} text={m.content} isAuthor={m.isAuthor} timestamp={m.timestamp} nickname={m.sender} />
+               <ChatMessage isSeen={m.isSeen} key={m.id} text={m.content} isAuthor={m.isAuthor} timestamp={m.timestamp} nickname={m.sender} />
             ))}
           </div>
         )}

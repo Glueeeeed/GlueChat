@@ -8,6 +8,10 @@ export const e2eeModel = {
         publicKey: t.Optional(
             t.String(),
         )
+    }),
+
+    request: t.Object({
+        messageID: t.String(),
     })
 
 }

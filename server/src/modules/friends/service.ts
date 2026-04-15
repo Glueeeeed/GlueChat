@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import {InvalidCredentialsError, NotFoundError} from "../../utils/exceptions";
+import {NotFoundError} from "../../utils/exceptions";
 
 
 export abstract class FriendsService {

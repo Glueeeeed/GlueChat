@@ -1,10 +1,14 @@
+import { Check, CheckCheck } from 'lucide-react'
+
 interface ChatMessage {
-  text: string;
-  isAuthor: boolean;
-  timestamp: string;
-  nickname: string;
+  text: string
+  isAuthor: boolean
+  timestamp: string
+  nickname: string
+  isSeen?: boolean
 }
-export function ChatMessage({ text, isAuthor, timestamp, nickname }: ChatMessage) {
+
+export function ChatMessage({ isSeen, text, isAuthor, timestamp, nickname }: ChatMessage) {
   return (
     <div className={`flex gap-3 ${isAuthor ? 'flex-row-reverse' : 'flex-row'} mb-4 items-end`}>
       {!isAuthor && (
@@ -16,16 +20,31 @@ export function ChatMessage({ text, isAuthor, timestamp, nickname }: ChatMessage
         <div
           className={`px-4 py-2.5 text-sm font-medium rounded-2xl shadow-sm ${
             isAuthor
-              ? "bg-linear-to-br from-violet-600 to-indigo-600 text-white rounded-br-none"
-              : "bg-white/10 text-gray-100 border border-white/5 rounded-bl-none"
+              ? 'bg-linear-to-br from-violet-600 to-indigo-600 text-white rounded-br-none'
+              : 'bg-white/10 text-gray-100 border border-white/5 rounded-bl-none'
           }`}
         >
           {text}
         </div>
-        <span className={`text-[10px] text-gray-500 font-medium px-1 ${isAuthor ? 'text-right' : 'text-left'}`}>
-          {timestamp}
-        </span>
+
+        <div
+          className={`text-[10px] flex flex-row items-center gap-1 font-medium px-1 text-gray-500 ${
+            isAuthor ? 'justify-end' : 'justify-start'
+          }`}
+        >
+          <span>{timestamp}</span>
+
+          {isAuthor && (
+            <span className="flex items-center">
+              {isSeen ? (
+                <CheckCheck size={14} className="text-indigo-400" />
+              ) : (
+                <Check size={14} className="text-gray-500" />
+              )}
+            </span>
+          )}
+        </div>
       </div>
     </div>
-  );
+  )
 }

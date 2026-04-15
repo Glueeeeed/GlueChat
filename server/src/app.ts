@@ -1,4 +1,5 @@
 import { Elysia,t } from 'elysia'
+import {MessageHandler} from "./utils/messageHandler";
 import { cors } from '@elysiajs/cors'
 
 
@@ -8,6 +9,7 @@ import {auth} from "./modules/auth";
 import {friends} from "./modules/friends";
 import {prisma} from "./lib/prisma";
 import {e2ee} from "./modules/e2ee";
+
 
 const app = new Elysia({
     name: 'glue-chat backend server',
@@ -34,12 +36,33 @@ const app = new Elysia({
                 console.log(`User joined to room: ${data.chatID}`);
             }
 
+
+
             if (data.type === 'send-message') {
-                ws.publish(data.chatID, {
-                    type: 'receive-message',
-                    payload: data.payload
-                });
+                const id =  MessageHandler.sendMessage(data.chatID, data.payload).then(result => {
+                    ws.publish(data.chatID, {
+                        type: 'receive-message',
+                        payload: data.payload,
+                        messageID: result
+                    });
+                })
                 console.log(data.payload)
+            }
+
+            if (data.type === 'mark-as-read') {
+                prisma.message.updateMany({
+                    where: {
+                        privateRoomId: data.chatID,
+                        isSeen: false,
+                        // senderId: { not: data.payload.r }
+                    },
+                    data: { isSeen: true }
+                }).then(() => {
+                    ws.publish(data.chatID, {
+                        type: 'messages-seen',
+                        chatID: data.chatID
+                    });
+                });
             }
         },
         close(ws) {

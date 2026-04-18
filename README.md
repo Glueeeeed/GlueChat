@@ -13,7 +13,7 @@ We utilize the **X-Wing** hybrid Key Encapsulation Mechanism (KEM).
 - **Hybrid Approach:** It combines the classic **X25519** (Elliptic Curve) with **ML-KEM-768** (Kyber), a NIST-standardized post-quantum algorithm.
 - **Why it matters:** This protects against "Harvest Now, Decrypt Later" attacks, where encrypted data intercepted today could be decrypted by a powerful quantum computer in the future.
 
-#### 2. Double Ratchet Protocol (Upcoming)
+#### 2. Double Ratchet Protocol
 To provide the highest level of session security, we are integrating the **Double Ratchet** protocol (pioneered by Signal).
 - **Forward Secrecy:** Every message is encrypted with a unique, one-time key. If a key is ever compromised, only that single message is at risk—past conversations remain secure.
 - **Break-in Recovery:** The system automatically "heals" by generating new independent keys with every message exchange, preventing an attacker from eavesdropping on future messages even after a temporary breach.
@@ -97,28 +97,7 @@ bun add @prisma/client
 bunx prisma init
 ```
 
-#### 2. Define the Schema
-Ensure your `server/src/prisma/schema.prisma` includes the necessary fields for E2EE:
-
-```prisma
-// User model with Public Key support
-model User {
-  id        String   @id @default(cuid())
-  nickname  String   @unique
-  password  String
-  publicKey String   @db.Text // Required for E2EE exchange
-  // ... other fields
-}
-
-// Message model with LongText for encrypted payloads
-model Message {
-  id            String      @id @default(cuid())
-  content       String      @db.LongText // Encrypted strings are much longer
-  // ... relations
-}
-```
-
-#### 3. Database Migration
+#### 2. Database Migration
 Apply the changes to your database and regenerate the client:
 ```bash
 # Generate migrations and update database
@@ -127,24 +106,23 @@ bunx prisma migrate dev --name init_e2ee_schema
 # Generate Prisma Client
 bunx prisma generate
 ```
-
-#### 4. Usage in Code
-Access the prisma client in your services:
-```typescript
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
-
-// Example: Saving a user with their X-Wing Public Key
-await prisma.user.create({
-  data: {
-    nickname: "Alice",
-    password: hashedPassword,
-    publicKey: xwingPublicKeyBase64
-  }
-})
-```
-
 ---
 
+
+```markdown
 ### 📝 Project Status
-GlueChat is currently in **Alpha**. The foundations for hybrid key generation and secure local storage are implemented. Our next milestone is the full implementation of the Double Ratchet session management for real-time chats.
+GlueChat is currently in **Beta**. 
+
+**Completed Milestones:**
+- **Security Foundations:** Implemented hybrid key generation (X-Wing) and secure local storage using OS-native vaults.
+- **Advanced Encryption:** Full implementation of the **Double Ratchet** protocol, providing Perfect Forward Secrecy and break-in recovery for all conversations.
+- **Real-Time Messaging:** Secure message delivery system built on WebSockets with integrated end-to-end encryption (E2EE).
+- **Relationship Management:** Fully functional friend request system (send/accept/reject) and chat list management.
+- **Database Architecture:** Optimized Prisma schema with a `roomID` structure and automated message status tracking (`isSeen`).
+
+**Next Steps:**
+- Save decrypted messages to local history. 
+- Multi-device synchronization support.
+- Group chat functionality with shared ratchet trees.
+- Enhanced user profiles and notification history.
+```

@@ -109,7 +109,6 @@ bunx prisma generate
 ---
 
 
-```markdown
 ### 📝 Project Status
 GlueChat is currently in **Beta**. 
 
@@ -125,4 +124,3 @@ GlueChat is currently in **Beta**.
 - Multi-device synchronization support.
 - Group chat functionality with shared ratchet trees.
 - Enhanced user profiles and notification history.
-```

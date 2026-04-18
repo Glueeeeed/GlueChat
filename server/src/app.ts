@@ -52,7 +52,7 @@ const app = new Elysia({
             if (data.type === 'mark-as-read') {
                 prisma.message.updateMany({
                     where: {
-                        privateRoomId: data.chatID,
+                        roomID: data.chatID,
                         isSeen: false,
                         // senderId: { not: data.payload.r }
                     },

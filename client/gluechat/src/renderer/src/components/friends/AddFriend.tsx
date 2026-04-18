@@ -30,7 +30,7 @@ export function AddFriend({authToken}: AddFriendProps) {
 
   return (
     <>
-      <div className=" px-4 flex flex-col items-start justify-start  border-r border-white/15 h-[30%] text-sm text-gray-600 dark:text-gray-400 ">
+      <div className=" px-4 flex flex-col items-start justify-start  border-r border-white/15 h-full text-sm text-gray-600 dark:text-gray-400 ">
         <h2 className=" mt-10 text-xl font-bold tracking-tight text-white uppercase">Add Friend</h2>
         <p className="text-gray-500 text-sm ">You can add friends using their nickname</p>
         <div className={"flex flex-col items-start mt-3 gap-2 w-full "}>

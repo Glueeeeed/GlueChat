@@ -5,8 +5,7 @@ export  abstract class MessageHandler {
         console.log(messageData.messageNumber);
         const id = await prisma.message.create({
             data: {
-                numberMessage:  messageData.messageNumber,
-                privateRoomId: messageData.roomID,
+                roomID: messageData.roomID,
                 senderId: messageData.senderID,
                 capsule: messageData.capsule ? messageData.capsule : null,
                 ephemeralPubKey: messageData.ephemeralPubKey ? messageData.ephemeralPubKey : null,

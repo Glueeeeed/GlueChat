@@ -118,7 +118,6 @@ export function App() {
               <div className="flex h-screen w-full justify-between">
                 <div className="flex h-full flex-col w-full max-w-[35%]">
                   <AddFriend authToken={authToken} />
-                  <SentRequests />
                 </div>
                 <div className={"mt-5 h-full w-full max-lg:w-[75%]"}>
                   <FriendsRequests authToken={authToken}/>

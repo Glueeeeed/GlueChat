@@ -15,13 +15,14 @@ interface FriendsListProps {
   selectedFriendId?: string
   addFriendOption: boolean
   setAddFriendOption: (newFriend: boolean) => void
+  setFriends: (friends: Friend[]) => void
+  friends: Friend[]
 }
 
 
-export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption }: FriendsListProps): React.JSX.Element {
+export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption, setFriends, friends }: FriendsListProps): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'online' | 'null'>('all')
-  const [friends, setFriends] = useState<Friend[]>([])
 
   useEffect(() => {
     const fetchFriends = async () => {

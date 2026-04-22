@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import {NotFoundError} from "../../utils/exceptions";
+import {activeConnections} from "../../app";
 
 
 export abstract class FriendsService {
@@ -122,17 +123,18 @@ export abstract class FriendsService {
         });
 
         return data.map(friendship => {
+
             if (friendship.senderId === userID) {
                 return {
                     id: friendship.receiver.id,
                     nickname: friendship.receiver.nickname,
-                    status: 'offline'
+                    status: activeConnections.has(friendship.receiver.id) ? 'online' : 'offline',
                 };
             } else {
                 return {
                     id: friendship.sender.id,
                     nickname: friendship.sender.nickname,
-                    status: 'offline'
+                    status: activeConnections.has(friendship.sender.id) ? 'online' : 'offline'
                 };
             }
         });

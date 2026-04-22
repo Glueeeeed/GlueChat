@@ -60,7 +60,7 @@ export function FriendsRequests({authToken} : friendsRequestsProps) {
 
         {requests.length > 0 ? (
           requests.map((friend) => (
-            <button
+            <div
               key={friend.id}
               className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 group mb-1
               'hover:bg-white/10 hover:bg-gray-700/10 border border-b-white/5 border-transparent hover:border-white/5`}
@@ -99,7 +99,7 @@ export function FriendsRequests({authToken} : friendsRequestsProps) {
               </div>
 
 
-            </button>
+            </div>
 
           ))
         ) : (

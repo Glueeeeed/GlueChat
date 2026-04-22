@@ -9,7 +9,9 @@ import {auth} from "./modules/auth";
 import {friends} from "./modules/friends";
 import {prisma} from "./lib/prisma";
 import {e2ee} from "./modules/e2ee";
+import {FriendsService} from "./modules/friends/service";
 
+export const activeConnections = new Map<string, Set<any>>();
 
 const app = new Elysia({
     name: 'glue-chat backend server',
@@ -24,13 +26,38 @@ const app = new Elysia({
     .ws('/ws', {
         body: t.Object({
             type: t.String(),
-            chatID: t.String(),
+            chatID: t.Optional(
+                t.String(),
+            ),
             payload: t.Any()
         }),
-        open(ws) {
+        open() {
             console.log('User connected');
         },
-        message(ws, data) {
+        async message(ws : any, data) {
+
+
+            if (data.type === 'authenticate') {
+                ws.data.userID = data.payload.userID;
+                console.log("connected user" + ws.data.userID);
+                if (!activeConnections.has(ws.data.userID)) {
+                    activeConnections.set(ws.data.userID, new Set());
+                }
+                activeConnections.get(ws.data.userID)?.add(ws);
+
+                const friends = await FriendsService.getAllFriend(ws.data.userID);
+                friends.forEach(friend => {
+                    const friendConns = activeConnections.get(friend.id);
+                    if (friendConns) {
+                        friendConns.forEach(conn => conn.send({
+                            type: 'status-change',
+                            payload: {userID: ws.data.userID, status: 'online'},
+                        }))
+                    }
+                })
+
+            }
+
             if (data.type === 'join-chat') {
                 ws.subscribe(data.chatID);
                 console.log(`User joined to room: ${data.chatID}`);
@@ -65,8 +92,23 @@ const app = new Elysia({
                 });
             }
         },
-        close(ws) {
-            console.log('Client Disconnected');
+         async close(ws : any) {
+            if (ws.data.userID &&  activeConnections.has(ws.data.userID)) {
+                const conns = activeConnections.get(ws.data.userID);
+                conns?.delete(ws.data.userID);
+
+                const friends = await FriendsService.getAllFriend(ws.data.userID);
+                friends.forEach(friend => {
+                    const friendConns = activeConnections.get(friend.id);
+                    if (friendConns) {
+                        friendConns.forEach(conn => conn.send({
+                            type: 'status-change',
+                            payload: {userID: ws.data.userID, status: 'offline'},
+                        }))
+                    }
+                })
+                activeConnections.delete(ws.data.userID);
+            }
         }
     })
 

@@ -8,6 +8,7 @@ import {FriendsRequests} from "@renderer/components/friends/FriendsRequests";
 import {SentRequests} from "@renderer/components/friends/SentRequests";
 import {ChatList} from "@renderer/components/app/ChatList";
 import {ChatView} from "@renderer/components/app/ChatView";
+import { jwtDecode } from 'jwt-decode'
 
 export type Tab = 'chats' | 'friends';
 
@@ -21,46 +22,76 @@ interface Friend {
 
 
 export function App() {
-  const [authToken , setAuthToken] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('chats');
-  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
-  const [addFriendOption, setAddFriendOption] = useState<boolean>(false);
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const [selectedChatName, setSelectedChatName] = useState<string | null>(null);
-  const [selectedChatPublicKey, setSelectedChatPublicKey] = useState<string | null>(null);
-  const [nickname, setNickname] = useState<string>('User');
-  const [senderID, setSenderID] = useState<string | null>(null);
-  const navigate = useNavigate();
-
+  const [authToken, setAuthToken] = useState<string | null>(null)
+  const [friends, setFriends] = useState<Friend[]>([])
+  const [activeTab, setActiveTab] = useState<Tab>('chats')
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null)
+  const [addFriendOption, setAddFriendOption] = useState<boolean>(false)
+  const [selectedChat, setSelectedChat] = useState<string | null>(null)
+  const [selectedChatName, setSelectedChatName] = useState<string | null>(null)
+  const [selectedChatPublicKey, setSelectedChatPublicKey] = useState<string | null>(null)
+  const [nickname, setNickname] = useState<string>('User')
+  const [senderID, setSenderID] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    let isMounted = true;
-    const currentNickname = localStorage.getItem('nickname');
+    let isMounted = true
+    const currentNickname = localStorage.getItem('nickname')
     if (currentNickname && isMounted) {
-      setNickname(currentNickname);
+      setNickname(currentNickname)
     }
 
     const checkAuth = async () => {
       try {
-        const token = await initAuthToken();
+        const token = await initAuthToken()
         if (isMounted) {
-          setAuthToken(token);
+          setAuthToken(token)
         }
       } catch (e) {
         if (isMounted) {
-          const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+          const accounts = JSON.parse(localStorage.getItem('accounts') || '[]')
           if (accounts.length > 0) {
-            navigate("/select-account");
+            navigate('/select-account')
           } else {
-            navigate("/login");
+            navigate('/login')
           }
         }
       }
-    };
+    }
 
-    checkAuth();
-    return () => { isMounted = false; };
-  }, []);
+    checkAuth()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+
+  useEffect(() => {
+    if (authToken) {
+      const decodedToken : any = jwtDecode(authToken)
+      const ws = new WebSocket('ws://localhost:3000/api/ws')
+
+      ws.onopen = () => {
+        ws.send(
+          JSON.stringify({
+            type: 'authenticate',
+            payload: { userID: decodedToken.id }
+          })
+        )
+      }
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        if (data.type === 'status-change') {
+          setFriends((prev) =>
+            prev.map((f) =>
+              f.id === data.payload.userID ? { ...f, status: data.payload.status } : f
+            )
+          )
+        }
+      }
+    }
+  }, [authToken])
 
   return (
     <div className="flex h-screen w-full bg-gray-950 text-gray-100 overflow-hidden">
@@ -69,7 +100,14 @@ export function App() {
       <div className="flex flex-col w-80 bg-gray-900/40 border-r border-white/5 backdrop-blur-sm h-full">
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chats' ? (
-            <ChatList setSenderID={setSenderID} selectedChat={selectedChat as string} setSelectedPublicKey={setSelectedChatPublicKey}  setSelectedChatName={setSelectedChatName} setSelectedChat={setSelectedChat} authToken={authToken} />
+            <ChatList
+              setSenderID={setSenderID}
+              selectedChat={selectedChat as string}
+              setSelectedPublicKey={setSelectedChatPublicKey}
+              setSelectedChatName={setSelectedChatName}
+              setSelectedChat={setSelectedChat}
+              authToken={authToken}
+            />
           ) : (
             <FriendsList
               authToken={authToken}
@@ -77,6 +115,8 @@ export function App() {
               setAddFriendOption={setAddFriendOption}
               onSelectFriend={setSelectedFriend}
               selectedFriendId={selectedFriend?.id}
+              setFriends={ setFriends}
+              friends={friends}
             />
           )}
         </div>
@@ -109,36 +149,40 @@ export function App() {
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-center opacity-40">
-              <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">Select a chat to start messaging</p>
+              <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
+                Select a chat to start messaging
+              </p>
             </div>
           )
         ) : (
-          <div className={`flex-1 flex ${addFriendOption ? "items-start" : "items-center justify-center"} `}>
+          <div
+            className={`flex-1 flex ${addFriendOption ? 'items-start' : 'items-center justify-center'} `}
+          >
             {addFriendOption ? (
               <div className="flex h-screen w-full justify-between">
                 <div className="flex h-full flex-col w-full max-w-[35%]">
                   <AddFriend authToken={authToken} />
                 </div>
-                <div className={"mt-5 h-full w-full max-lg:w-[75%]"}>
-                  <FriendsRequests authToken={authToken}/>
+                <div className={'mt-5 h-full w-full max-lg:w-[75%]'}>
+                  <FriendsRequests authToken={authToken} />
                 </div>
-
               </div>
             ) : selectedFriend ? (
               <div className="flex justify-center text-center opacity-40">
-                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">Select a friend</p>
+                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
+                  Select a friend
+                </p>
               </div>
             ) : (
               <div className="text-center opacity-40">
-                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">Select a friend</p>
+                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
+                  Select a friend
+                </p>
               </div>
             )}
           </div>
         )}
       </div>
-
-
-      </div>
-
+    </div>
   )
 }

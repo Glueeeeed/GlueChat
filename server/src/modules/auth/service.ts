@@ -8,9 +8,19 @@ interface UserData {
     id: string;
 }
 
+interface OneTimeKey {
+    id: string;
+    pubKey: string;
+}
+
+interface RegistrationKeys {
+    identityPubKey: string;
+    spkPubKey: string;
+    signature: string;
+    oneTimeKeys: OneTimeKey[];
+}
+
 export abstract class AuthService {
-
-
 
     static  async checkIfNicknameExists(nickname: string,loginOption: boolean): Promise<void> {
         const isExists = await prisma.user.findFirst({
@@ -31,17 +41,49 @@ export abstract class AuthService {
 
 
 
-    static async registerUser(nickname: string , password: string, publicKey : string): Promise<void> {
 
+
+    static async registerUser(nickname: string , password: string, keys : string): Promise<void> {
         const passwordHash = await Bun.password.hash(password);
 
+        const parsedKey : RegistrationKeys = JSON.parse(keys);
+        const {identityPubKey, spkPubKey, signature, oneTimeKeys} = parsedKey;
 
-        await prisma.user.create({
-            data: {
-                nickname: nickname,
-                password: passwordHash,
-                publicKey: publicKey
+
+        await prisma.$transaction(async (t) => {
+            const user = await t.user.create({
+                data: {
+                    nickname: nickname,
+                    password: passwordHash,
+                }
+            })
+
+            await t.identityKeys.create({
+                data: {
+                    userID: user.id,
+                    identityKey: identityPubKey,
+                }
+            })
+
+            await t.signedPreKeys.create({
+                data: {
+                    userID: user.id,
+                    signedPubKey: spkPubKey,
+                    signature: signature,
+                }
+            })
+
+            if (oneTimeKeys && oneTimeKeys.length > 0) {
+                await t.oneTimePreKeys.createMany({
+                    data: oneTimeKeys.map(key => ({
+                        userId: user.id,
+                        keyId: key.id,
+                        publicKey: key.pubKey
+                    }))
+                });
             }
+
+
         })
 
         console.log("Registered user with nickname", nickname)

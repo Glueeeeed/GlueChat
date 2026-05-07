@@ -5,7 +5,10 @@ export const e2eeModel = {
     response: t.Object({
         success: t.Boolean(),
         message: t.String(),
-        publicKey: t.Optional(
+        spk: t.Optional(
+            t.String(),
+        ),
+        opk: t.Optional(
             t.String(),
         )
     }),

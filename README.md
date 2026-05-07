@@ -108,6 +108,139 @@ bunx prisma generate
 ```
 ---
 
+#### 3. Prisma Schema
+
+
+```prisma
+// server/prisma/schema.prisma
+
+
+model User {
+  id        String   @id @default(cuid())
+  nickname  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSeen  DateTime @default(now())
+
+  oneTimePreKeys       OneTimePreKeys[] @relation("SignedToUser")
+  signedPreKeys        SignedPreKeys[]  @relation("SignedToUser")
+  identityKeys         IdentityKeys[]   @relation("SignedToUser")
+  sentMessages         Message[]
+  privateRoomsAsFirst  PrivateRoom[]    @relation("PrivateRoomUser1")
+  privateRoomsAsSecond PrivateRoom[]    @relation("PrivateRoomUser2")
+  sentRequests         Friendship[]     @relation("SentRequests")
+  receivedRequests     Friendship[]     @relation("ReceivedRequests")
+  sessions             Sessions[]
+}
+
+model PrivateRoom {
+  id        String   @id @default(cuid())
+  userId    String
+  userId2   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+
+  user1 User @relation("PrivateRoomUser1", fields: [userId], references: [id], onDelete: Cascade)
+  user2 User @relation("PrivateRoomUser2", fields: [userId2], references: [id], onDelete: Cascade)
+
+  @@unique([userId, userId2])
+  @@index([userId])
+  @@index([userId2])
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  roomID          String
+  senderId        String
+  capsule         String?  @db.LongText
+  ephemeralPubKey String?  @db.LongText
+  salt            String?
+  content         String   @db.LongText
+  nonce           String
+  createdAt       DateTime @default(now())
+  isDeleted       Boolean
+  isSeen          Boolean
+
+  privateRoom PrivateRoom @relation(fields: [roomID], references: [id], onDelete: Cascade)
+  sender      User        @relation(fields: [senderId], references: [id])
+
+  @@index([roomID])
+}
+
+model Sessions {
+  sessionID String @id
+  userID    String
+
+  loggedUser User @relation(fields: [userID], references: [id])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Friendship {
+  id         String           @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  sender   User @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model IdentityKeys {
+  id          Int    @id @default(autoincrement())
+  userID      String
+  identityKey String @db.LongText // base64(ML-DSA public key)
+
+  user User @relation("SignedToUser", fields: [userID], references: [id], onDelete: Cascade)
+
+  @@unique([userID])
+  @@index([userID])
+}
+
+model SignedPreKeys {
+  id           Int    @id @default(autoincrement())
+  userID       String
+  signedPubKey String @db.LongText
+  signature    String @db.LongText
+
+  user User @relation("SignedToUser", fields: [userID], references: [id], onDelete: Cascade)
+
+  @@unique([userID])
+  @@index([userID])
+}
+
+model OneTimePreKeys {
+  id     Int    @id @default(autoincrement())
+  userId String
+  keyId  String
+
+  publicKey String @db.LongText // base64(X-Wing public key)
+
+  isUsed    Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation("SignedToUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, keyId])
+  @@index([userId, isUsed])
+  @@index([userId])
+}
+```
+
 
 ### 📝 Project Status
 GlueChat is currently in **Beta**. 
@@ -117,7 +250,6 @@ GlueChat is currently in **Beta**.
 - **Advanced Encryption:** Full implementation of the **Double Ratchet** protocol, providing Perfect Forward Secrecy and break-in recovery for all conversations.
 - **Real-Time Messaging:** Secure message delivery system built on WebSockets with integrated end-to-end encryption (E2EE).
 - **Relationship Management:** Fully functional friend request system (send/accept/reject) and chat list management.
-- **Database Architecture:** Optimized Prisma schema with a `roomID` structure and automated message status tracking (`isSeen`).
 
 **Next Steps:**
 - Save decrypted messages to local history. 

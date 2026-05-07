@@ -14,14 +14,12 @@ export abstract class ChatService {
                     select: {
                         id: true,
                         nickname: true,
-                        publicKey: true,
                     }
                 },
                 user2: {
                     select: {
                         id: true,
                         nickname: true,
-                        publicKey: true,
                     }
                 }
             }
@@ -36,7 +34,7 @@ export abstract class ChatService {
                     status: "offline",
                     unread: false,
                     unreadCount: 0,
-                    publicKey: chat.user2.publicKey,
+                    receiverID: chat.user2.id,
                     senderID: userID,
                 };
             } else {
@@ -46,7 +44,7 @@ export abstract class ChatService {
                     status: "offline",
                     unread: false,
                     unreadCount: 0,
-                    publicKey: chat.user1.publicKey,
+                    receiverID: chat.user1.id,
                     senderID: userID,
                 };
             }

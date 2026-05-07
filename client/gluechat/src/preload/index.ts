@@ -28,8 +28,19 @@ contextBridge.exposeInMainWorld("auth", {
   deleteRefreshToken: (accountName: string) => ipcRenderer.invoke("delete-refresh-token", accountName),
 });
 
-contextBridge.exposeInMainWorld("e2ee", {
-  generatePairKeys: (accountName: string) => ipcRenderer.invoke("generate-xwing-pair-keys", accountName),
-  initializeEncryptMessage: (publicKey: string, content: string, roomID: string,senderID: string)=> ipcRenderer.invoke("initializeEncryptMessage", publicKey, content, roomID,senderID),
-  decryptMessage: (encryptedPackage: any, accountName: string) => ipcRenderer.invoke("decryptMessage", encryptedPackage, accountName),
+contextBridge.exposeInMainWorld('e2ee', {
+  generatePairKeys: (accountName: string) =>
+    ipcRenderer.invoke('generate-xwing-pair-keys', accountName),
+  initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string
+  ) =>
+    ipcRenderer.invoke(
+      'initializeEncryptMessage',
+      publicKey,
+      content,
+      roomID,
+      senderID,
+      receiverID
+    ),
+  decryptMessage: (encryptedPackage: any, accountName: string) =>
+    ipcRenderer.invoke('decryptMessage', encryptedPackage, accountName)
 })

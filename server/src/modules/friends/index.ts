@@ -5,7 +5,7 @@ import {friendsModel} from "./model";
 import {NotFoundError} from "../../utils/exceptions";
 import {FriendsService} from "./service"
 import {join} from "path";
-require("dotenv").config({ path: join(__dirname, "../.env") });
+require("dotenv").config({ path: join(__dirname, "../..env") });
 export const friends = new Elysia({ prefix: '/friends' })
     .use(bearer())
     .use(jwt({ name: 'jwt',

@@ -9,18 +9,18 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/register', async ({body}) =>  {
     try {
-        const {nickname, password, publicKey} = body;
+        const {nickname, password, keys} = body;
 
-        if (!publicKey) {
+        if (!keys) {
             return status(400, {
                 success: false,
-                message: "Public key is missing"
+                message: "Keys are required"
             })
         }
 
         AuthService.validate(nickname, password, false);
         await AuthService.checkIfNicknameExists(nickname, false);
-        await AuthService.registerUser(nickname, password,publicKey);
+        await AuthService.registerUser(nickname, password, keys as string);
 
         return status(201, {
             success: true,
@@ -122,6 +122,8 @@ export const auth = new Elysia({ prefix: '/auth' })
         201: authModel.authResponse,
     }
 })
+
+
 
 
 

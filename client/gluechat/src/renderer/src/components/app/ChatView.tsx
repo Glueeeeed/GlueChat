@@ -2,6 +2,7 @@ import { ChatInput } from "./ChatInput";
 import { Info, MoreVertical } from "lucide-react";
 import {ChatMessage} from "@renderer/components/app/ChatMessage";
 import {useEffect, useRef, useState} from "react";
+import {validateOrRefreshToken} from "@renderer/assets/main";
 
 
 interface Message {
@@ -17,14 +18,13 @@ interface ChatViewProps {
   chatID: string;
   chatName: string;
   authKey: string;
-  chatPublicKey: string;
   senderID: string;
+  receiverID: string;
 }
 
-export function ChatView({senderID,  chatPublicKey, authKey, chatID, chatName }: ChatViewProps) {
+export function ChatView({senderID, authKey, chatID, chatName, receiverID}: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
-  const [isSeen, setIsSeen] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -57,7 +57,6 @@ export function ChatView({senderID,  chatPublicKey, authKey, chatID, chatName }:
       if (data.type === 'receive-message') {
         const currentNickname = localStorage.getItem('nickname') || 'User';
         const decryptedText = await window.e2ee.decryptMessage(data.payload, currentNickname);
-        console.log(data.messageID);
         if (decryptedText) {
           setMessages(prev => [...prev, {
             id: data.messageID,
@@ -78,13 +77,16 @@ export function ChatView({senderID,  chatPublicKey, authKey, chatID, chatName }:
     };
 
     return () => ws.close();
-  }, [chatID]);
+  }, [chatID, chatName]);
 
 
 
 
   const handleSendMessage = async (message: string) => {
-    const result = await window.e2ee.initializeEncryptMessage(chatPublicKey, message, chatID, senderID);
+
+
+    const authToken : string = await validateOrRefreshToken(authKey);
+    const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID,receiverID);
 
     if (result && socketRef.current?.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({

@@ -6,7 +6,7 @@ export const authModel = {
     authBody: t.Object({
         nickname: t.String(),
         password: t.String(),
-        publicKey: t.Optional(
+        keys: t.Optional(
             t.String(),
         ),
     }),

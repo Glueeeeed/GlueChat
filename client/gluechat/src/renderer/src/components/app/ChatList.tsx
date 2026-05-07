@@ -8,21 +8,22 @@ interface ChatInfo {
   status: "online" | "offline";
   unread: boolean;
   unreadCount: number;
-  publicKey: string;
+  senderID: string;
+  receiverID: string;
 }
 
 
 
 interface ChatProps {
-  authToken : string | null;
-  selectedChat: string;
-  setSelectedChat: (selectedChat: string) => void;
-  setSelectedChatName: (name: string) => void;
-  setSelectedPublicKey: (publicKey: string) => void;
-  setSenderID: (senderID: string) => void;
+  authToken: string | null
+  selectedChat: string
+  setSelectedChat: (selectedChat: string) => void
+  setSelectedChatName: (name: string) => void
+  setReceiverID: (receiverID: string) => void
+  setSenderID: (senderID: string) => void
 }
 
-export function ChatList({setSenderID,authToken, selectedChat, setSelectedChat, setSelectedChatName, setSelectedPublicKey}: ChatProps) {
+export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, setSelectedChat, setSelectedChatName}: ChatProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [chats, setChats] = useState<ChatInfo[]>([])
 
@@ -42,11 +43,11 @@ export function ChatList({setSenderID,authToken, selectedChat, setSelectedChat, 
     fetchChats();
   }, [authToken]);
 
-  const setSelectedChatData = (selectedChat: string , selectedChatName: string , publicKey : string, senderID: string) => {
+  const setSelectedChatData = (selectedChat: string , selectedChatName: string , senderID: string, receiverID) => {
     setSelectedChat(selectedChat);
     setSelectedChatName(selectedChatName);
-    setSelectedPublicKey(publicKey);
     setSenderID(senderID);
+    setReceiverID(receiverID);
   }
 
   const filteredChats = chats.filter((chat) => {
@@ -78,7 +79,7 @@ export function ChatList({setSenderID,authToken, selectedChat, setSelectedChat, 
           filteredChats.map((chat) => (
             <button
               key={chat.id}
-              onClick={() => setSelectedChatData(chat.id, chat.name, chat.publicKey, chat.senderID) }
+              onClick={() => setSelectedChatData(chat.id, chat.name, chat.senderID, chat.receiverID) }
               className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group mb-1 ${
                 selectedChat === chat.id
                   ? 'bg-violet-500/10 border border-violet-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)]'

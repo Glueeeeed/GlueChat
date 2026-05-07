@@ -11,7 +11,7 @@ declare global {
     };
     e2ee: {
       generatePairKeys: (accountName: string) => Promise<string>;
-      initializeEncryptMessage: (publicKey: string, content: string, roomID: string,senderID: string) => Promise<string | null>;
+      initializeEncryptMessage: (publicKey: string, content: string, roomID: string,senderID: string,receiverID : string) => Promise<string | null>;
       decryptMessage: (encryptedPackage: any, accountName: string) => Promise<string | null>;
     }
   }

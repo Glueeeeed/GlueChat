@@ -5,7 +5,6 @@ import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
 import {AddFriend} from "@renderer/components/friends/AddFriend";
 import {FriendsRequests} from "@renderer/components/friends/FriendsRequests";
-import {SentRequests} from "@renderer/components/friends/SentRequests";
 import {ChatList} from "@renderer/components/app/ChatList";
 import {ChatView} from "@renderer/components/app/ChatView";
 import { jwtDecode } from 'jwt-decode'
@@ -29,9 +28,9 @@ export function App() {
   const [addFriendOption, setAddFriendOption] = useState<boolean>(false)
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [selectedChatName, setSelectedChatName] = useState<string | null>(null)
-  const [selectedChatPublicKey, setSelectedChatPublicKey] = useState<string | null>(null)
   const [nickname, setNickname] = useState<string>('User')
   const [senderID, setSenderID] = useState<string | null>(null)
+  const [receiverID, setReceiverID] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -101,9 +100,9 @@ export function App() {
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chats' ? (
             <ChatList
+              setReceiverID={setReceiverID}
               setSenderID={setSenderID}
               selectedChat={selectedChat as string}
-              setSelectedPublicKey={setSelectedChatPublicKey}
               setSelectedChatName={setSelectedChatName}
               setSelectedChat={setSelectedChat}
               authToken={authToken}
@@ -115,7 +114,7 @@ export function App() {
               setAddFriendOption={setAddFriendOption}
               onSelectFriend={setSelectedFriend}
               selectedFriendId={selectedFriend?.id}
-              setFriends={ setFriends}
+              setFriends={setFriends}
               friends={friends}
             />
           )}
@@ -141,8 +140,8 @@ export function App() {
         {activeTab === 'chats' ? (
           selectedChat ? (
             <ChatView
+              receiverID={receiverID}
               senderID={senderID as string}
-              chatPublicKey={selectedChatPublicKey as string}
               authKey={authToken as string}
               chatID={selectedChat}
               chatName={selectedChatName as string}

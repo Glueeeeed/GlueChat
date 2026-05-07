@@ -1,9 +1,11 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import keytar from "keytar";
-import {CryptoService, KeyPair} from "./Services/CryptoService";
+import keytar from 'keytar'
+import { randomBytes } from '@noble/post-quantum/utils.js'
+import ProtocolService from './Services/ProtocolService'
+import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore'
 
 function createWindow(): void {
   // Create the browser window.
@@ -91,29 +93,53 @@ ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
   return await keytar.deletePassword("gluechat", accountName);
 });
 
-ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) => {
-  const pairKey : KeyPair =  CryptoService.generateNewKeyPair();
-  const pubStr : string = Buffer.from(pairKey.publicKey).toString('base64');
-  const privStr : string = Buffer.from(pairKey.secretKey).toString('base64');
-  const privKeyID : string = accountName + '-' + "private-key";
-  const pubKeyID : string = accountName + '-' + "public-key";
-  await keytar.setPassword("gluechat", privKeyID, privStr);
-  await keytar.setPassword("gluechat", pubKeyID, pubStr);
-  return pubStr;
+ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) : Promise<string> => {
+  const oneTimeKeys: oneTimeKey[] = []
+  const keys: KeyPair = CryptoCore.generateSignKeyPair();
+  const identityPubKey: string = Buffer.from(keys.publicKey).toString('base64');
+  const identityKey: string = Buffer.from(keys.secretKey).toString('base64');
+  const spk: KeyPair = CryptoCore.generateNewKeyPair() // Signed PreKey Pair
+  const spkPubKey: string = Buffer.from(spk.publicKey).toString('base64');
+  const spkKey: string = Buffer.from(spk.secretKey).toString('base64')
+
+  await keytar.setPassword('gluechat_' + accountName, 'identityKey', identityKey);
+  await keytar.setPassword('gluechat_' + accountName, 'identityPubKey', identityPubKey);
+  await keytar.setPassword('gluechat_' + accountName, 'signingPrivateKey',  spkKey);
+  await keytar.setPassword('gluechat_' + accountName, 'signingPubKey', spkPubKey);
+
+  const signature: string = Buffer.from(CryptoCore.sign(spk.publicKey, keys.secretKey)).toString(
+    'base64');
+  for (let i: number = 1; i <= 50; i++) {
+    const oneTimeKeyID: string = Buffer.from(randomBytes(4)).toString('hex');
+    const keyPair: KeyPair = CryptoCore.generateNewKeyPair();
+    const pubKey: string = Buffer.from(keyPair.publicKey).toString('base64');
+    const privateKey: string = Buffer.from(keyPair.secretKey).toString('base64');
+    await keytar.setPassword('gluechat_' + accountName, oneTimeKeyID, privateKey);
+    const oneTimeKey = {
+      id: oneTimeKeyID,
+      pubKey: pubKey
+    }
+    oneTimeKeys.push(oneTimeKey);
+  }
+
+
+  const data = {
+    identityPubKey: identityPubKey,
+    spkPubKey: spkPubKey,
+    signature: signature,
+    oneTimeKeys: oneTimeKeys
+  }
+
+  return JSON.stringify(data);
+
 })
 
-ipcMain.handle("initializeEncryptMessage", async (_, publicKey: string, content: string, roomID: string,senderID : string) => {
-  const publicKeyBytes = Buffer.from(publicKey, 'base64');
-  const data : any = CryptoService.initializeEncrypt(publicKeyBytes,content,roomID,senderID);
-  CryptoService.messageCounter++
-  return data
+ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string) => {
+    const data = await ProtocolService.initializeEncrypt(authKey, content, roomID, senderID, receiverID)
+    return data
+  }
+)
+
+ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string) => {
+  return await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName)
 })
-
-ipcMain.handle("decryptMessage", async (_, encryptedPackage: any, accountName: string) => {
-  const privKeyID : string = accountName + '-' + "private-key";
-  const privStr = await keytar.getPassword("gluechat", privKeyID);
-  if (!privStr) throw new Error("Private key not found");
-
-  const privateKey = Buffer.from(privStr, 'base64');
-  return await CryptoService.initializeDecrypt(encryptedPackage, privateKey);
-});

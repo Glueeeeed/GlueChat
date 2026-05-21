@@ -33,7 +33,6 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
       if (authToken) {
         try {
           const data = await loadChats(authToken);
-          console.log(data);
           setChats(data as ChatInfo[]);
         } catch (error) {
           console.error("Failed to load chats", error);

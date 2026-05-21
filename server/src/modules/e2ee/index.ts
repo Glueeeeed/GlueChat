@@ -79,3 +79,51 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
             201: authModel.authResponse,
         }
     })
+
+    .get('/messages/sync', async ({ query: { roomID }, user  }) => {
+        try {
+            if (!roomID) {
+                return status(400, { success: false, message: "Missing parameters" });
+            }
+
+            const newMessages = await E2EEService.syncMessages(roomID, user.id);
+
+            return status(200, {
+                success: true,
+                data: newMessages
+            });
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                return status(404, {
+                    success: false,
+                    message: e.message
+                })
+            }
+            return status(500, {
+                success: false,
+                message: e.message
+            });
+        }
+    })
+
+    .post('/messages/make-as-read', async ({body, user}) => {
+        const {id} = body;
+        try {
+            await E2EEService.makeAsRead(id);
+            return status(200, {
+                success: true,
+                message: 'ok',
+            })
+        } catch (e) {
+            console.error(e)
+            return status (500, {
+                success: false,
+                message: `something went wrong`,
+            })
+        }
+    }, {
+        body: e2eeModel.request,
+        response: {
+            201: e2eeModel.response
+        }
+    })

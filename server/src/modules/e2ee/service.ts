@@ -70,4 +70,46 @@ export abstract class E2EEService {
 
            return JSON.stringify(data);
     }
+
+    static async syncMessages(roomID: string, userID : string) {
+        const data = await prisma.message.findMany({
+            where: {
+                roomID: roomID,
+                NOT: {
+                    senderId: userID
+                },
+                isSeen: false
+            },
+            orderBy: {
+                createdAt: 'asc'
+            }
+        });
+
+        if (data.length <= 0) {
+            throw new NotFoundError("Not found");
+        } else {
+            console.log("M,ESSAGES DATA " + JSON.stringify(data));
+            return data;
+        }
+
+    }
+
+    static async makeAsRead(messageID: string) {
+        const message = await prisma.message.findFirst({
+            where: {
+                nonce: messageID,
+            }
+        })
+        if (!message) {
+            throw new NotFoundError("Not found");
+        }
+        await prisma.message.update({
+            where: {
+                nonce: messageID,
+            },
+            data: {
+                isSeen: true
+            }
+        })
+    }
 }

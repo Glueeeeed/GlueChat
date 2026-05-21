@@ -55,24 +55,20 @@ abstract class ProtocolService {
     }
   }
 
-  private static async preparePreKeyCapsule(
-    roomID: string,
-    authKey: string,
-    receiverID: string,
-    senderID: string
-  ): Promise<void> {
+  private static async preparePreKeyCapsule(roomID: string, authKey: string, receiverID: string, senderID: string): Promise<void> {
     try {
       const preKeys = await NetworkService.getPreKeys(authKey, receiverID)
-      const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(
-        Buffer.from(preKeys.spk, 'base64')
-      )
-      const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(
-        Buffer.from(preKeys.opk, 'base64')
-      )
-      const { nextChainKey, messageKey } = CryptoCore.mixKeys(
-        ssSPK,
-        ssOPK,
-        Buffer.from(preKeys.pubKey, 'base64')
+      const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKeys.spk, 'base64'));
+      const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKeys.opk, 'base64'));
+      console.log("Shared Secret SPK: " + Buffer.from(ssSPK).toString("base64"));
+      console.log("Shared Secret OPK: " + Buffer.from(ssOPK).toString("base64"));
+      const { nextChainKey, messageKey } = CryptoCore.mixKeys(ssSPK, ssOPK, Buffer.from(preKeys.pubKey, 'base64'));
+
+      console.log(
+        'Generated OPK session keys: ChainKey:' +
+          Buffer.from(nextChainKey).toString('base64') +
+          ' MessageKey: ' +
+          Buffer.from(messageKey).toString('base64')
       )
 
 
@@ -109,23 +105,25 @@ abstract class ProtocolService {
         sendCounter: 1,
         lastSenderID: senderID
       }
+
       await StorageService.saveSession(roomID, JSON.stringify(dataToSave))
     } catch (error) {
       console.error('Failed prepare session with pre keys', error)
     }
   }
 
-  private static async prepareCapsule(
-    roomID: string,
-    senderID: string,
-    session: SessionState
-  ): Promise<void> {
+  private static async prepareCapsule(roomID: string, senderID: string, session: SessionState): Promise<void> {
     try {
       const { cipherText: capsule, sharedSecret } = CryptoCore.encapsulate(session.bobPublicKey)
 
+      console.log("GENERATED CAPSULE SECRET:" + Buffer.from(sharedSecret).toString("base64"));
+
       const salt: Uint8Array<ArrayBufferLike> = randomBytes(32)
 
-      const { messageKey } = RatchetService.rotate(session, sharedSecret, salt, roomID)
+      const {nextChainKey, messageKey } = RatchetService.rotate(session, sharedSecret, salt, roomID);
+
+      console.log('Generated Capsule session keys: ChainKey: ' + Buffer.from(nextChainKey).toString('base64') + ' MessageKey: ' + Buffer.from(messageKey).toString('base64'))
+
 
       session.sendCounter = 1
       session.lastSenderID = senderID
@@ -154,9 +152,13 @@ abstract class ProtocolService {
   private static async prepareSymmetricStep(roomID: string, session: SessionState): Promise<void> {
     try {
       const salt = randomBytes(32)
-
       const rootKey = new Uint8Array(session.rootKey)
-      const { messageKey } = RatchetService.rotate(session, rootKey, salt, roomID)
+
+      console.log("Symmetric ROOT KEY: " + Buffer.from(rootKey).toString('base64'))
+      const { nextChainKey , messageKey } = RatchetService.rotate(session, rootKey, salt, roomID)
+
+      console.log('Generated Symmetric session keys: ChainKey: ' + Buffer.from(nextChainKey).toString('base64') + ' MessageKey: ' + Buffer.from(messageKey).toString('base64'));
+
 
       this.temporarySessions.set(roomID, {
         ...session,
@@ -179,20 +181,17 @@ abstract class ProtocolService {
     }
   }
 
-  static async initializeEncrypt(
-    authKey: string,
-    content: string,
-    roomID: string,
-    senderID: string,
-    receiverID: string
-  ): Promise<pkgStructure> {
-    const session: SessionState | null = await this.getOrLoadSession(roomID)
+  static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string): Promise<pkgStructure> {
+    const session: SessionState | null = await this.getOrLoadSession(roomID);
 
     if (session === null) {
+      console.log("SESSION IS NULL")
       await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID)
     } else if (session.lastSenderID !== senderID || session.sendCounter >= 5) {
+      console.log("SESSION IS ACTIVE AND SENDER CHANGED OR COUNTER REACHED")
       await this.prepareCapsule(roomID, senderID, session)
     } else {
+      console.log("SESSION IS ACTIVE, SYMMETRIC STEP")
       await this.prepareSymmetricStep(roomID, session)
     }
 
@@ -201,10 +200,9 @@ abstract class ProtocolService {
       throw new Error('Failed to initialize encrypt session')
     }
 
+
+    console.log("Message KEY used to encrypt:", Buffer.from(readySession.messageKey).toString('base64'));
     const encrypted = CryptoCore.encryptData(content, readySession.messageKey)
-
-
-
 
 
     const pkg = {
@@ -226,45 +224,45 @@ abstract class ProtocolService {
     return pkg
   }
 
-  private static decapsulateOpkCapsule(
-    capsuleSPK: string,
-    capsuleOPK: string,
-    roomID: string,
-    spkPrivateKey: string | null,
-    opkPrivateKey: string | null,
-    identityPubKey: string | null
-  ): void {
-    const ss1: Uint8Array = CryptoCore.decapsulate(
-      Buffer.from(capsuleSPK, 'base64'),
-      Buffer.from(spkPrivateKey as string, 'base64')
-    )
-    const ss2: Uint8Array = CryptoCore.decapsulate(
-      Buffer.from(capsuleOPK, 'base64'),
-      Buffer.from(opkPrivateKey as string, 'base64')
-    )
-    const { nextChainKey, messageKey } = CryptoCore.mixKeys(
-      ss1,
-      ss2,
-      Buffer.from(identityPubKey as string, 'base64')
+  private static decapsulateOpkCapsule(capsuleSPK: string, capsuleOPK: string, roomID: string, spkPrivateKey: string | null, opkPrivateKey: string | null, identityPubKey: string | null, senderID : string): void {
+    const ss1: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey as string, 'base64'));
+    const ss2: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey as string, 'base64'));
+
+    console.log('Generated decrypt Shared Secret SPK: ' + Buffer.from(ss1).toString('base64'));
+    console.log('Generated decrypt Shared Secret OPK: ' + Buffer.from(ss2).toString('base64'));
+
+    const { nextChainKey, messageKey } = CryptoCore.mixKeys(ss1, ss2, Buffer.from(identityPubKey as string, 'base64'));
+
+    console.log(
+      'Generated OPK session keys: ChainKey: ' +
+        Buffer.from(nextChainKey).toString('base64') +
+        ' MessageKey: ' +
+        Buffer.from(messageKey).toString('base64')
     )
 
+    const newEphemeral = CryptoCore.generateNewKeyPair();
+
+    this.activeSessions.set(roomID, {
+      rootKey: nextChainKey,
+      alicePrivateKey: newEphemeral.secretKey,
+      bobPublicKey: newEphemeral.publicKey,
+      sendCounter: 0,
+      lastSenderID: senderID
+    });
     this.temporaryDecryptData.set(roomID, {
       nextChainKey: nextChainKey,
       messageKey: messageKey
     })
   }
 
-  private static decapsulateCapsule(
-    capsule: string,
-    privateKey: Uint8Array,
-    session: SessionState,
-    salt: string,
-    roomID: string
-  ): void {
+  private static decapsulateCapsule(capsule: string, privateKey: Uint8Array, session: SessionState, salt: string, roomID: string): void {
     const ss: Uint8Array = CryptoCore.decapsulate(
       Buffer.from(capsule, 'base64'),
       privateKey as Uint8Array
     )
+
+    console.log('Generated decrypt CAPSULE Shared Secret: ' + Buffer.from(ss).toString('base64'))
+
     const { nextChainKey, messageKey } = RatchetService.rotate(
       session as SessionState,
       ss,
@@ -272,6 +270,12 @@ abstract class ProtocolService {
       roomID
     )
 
+    console.log(
+      'Generated Capsule session keys: ChainKey: ' +
+        Buffer.from(nextChainKey).toString('base64') +
+        ' MessageKey: ' +
+        Buffer.from(messageKey).toString('base64')
+    )
 
     this.temporaryDecryptData.set(roomID, {
       nextChainKey: nextChainKey,
@@ -279,11 +283,7 @@ abstract class ProtocolService {
     })
   }
 
-  static async initializeDecrypt(
-    pkg: pkgStructure,
-    roomID: string,
-    account: string
-  ): Promise<string> {
+  static async initializeDecrypt(pkg: pkgStructure, roomID: string, account: string): Promise<string> {
     const session: SessionState | null = await this.getOrLoadSession(roomID)
     if (pkg.capsule !== null) {
       if (pkg.capsule.includes('|')) {
@@ -291,32 +291,16 @@ abstract class ProtocolService {
         const opkPrivateKey = await StorageService.getOneTimeKey(account, pkg.opkId as string)
         const identityPubKey = await StorageService.getPubIdentityKey(account)
 
-        console.log(pkg.opkId + ':' + opkPrivateKey)
-        console.log(spkPrivateKey, opkPrivateKey, identityPubKey)
 
         if (spkPrivateKey !== null && opkPrivateKey !== null && identityPubKey !== null) {
           const [capsuleSPK, capsuleOPK] = pkg.capsule.split('|')
-          console.log(spkPrivateKey, opkPrivateKey, identityPubKey)
-          this.decapsulateOpkCapsule(
-            capsuleSPK,
-            capsuleOPK,
-            roomID,
-            spkPrivateKey,
-            opkPrivateKey,
-            identityPubKey
-          )
+          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, identityPubKey, pkg.senderID)
         } else {
           console.log()
           throw new Error('Failed to initialize decrypt session')
         }
       } else {
-        this.decapsulateCapsule(
-          pkg.capsule,
-          session?.alicePrivateKey as Uint8Array,
-          session as SessionState,
-          pkg.salt as string,
-          roomID
-        )
+        this.decapsulateCapsule(pkg.capsule, session?.alicePrivateKey as Uint8Array, session as SessionState, pkg.salt as string, roomID)
       }
     } else {
       const { nextChainKey, messageKey } = RatchetService.rotate(
@@ -325,6 +309,14 @@ abstract class ProtocolService {
         Buffer.from(pkg.salt as string, 'base64'),
         roomID
       )
+
+      console.log(
+        'Generated Symmetric decrypt session keys: ChainKey: ' +
+          Buffer.from(nextChainKey).toString('base64') +
+          ' MessageKey: ' +
+          Buffer.from(messageKey).toString('base64')
+      )
+
       this.temporaryDecryptData.set(roomID, {
         nextChainKey: nextChainKey,
         messageKey: messageKey

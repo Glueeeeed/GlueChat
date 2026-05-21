@@ -14,7 +14,7 @@ export const e2eeModel = {
     }),
 
     request: t.Object({
-        messageID: t.String(),
+        id: t.String(),
     })
 
 }

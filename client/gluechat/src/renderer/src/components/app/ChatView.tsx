@@ -3,6 +3,7 @@ import { Info, MoreVertical } from "lucide-react";
 import {ChatMessage} from "@renderer/components/app/ChatMessage";
 import {useEffect, useRef, useState} from "react";
 import {validateOrRefreshToken} from "@renderer/assets/main";
+import {syncMessages, makeAsRead} from '@renderer/assets/e2ee'
 
 
 interface Message {
@@ -29,6 +30,42 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
   useEffect(() => {
 
+    const syncOfflineMessages = async () : Promise<void> =>  {
+        try {
+        const authToken : string = await validateOrRefreshToken(authKey);
+        const newPackages = await syncMessages(authToken, chatID);
+
+          console.log("PACKAGES " + JSON.stringify(newPackages));
+
+          if (newPackages && newPackages.length > 0)  {
+            for (const pkg of newPackages) {
+              const currentNickname = localStorage.getItem('nickname') || 'User'
+              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname)
+              if (decryptedText) {
+                await makeAsRead(authKey, pkg.nonce);
+                setMessages((prev) => {
+                  if (prev.some((m) => m.id === pkg.id)) return prev
+                  return [
+                    ...prev,
+                    {
+                      id: pkg.id,
+                      sender: chatName,
+                      content: decryptedText,
+                      timestamp: new Date().toLocaleTimeString(),
+                      isAuthor: false,
+                      isSeen: true
+                    }
+                  ]
+                })
+              }
+            }
+          }
+      } catch (e) {
+        console.error("Failed to sync message", e);
+      }
+    }
+
+     syncOfflineMessages();
 
     const ws = new WebSocket("ws://localhost:3000/api/ws");
     socketRef.current = ws;
@@ -40,11 +77,6 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
         payload: {}
       }));
 
-      ws.send(JSON.stringify({
-        type: 'mark-as-read',
-        chatID: chatID,
-        payload: {}
-      }));
     };
 
     ws.onmessage = async (event ) => {
@@ -58,20 +90,22 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
         const currentNickname = localStorage.getItem('nickname') || 'User';
         const decryptedText = await window.e2ee.decryptMessage(data.payload, currentNickname);
         if (decryptedText) {
-          setMessages(prev => [...prev, {
-            id: data.messageID,
-            sender: chatName,
-            content: decryptedText,
-            timestamp: new Date().toLocaleTimeString(),
-            isAuthor: false,
-            isSeen: false
-          }]);
-
-          ws.send(JSON.stringify({
-            type: 'mark-as-read',
-            chatID: chatID,
-            payload: {}
-          }));
+          console.log('kurwa nulll' + data.payload.nonce)
+          await makeAsRead(authKey, data.payload.nonce);
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === data.id)) return prev
+            return [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                sender: chatName,
+                content: decryptedText,
+                timestamp: new Date().toLocaleTimeString(),
+                isAuthor: false,
+                isSeen: false
+              }
+            ]
+          })
         }
       }
     };

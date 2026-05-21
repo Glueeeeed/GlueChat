@@ -112,9 +112,6 @@ bunx prisma generate
 
 
 ```prisma
-// server/prisma/schema.prisma
-
-
 model User {
   id        String   @id @default(cuid())
   nickname  String   @unique
@@ -155,6 +152,8 @@ model Message {
   id              String   @id @default(cuid())
   roomID          String
   senderId        String
+  messageNumber   Int
+  opkId           String?
   capsule         String?  @db.LongText
   ephemeralPubKey String?  @db.LongText
   salt            String?
@@ -167,6 +166,7 @@ model Message {
   privateRoom PrivateRoom @relation(fields: [roomID], references: [id], onDelete: Cascade)
   sender      User        @relation(fields: [senderId], references: [id])
 
+  @@unique([nonce])
   @@index([roomID])
 }
 

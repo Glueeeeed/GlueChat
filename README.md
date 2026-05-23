@@ -11,14 +11,8 @@ GlueChat implements a multi-layered security model to ensure that your data rema
 #### 1. Hybrid Post-Quantum Cryptography (X-Wing)
 We utilize the **X-Wing** hybrid Key Encapsulation Mechanism (KEM).
 - **Hybrid Approach:** It combines the classic **X25519** (Elliptic Curve) with **ML-KEM-768** (Kyber), a NIST-standardized post-quantum algorithm.
-- **Why it matters:** This protects against "Harvest Now, Decrypt Later" attacks, where encrypted data intercepted today could be decrypted by a powerful quantum computer in the future.
 
-#### 2. Double Ratchet Protocol
-To provide the highest level of session security, we are integrating the **Double Ratchet** protocol (pioneered by Signal).
-- **Forward Secrecy:** Every message is encrypted with a unique, one-time key. If a key is ever compromised, only that single message is at risk—past conversations remain secure.
-- **Break-in Recovery:** The system automatically "heals" by generating new independent keys with every message exchange, preventing an attacker from eavesdropping on future messages even after a temporary breach.
-
-#### 3. Secure Local Storage
+#### 2. Secure Local Storage
 Your private keys never leave your machine. GlueChat leverages **Keytar** to store sensitive cryptographic material in your operating system's native secure vault:
 - **macOS:** Keychain Access
 - **Windows:** Credentials Manager
@@ -247,11 +241,11 @@ GlueChat is currently in **Beta**.
 
 **Completed Milestones:**
 - **Security Foundations:** Implemented hybrid key generation (X-Wing) and secure local storage using OS-native vaults.
-- **Advanced Encryption:** Full implementation of the **Double Ratchet** protocol, providing Perfect Forward Secrecy and break-in recovery for all conversations.
 - **Real-Time Messaging:** Secure message delivery system built on WebSockets with integrated end-to-end encryption (E2EE).
 - **Relationship Management:** Fully functional friend request system (send/accept/reject) and chat list management.
 
 **Next Steps:**
+- Full implementation of the **Double Ratchet** protocol
 - Save decrypted messages to local history. 
 - Multi-device synchronization support.
 - Group chat functionality with shared ratchet trees.

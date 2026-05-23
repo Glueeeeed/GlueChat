@@ -6,7 +6,6 @@ import keytar from 'keytar'
 import { randomBytes } from '@noble/post-quantum/utils.js'
 import ProtocolService from './Services/ProtocolService'
 import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore'
-import { NetworkService } from './Services/NetworkService'
 
 function createWindow(): void {
   // Create the browser window.
@@ -143,7 +142,7 @@ ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: s
 )
 
 
-ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string) => {
-  return await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName)
+ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string, accountID) => {
+  return await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName,accountID)
 })
 

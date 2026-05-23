@@ -40,7 +40,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
           if (newPackages && newPackages.length > 0)  {
             for (const pkg of newPackages) {
               const currentNickname = localStorage.getItem('nickname') || 'User'
-              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname)
+              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname,senderID)
               if (decryptedText) {
                 await makeAsRead(authKey, pkg.nonce);
                 setMessages((prev) => {
@@ -88,7 +88,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
       if (data.type === 'receive-message') {
         const currentNickname = localStorage.getItem('nickname') || 'User';
-        const decryptedText = await window.e2ee.decryptMessage(data.payload, currentNickname);
+        const decryptedText = await window.e2ee.decryptMessage(data.payload, currentNickname,senderID);
         if (decryptedText) {
           console.log('kurwa nulll' + data.payload.nonce)
           await makeAsRead(authKey, data.payload.nonce);

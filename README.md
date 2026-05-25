@@ -243,10 +243,10 @@ GlueChat is currently in **Beta**.
 - **Security Foundations:** Implemented hybrid key generation (X-Wing) and secure local storage using OS-native vaults.
 - **Real-Time Messaging:** Secure message delivery system built on WebSockets with integrated end-to-end encryption (E2EE).
 - **Relationship Management:** Fully functional friend request system (send/accept/reject) and chat list management.
+- Save decrypted messages to local history.
 
 **Next Steps:**
 - Full implementation of the **Double Ratchet** protocol
-- Save decrypted messages to local history. 
 - Multi-device synchronization support.
 - Group chat functionality with shared ratchet trees.
 - Enhanced user profiles and notification history.

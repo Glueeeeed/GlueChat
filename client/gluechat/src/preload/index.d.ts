@@ -1,4 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import {messageData} from "../main/Services/StorageService";
 
 declare global {
   interface Window {
@@ -14,7 +15,7 @@ declare global {
       initializeEncryptMessage: (publicKey: string, content: string, roomID: string,senderID: string,receiverID : string) => Promise<string | null>;
       decryptMessage: (encryptedPackage: any, accountName: string, accountID: string) => Promise<string | null>;
       getMessages: (roomID: string) => Promise<string | null>;
-      saveMessages: (msg: any) => Promise<string | null>;
+      saveMessage: (roomID: string, senderID: string, content: messageData, nonce : string, chatName:string) => Promise<string | null>;
     }
   }
 }

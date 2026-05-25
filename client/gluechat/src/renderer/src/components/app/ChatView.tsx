@@ -30,6 +30,29 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
   useEffect(() => {
 
+      const loadLocalHistory = async () => {
+        try {
+          const history = await window.e2ee.getMessages(chatID)
+
+          if (history && history.length > 0) {
+            const formattedMessages = history.map((msg: any) => ({
+              id: msg.id,
+              sender: msg.sender,
+              content: msg.content,
+              timestamp: msg.timestamp,
+              isAuthor: msg.isAuthor,
+              isSeen: msg.isSeen
+            }))
+            setMessages(formattedMessages)
+          }
+        } catch (error) {
+          console.error('Failed to load history', error)
+        }
+      }
+
+      loadLocalHistory()
+
+
     const syncOfflineMessages = async () : Promise<void> =>  {
         try {
         const authToken : string = await validateOrRefreshToken(authKey);
@@ -45,6 +68,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
                 await makeAsRead(authKey, pkg.nonce);
                 setMessages((prev) => {
                   if (prev.some((m) => m.id === pkg.id)) return prev
+
                   return [
                     ...prev,
                     {
@@ -57,6 +81,17 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
                     }
                   ]
                 })
+
+                const messageData = {
+                  id: Date.now().toString(),
+                  sender: chatName,
+                  content: decryptedText,
+                  timestamp: new Date().toLocaleTimeString(),
+                  isAuthor: false,
+                  isSeen: false
+                }
+
+                await window.e2ee.saveMessage(chatID, pkg.senderId, messageData, pkg.nonce, chatName);
               }
             }
           }
@@ -90,7 +125,6 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
         const currentNickname = localStorage.getItem('nickname') || 'User';
         const decryptedText = await window.e2ee.decryptMessage(data.payload, currentNickname,senderID);
         if (decryptedText) {
-          console.log('kurwa nulll' + data.payload.nonce)
           await makeAsRead(authKey, data.payload.nonce);
           setMessages((prev) => {
             if (prev.some((m) => m.id === data.id)) return prev
@@ -106,6 +140,17 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
               }
             ]
           })
+
+          const messageData = {
+            id: Date.now().toString(),
+            sender: localStorage.getItem('nickname') || 'Me',
+            content: decryptedText,
+            timestamp: new Date().toLocaleTimeString(),
+            isAuthor: false,
+            isSeen: false
+          }
+
+          await window.e2ee.saveMessage(chatID, data.payload.senderID, messageData, data.payload.nonce,chatName);
         }
       }
     };
@@ -123,20 +168,28 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
     const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID,receiverID);
 
     if (result && socketRef.current?.readyState === WebSocket.OPEN) {
+      const currentNickname = localStorage.getItem('nickname') || 'User'
+
       socketRef.current.send(JSON.stringify({
         type: 'send-message',
         chatID: chatID,
         payload: result
       }));
 
-      setMessages(prev => [...prev, {
+      const messageData = {
         id: Date.now().toString(),
         sender: localStorage.getItem('nickname') || 'Me',
         content: message,
         timestamp: new Date().toLocaleTimeString(),
         isAuthor: true,
         isSeen: false
-      }]);
+      }
+
+      setMessages(prev => [...prev, messageData]);
+
+      const resultObj = JSON.parse(JSON.stringify(result));
+      console.log(resultObj);
+      await window.e2ee.saveMessage(chatID, senderID, messageData, resultObj.nonce,currentNickname)
     }
   };
 

@@ -25,6 +25,16 @@ export interface messageData {
   isSeen: boolean
 }
 
+export interface ChatInfo {
+  id: string
+  name: string
+  status: 'online' | 'offline'
+  unread: boolean
+  unreadCount: number
+  senderID: string
+  receiverID: string
+}
+
 const db = new Database(path.join(process.cwd(), `${process.argv[2] || 'DefaultUser'}_history.db`))
 
 db.exec(`
@@ -44,7 +54,6 @@ db.exec(`
 
 
 export abstract class StorageService {
-
   private static async getStorageKey(): Promise<Uint8Array> {
     let key = await keytar.getPassword('Gluechat', 'local_storage_key')
 
@@ -57,10 +66,16 @@ export abstract class StorageService {
     return Buffer.from(key, 'base64')
   }
 
-  static async saveMessage(roomID: string, senderID: string, messageData : messageData, nonce : string, chatName:string): Promise<void> {
+  static async saveMessage(
+    roomID: string,
+    senderID: string,
+    messageData: messageData,
+    nonce: string,
+    chatName: string
+  ): Promise<void> {
     const key = await this.getStorageKey()
 
-    const encrypted = (CryptoCore as any).encryptData(messageData.content, key);
+    const encrypted = (CryptoCore as any).encryptData(messageData.content, key)
 
     const stmt = db.prepare(`
       INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, nonce)
@@ -80,15 +95,17 @@ export abstract class StorageService {
   }
 
   static async getHistory(roomID: string) {
-    const rows = db.prepare('SELECT * FROM chat_history WHERE roomID = ? ORDER BY timestamp ASC').all(roomID);
-    const key = await this.getStorageKey();
+    const rows = db
+      .prepare('SELECT * FROM chat_history WHERE roomID = ? ORDER BY timestamp ASC')
+      .all(roomID)
+    const key = await this.getStorageKey()
 
     return rows.map((row: any) => {
       const decrypted = (CryptoCore as any).decryptData(
         Buffer.from(row.encryptedContent, 'base64'),
         Buffer.from(row.nonce, 'base64'),
         key
-      );
+      )
 
       return {
         id: row.messageID,
@@ -98,7 +115,29 @@ export abstract class StorageService {
         isAuthor: Boolean(row.isAuthor),
         isSeen: Boolean(row.isSeen)
       }
-    });
+    })
+  }
+
+  static async getLastMessage(data: ChatInfo) {
+
+    const row: any = db
+      .prepare('SELECT * FROM chat_history WHERE roomID = ? ORDER BY timestamp DESC LIMIT 1')
+      .get(data.id);
+
+    if (!row) return null;
+    const key = await this.getStorageKey()
+
+    const decrypted = (CryptoCore as any).decryptData(
+      Buffer.from(row.encryptedContent, 'base64'),
+      Buffer.from(row.nonce, 'base64'),
+      key
+    )
+
+    return {
+      senderName: row.senderName,
+      isAuthor: Boolean(row.isAuthor),
+      content: decrypted
+    }
   }
 
   static async saveSession(roomID: string, data: string, accountID: string): Promise<void> {

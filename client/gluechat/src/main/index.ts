@@ -6,7 +6,7 @@ import keytar from 'keytar'
 import { randomBytes } from '@noble/post-quantum/utils.js'
 import ProtocolService from './Services/ProtocolService'
 import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore'
-import { StorageService } from './Services/StorageService'
+import { ChatInfo, StorageService } from './Services/StorageService'
 import {messageData} from './Services/StorageService'
 
 function createWindow(): void {
@@ -154,5 +154,9 @@ ipcMain.handle('saveMessage', async (_,roomID: string, senderID: string, message
 
 ipcMain.handle('getMessages', async (_, roomID: string) => {
   return await StorageService.getHistory(roomID);
+})
+
+ipcMain.handle('getLastMessage', async (_, roomID: ChatInfo) => {
+  return await StorageService.getLastMessage(roomID);
 })
 

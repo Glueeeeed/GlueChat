@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { messageData } from '../main/Services/StorageService'
+import { ChatInfo, messageData } from '../main/Services/StorageService'
 
 // Custom APIs for renderer
 const api = {}
@@ -52,6 +52,7 @@ contextBridge.exposeInMainWorld('e2ee', {
   getMessages: (roomID: string) => ipcRenderer.invoke('getMessages', roomID),
   saveMessage: (roomID: string, senderID: string, content: messageData, nonce : string, chatName: string) =>
     ipcRenderer.invoke('saveMessage', roomID, senderID, content, nonce,chatName),
+  getLastMessage: (roomID: ChatInfo) => ipcRenderer.invoke('getLastMessage', roomID),
 })
 
 

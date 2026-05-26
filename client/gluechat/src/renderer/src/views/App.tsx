@@ -8,8 +8,10 @@ import {FriendsRequests} from "@renderer/components/friends/FriendsRequests";
 import {ChatList} from "@renderer/components/app/ChatList";
 import {ChatView} from "@renderer/components/app/ChatView";
 import { jwtDecode } from 'jwt-decode'
+import {Settings} from "@renderer/components/app/Settings";
+import { ProfileSettings } from '@renderer/components/app/profile/ProfileSettings'
 
-export type Tab = 'chats' | 'friends';
+export type Tab = 'chats' | 'friends' | 'settings';
 
 interface Friend {
   id: string;
@@ -31,6 +33,7 @@ export function App() {
   const [nickname, setNickname] = useState<string>('User')
   const [senderID, setSenderID] = useState<string | null>(null)
   const [receiverID, setReceiverID] = useState<string | null>(null)
+  const [selectedSetting, setSelectedSetting] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -107,7 +110,7 @@ export function App() {
               setSelectedChat={setSelectedChat}
               authToken={authToken}
             />
-          ) : (
+          ) : activeTab === 'friends' ? (
             <FriendsList
               authToken={authToken}
               addFriendOption={addFriendOption}
@@ -117,7 +120,9 @@ export function App() {
               setFriends={setFriends}
               friends={friends}
             />
-          )}
+          ) : activeTab === 'settings' ? (
+            <Settings selectedSetting={selectedSetting} setSelectedSetting={setSelectedSetting} />
+          ) : null}
         </div>
 
         <div className="px-3 py-3 border-t border-white/5 bg-gray-950/20">
@@ -137,6 +142,7 @@ export function App() {
       </div>
 
       <div className="flex-1 flex flex-col bg-gray-950/50">
+
         {activeTab === 'chats' ? (
           selectedChat ? (
             <ChatView
@@ -153,9 +159,9 @@ export function App() {
               </p>
             </div>
           )
-        ) : (
+        ) : activeTab === 'friends' ? (
           <div
-            className={`flex-1 flex ${addFriendOption ? 'items-start' : 'items-center justify-center'} `}
+            className={`flex-1 flex ${addFriendOption ? 'items-start' : 'items-center justify-center'}`}
           >
             {addFriendOption ? (
               <div className="flex h-screen w-full justify-between">
@@ -167,21 +173,34 @@ export function App() {
                 </div>
               </div>
             ) : selectedFriend ? (
-              <div className="flex justify-center text-center opacity-40">
+              <div className="text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
-                  Select a friend
+                  Friend Profile View (Coming Soon)
                 </p>
               </div>
             ) : (
               <div className="text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
-                  Select a friend
+                  Select a friend or add new ones
                 </p>
               </div>
             )}
           </div>
-        )}
+        ) : activeTab === 'settings' ? (
+          <div className="flex-1 overflow-y-auto">
+            {selectedSetting === 'EditProfile' ? (
+              <ProfileSettings />
+            ) : (
+              <div className="flex-1 h-full flex items-center justify-center text-center opacity-40">
+                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
+                  Select a setting from the list
+                </p>
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
+
     </div>
   )
 }

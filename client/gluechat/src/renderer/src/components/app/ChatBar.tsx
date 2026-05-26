@@ -2,6 +2,8 @@ import { FaUsers, FaSignOutAlt } from 'react-icons/fa';
 import { BiSolidMessageSquareDetail } from "react-icons/bi";
 import { Tab } from "../../views/App";
 import { useNavigate } from 'react-router-dom';
+import { FaCog } from 'react-icons/fa'
+
 
 interface ChatBarProps {
   activeTab: Tab;
@@ -32,7 +34,6 @@ export function ChatBar({ activeTab, setActiveTab }: ChatBarProps) {
           className={`transition-transform ${activeTab === 'chats' ? 'scale-110' : 'group-hover:scale-110'}`}
         />
       </button>
-
       <button
         onClick={() => setActiveTab('friends')}
         className={`p-3 rounded-xl transition-all duration-200 cursor-pointer group ${
@@ -47,19 +48,29 @@ export function ChatBar({ activeTab, setActiveTab }: ChatBarProps) {
           className={`transition-transform ${activeTab === 'friends' ? 'scale-110' : 'group-hover:scale-110'}`}
         />
       </button>
-
       <div className="mt-auto flex flex-col gap-4">
         <button
           onClick={handleLogout}
           className="p-3 rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-all duration-200 cursor-pointer group"
           title="Switch Account / Logout"
         >
-          <FaSignOutAlt
-            size={24}
-            className="transition-transform group-hover:scale-110"
-          />
+          <FaSignOutAlt size={24} className="transition-transform group-hover:scale-110" />
         </button>
       </div>
+      <button
+        onClick={() => setActiveTab('settings')}
+        className={`p-3 rounded-xl transition-all duration-200 cursor-pointer group ${
+          activeTab === 'settings'
+            ? 'text-white bg-gray-800'
+            : 'text-gray-400 hover:text-white hover:bg-gray-800'
+        }`}
+        title="Settings"
+      >
+        <FaCog
+          size={24}
+          className={activeTab === 'settings' ? 'scale-110' : 'group-hover:scale-110'}
+        />
+      </button>
     </div>
-  );
+  )
 }

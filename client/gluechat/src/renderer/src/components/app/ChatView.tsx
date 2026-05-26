@@ -20,7 +20,7 @@ interface ChatViewProps {
   chatName: string;
   authKey: string;
   senderID: string;
-  receiverID: string;
+  receiverID: string | null;
 }
 
 export function ChatView({senderID, authKey, chatID, chatName, receiverID}: ChatViewProps) {

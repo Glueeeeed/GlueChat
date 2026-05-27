@@ -1,4 +1,5 @@
 import { useState, ChangeEvent } from 'react'
+import {Badge} from "@renderer/components/app/profile/Badge"
 
 export function ProfileSettings() {
   const [bio, setBio] = useState(localStorage.getItem('bio') || '')
@@ -36,7 +37,7 @@ export function ProfileSettings() {
     <div className="p-8 max-w-2xl mx-auto space-y-8 overflow-y-auto h-full">
       <h2 className="text-2xl font-bold uppercase tracking-widest text-white">Your Profile</h2>
 
-      <div className="relative h-70 rounded-2xl bg-gray-900/40 overflow-hidden border border-white/10 shadow-2xl">
+      <div className="relative h-80 rounded-2xl bg-gray-900/40 overflow-hidden border border-white/10 shadow-2xl">
         <div
           className="h-24 w-full"
           style={{
@@ -65,8 +66,11 @@ export function ProfileSettings() {
           </div>
         </div>
 
-        <div className="font-bold mt-8 ml-10 flex justify-start">
+        <div className="font-bold flex-col mt-8 ml-10 flex justify-start">
           <h3 className="text-white text-lg">{localStorage.getItem('nickname') || 'Nickname'}</h3>
+          <div className={'flex gap-0.5'}>
+            <Badge src="https://cdn3.emoji.gg/emojis/601949-owner.png" label="GlueChat Owner" />
+          </div>
         </div>
 
         <div className="flex h-15 flex-col w-[80%] bg-gray-900/60 rounded-md ml-[10%] mt-5 p-3">

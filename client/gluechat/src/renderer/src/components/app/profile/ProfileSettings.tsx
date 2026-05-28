@@ -1,6 +1,7 @@
-import { useState, ChangeEvent, JSX } from 'react'
+import { useState, ChangeEvent, useEffect } from 'react'
 import {Badge} from "@renderer/components/app/profile/Badge"
 import { validateOrRefreshToken } from '@renderer/assets/main'
+import { jwtDecode } from 'jwt-decode'
 
 interface ProfileSettingsProps {
   authToken: string | null
@@ -12,6 +13,45 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
   const [banner, setBanner] = useState('#0d1935')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [bannerFile, setBannerFile] = useState<File | null>(null)
+
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!authToken)  {
+        return
+      }
+      try {
+        const authKey = await validateOrRefreshToken(authToken)
+        const response = await fetch('http://localhost:3000/api/profile/me', {
+          headers: {
+            Authorization: `Bearer ${authKey}`
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data) {
+            setBio(data.description || '')
+            setBanner(data.bannerColor || '#0d1935')
+
+
+            const decoded: any = jwtDecode(authKey)
+            if (data.avatarUrl)
+              setAvatar(`http://localhost:3000/api/profile/assets/avatar/${decoded.id}`)
+            if (data.bannerUrl)
+              setBanner(`http://localhost:3000/api/profile/assets/banner/${decoded.id}`)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile', err)
+      }
+    }
+    fetchProfile()
+  }, [authToken])
+
+
 
   const handleBannerFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -39,33 +79,56 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
   }
 
   const handleSave = async () => {
-    const authKey: string = await validateOrRefreshToken(authToken as string);
+    setError(null)
+    setSuccess(false)
 
-    const formData = new FormData()
-    if (avatar) {
-      formData.append('avatar', avatarFile as File);
+    try {
+      const authKey: string = await validateOrRefreshToken(authToken as string)
+      const formData = new FormData()
+
+      if (avatarFile) formData.append('avatar', avatarFile)
+      if (bannerFile) {
+        formData.append('banner', bannerFile)
+      } else {
+        formData.append('bannerColor', banner)
+      }
+      formData.append('description', bio)
+
+      const response = await fetch('http://localhost:3000/api/profile/update', {
+        headers: { Authorization: `Bearer ${authKey}` },
+        method: 'POST',
+        body: formData
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || "Something went wrong")
+      }
+
+      setSuccess(true)
+      setAvatarFile(null)
+      setBannerFile(null)
+    } catch (err: any) {
+      setError(err.message)
     }
-    if (bannerFile) {
-      formData.append('banner', bannerFile as File);
-    } else {
-      formData.append('bannerColor', banner);
-    }
-
-
-    formData.append('description', bio);
-
-    await fetch('http://localhost:3000/api/profile/update', {
-      headers: {
-        Authorization: `Bearer ${authKey}`
-      },
-      method: 'POST',
-      body: formData
-    })
   }
 
   return (
     <div className="p-8 max-w-2xl mx-auto space-y-8 overflow-y-auto h-full">
       <h2 className="text-2xl font-bold uppercase tracking-widest text-white">Your Profile</h2>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm font-medium">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-500 p-4 rounded-xl text-sm font-medium">
+          Successfully saved profile!
+        </div>
+      )}
 
       <div className="relative h-80 rounded-2xl bg-gray-900/40 overflow-hidden border border-white/10 shadow-2xl">
         <div

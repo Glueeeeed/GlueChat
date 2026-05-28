@@ -39,6 +39,8 @@ export function App() {
   const navigate = useNavigate()
 
   useEffect(() => {
+
+
     let isMounted = true
     const currentNickname = localStorage.getItem('nickname')
     if (currentNickname && isMounted) {

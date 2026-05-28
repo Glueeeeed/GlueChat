@@ -70,4 +70,10 @@ export abstract class ProfileService {
             return banner.bannerUrl;
         }
     }
+
+    static async getProfile(userId: string) {
+        return prisma.profiles.findUnique({
+            where: { userId }
+        });
+    }
 }

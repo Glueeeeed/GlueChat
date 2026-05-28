@@ -113,6 +113,26 @@ const app = new Elysia({
             }
         }
     })
+    .onError(({ code, error, set }) => {
+        if (code === 'VALIDATION') {
+            set.status = 422;
+            return {
+                success: false,
+                message: error.message,
+                status: 422,
+                code: 'VALIDATION_ERROR'
+            };
+        }
+
+        if (code === 'INVALID_FILE_TYPE') {
+            set.status = 422;
+            return {
+                success: false,
+                message: `Invalid type file: ${error.property}`,
+                code: 'INVALID_FILE_TYPE'
+            };
+        }
+    })
 
 
 

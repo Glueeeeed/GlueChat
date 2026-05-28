@@ -49,14 +49,20 @@ export const profile = new Elysia({ prefix: '/profile' })
             user: payload as { id: string } & typeof payload        }
     })
 
-    .post('/update', async ({user,body}) => {
+    .get('/me', async ({ user }) => {
         try {
-            const {avatar, banner, bannerColor, description} = body;
-            await ProfileService.updateProfile(user.id,avatar,banner,description,bannerColor);
-            return status(200);
-
+            const profileData = await ProfileService.getProfile(user.id);
+            return profileData;
         } catch (e) {
-            console.error(e);
+            return status(500, { message: "Nie udało się pobrać profilu" });
+        }
+    })
+    .post('/update', async ({ user, body }) => {
+        try {
+            const { avatar, banner, bannerColor, description } = body;
+            await ProfileService.updateProfile(user.id, avatar, banner, description, bannerColor);
+            return { success: true, message: "Successfully updated profile" };
+        } catch (e: any) {
             return status(500, {
                 success: false,
                 message: "Something went wrong"

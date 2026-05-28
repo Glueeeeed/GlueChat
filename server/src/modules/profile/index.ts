@@ -29,6 +29,20 @@ export const profile = new Elysia({ prefix: '/profile' })
            return status(404)
        }
     })
+
+    .get('/:userId', async ({ params, set }) => {
+        try {
+            const profileData = await ProfileService.getProfile(params.userId);
+            if (!profileData) {
+                set.status = 404;
+                return { success: false, message: "Profile not found" };
+            }
+            return profileData;
+        } catch (e) {
+            set.status = 500;
+            return { success: false, message: "Internal server error" };
+        }
+    })
     .use(bearer())
     .use(jwt({ name: 'jwt',
         secret: process.env.JWT_SECRET!

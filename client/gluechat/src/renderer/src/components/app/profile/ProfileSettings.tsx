@@ -130,9 +130,9 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
         </div>
       )}
 
-      <div className="relative h-80 rounded-2xl bg-gray-900/40 overflow-hidden border border-white/10 shadow-2xl">
+      <div className="relative h-120 rounded-2xl bg-gray-900/40 overflow-hidden border border-white/10 shadow-2xl">
         <div
-          className="h-24 w-full"
+          className="h-35 w-full"
           style={{
             backgroundColor: banner.startsWith('#') ? banner : 'transparent',
             backgroundImage: banner.startsWith('#') ? 'none' : `url(${banner})`,
@@ -153,7 +153,6 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
                     )}
                   </div>
                 </div>
-                <div className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-emerald-500 border-4 border-gray-900" />
               </div>
             </div>
           </div>
@@ -166,9 +165,13 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
           </div>
         </div>
 
-        <div className="flex h-15 flex-col w-[80%] bg-gray-900/60 rounded-md ml-[10%] mt-5 p-3">
-          <label className="mb-1 font-medium text-[10px] uppercase text-gray-500">About me</label>
-          <p className="text-xs italic text-gray-300">{bio || 'No description yet...'}</p>
+        <div className="flex flex-col w-[90%] bg-gray-950/40 rounded-xl mx-auto mt-6 p-4 border border-white/5">
+          <label className="mb-2 font-bold text-[10px] uppercase text-gray-500 tracking-wider">
+            About me
+          </label>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            {bio|| 'This user has no bio yet.'}
+          </p>
         </div>
       </div>
 

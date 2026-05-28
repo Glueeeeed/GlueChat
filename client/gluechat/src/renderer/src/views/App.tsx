@@ -11,6 +11,7 @@ import { jwtDecode } from 'jwt-decode'
 import {Settings} from "@renderer/components/app/Settings";
 import { ProfileSettings } from '@renderer/components/app/profile/ProfileSettings'
 import {checkIfAssetExists} from "@renderer/assets/profile";
+import {UserProfile} from "@renderer/components/app/profile/UserProfile";
 
 export type Tab = 'chats' | 'friends' | 'settings';
 
@@ -139,10 +140,10 @@ export function App() {
                 <img className={'w-9 h-9 rounded-full'} src={avatarURL}></img>
               ) : (
                 <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
-                  {nickname.substring(0,2)}
+                  {nickname.substring(0, 2)}
                 </div>
               )}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-gray-900" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-violet-500 border-2 border-gray-900" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate text-gray-100">{nickname}</p>
@@ -183,11 +184,11 @@ export function App() {
                 </div>
               </div>
             ) : selectedFriend ? (
-              <div className="text-center opacity-40">
-                <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
-                  Friend Profile View (Coming Soon)
-                </p>
-              </div>
+              <UserProfile
+                authToken={authToken}
+                userId={selectedFriend.id}
+                nickname={selectedFriend.nickname}
+              />
             ) : (
               <div className="text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">

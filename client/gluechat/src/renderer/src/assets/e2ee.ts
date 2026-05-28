@@ -1,7 +1,8 @@
+import { API_BASE_URL } from './utils'
 
 
 export async function syncMessages(authKey: string, roomID: string): Promise<any[]> {
-  const response = await fetch(`http://localhost:3000/api/e2ee/messages/sync?roomID=${roomID}`,
+  const response = await fetch(`${API_BASE_URL}/api/e2ee/messages/sync?roomID=${roomID}`,
     {
       method: 'GET',
       headers: {
@@ -21,7 +22,7 @@ export async function syncMessages(authKey: string, roomID: string): Promise<any
 }
 
 export async function makeAsRead(authKey: string, messageID): Promise<void> {
-  await fetch(`http://localhost:3000/api/e2ee/messages/make-as-read/`, {
+  await fetch(`${API_BASE_URL}/api/e2ee/messages/make-as-read/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

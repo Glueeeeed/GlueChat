@@ -1,6 +1,7 @@
 import validator from 'validator';
 
 
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function validateNickname (nickname: string) : void {
     if (validator.isEmpty(nickname)) {
@@ -41,16 +42,16 @@ export async function initAuthToken(): Promise<string> {
 
   console.log('refreshToken', refreshToken);
 
-  const response = await fetch(`http://localhost:3000/api/auth/refresh`, {
+  const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json'
     },
     body: JSON.stringify({
-      refreshToken: refreshToken,
+      refreshToken: refreshToken
     })
-  });
+  })
 
   const json = await response.json();
 

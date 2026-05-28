@@ -1,18 +1,18 @@
-import {initAuthToken} from "@renderer/assets/utils";
+import { API_BASE_URL, initAuthToken } from '@renderer/assets/utils'
 
 export async function addToFriend(nickname: string, authToken: string, tryAgain = false): Promise<boolean> {
   if (!nickname) {
     throw new Error("You must provide a nickname");
   }
 
-  const response = await fetch(`http://localhost:3000/api/friends/add-friend`, {
+  const response = await fetch(`${API_BASE_URL}/api/friends/add-friend`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authToken}`
+      Authorization: `Bearer ${authToken}`
     },
     body: JSON.stringify({ nickname })
-  });
+  })
 
   if (response.status === 401 && !tryAgain) {
     const newToken = await initAuthToken();
@@ -32,13 +32,13 @@ export async function addToFriend(nickname: string, authToken: string, tryAgain 
 }
 
 export async function loadFriend(authToken: string, tryAgain = false): Promise<object> {
-  const response = await fetch(`http://localhost:3000/api/friends`, {
+  const response = await fetch(`${API_BASE_URL}/api/friends`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authToken}`
-    },
-  });
+      Authorization: `Bearer ${authToken}`
+    }
+  })
 
   if (response.status === 401 && !tryAgain) {
     const newToken : string = await initAuthToken();
@@ -53,11 +53,11 @@ export async function loadFriend(authToken: string, tryAgain = false): Promise<o
 }
 
 export async function loadRequests(authToken: string, tryAgain = false): Promise<object> {
-  const response = await fetch(`http://localhost:3000/api/friends/requests`, {
+  const response = await fetch(`${API_BASE_URL}/api/friends/requests`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authToken}`
+      Authorization: `Bearer ${authToken}`
     }
   })
 
@@ -74,16 +74,16 @@ export async function loadRequests(authToken: string, tryAgain = false): Promise
 }
 
 export async function request(requestID: string , accept: boolean, authToken : string, tryAgain = false): Promise<void> {
-  const response = await fetch(`http://localhost:3000/api/friends/requests`, {
+  const response = await fetch(`${API_BASE_URL}/api/friends/requests`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${authToken}`
+      Accept: 'application/json',
+      Authorization: `Bearer ${authToken}`
     },
     body: JSON.stringify({
       requestID: requestID,
-      accept : accept,
+      accept: accept
     })
   })
   if (response.status === 401 && !tryAgain) {

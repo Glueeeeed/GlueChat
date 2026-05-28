@@ -1,11 +1,11 @@
-import {initAuthToken} from "@renderer/assets/utils";
+import { API_BASE_URL, initAuthToken } from '@renderer/assets/utils'
 
 export async function loadChats(authToken: string, tryAgain = false): Promise<object> {
-  const response = await fetch(`http://localhost:3000/api/chats/`, {
+  const response = await fetch(`${API_BASE_URL}/api/chats/`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authToken}`
+      Authorization: `Bearer ${authToken}`
     }
   })
 
@@ -27,7 +27,7 @@ export async function validateOrRefreshToken(authToken: string): Promise<string>
   }
 
   try {
-    const response = await fetch(`http://localhost:3000/api/e2ee/check-token`, {
+    const response = await fetch(`${API_BASE_URL}/api/e2ee/check-token`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

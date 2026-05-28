@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config'
+
 interface preKeysPackage {
   pubKey: string
   spk: string
@@ -8,7 +10,7 @@ interface preKeysPackage {
 
 export abstract class NetworkService {
    static async getPreKeys(authKey: string, userID: string): Promise<preKeysPackage> {
-    const response = await fetch(`http://localhost:3000/api/e2ee/pre-keys/${userID}`, {
+    const response = await fetch(`${API_BASE_URL}/api/e2ee/pre-keys/${userID}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

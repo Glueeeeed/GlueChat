@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '@renderer/assets/utils'
+
 interface result {
   success: boolean;
   message: string;
@@ -6,15 +8,15 @@ interface result {
 }
 
 export async function login(nickname: string, password: string) : Promise<result> {
-  const response = await fetch('http://localhost:3000/api/auth/login', {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json'
     },
     body: JSON.stringify({
       nickname: nickname,
-      password: password,
+      password: password
     })
   })
   const json = await response.json();

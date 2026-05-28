@@ -8,15 +8,15 @@ interface ProfileSettingsProps {
 }
 
 export function ProfileSettings({authToken}: ProfileSettingsProps) {
-  const [bio, setBio] = useState( "")
-  const [avatar, setAvatar] = useState("")
-  const [banner, setBanner] = useState('#0d1935')
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [bannerFile, setBannerFile] = useState<File | null>(null)
+  const [bio, setBio] = useState( "");
+  const [avatar, setAvatar] = useState("");
+  const [banner, setBanner] = useState('#0d1935');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [badges, setBadges] = useState<{ id: string; name: string; imageUrl: string }[]>([]);
 
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   useEffect(() => {
     const fetchProfile = async () => {
       if (!authToken)  {
@@ -35,6 +35,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
           if (data) {
             setBio(data.description || '')
             setBanner(data.bannerColor || '#0d1935')
+            setBadges(data.badges || [])
 
 
             const decoded: any = jwtDecode(authKey)
@@ -161,7 +162,9 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
         <div className="font-bold flex-col mt-8 ml-10 flex justify-start">
           <h3 className="text-white text-lg">{localStorage.getItem('nickname') || 'Nickname'}</h3>
           <div className={'flex gap-0.5'}>
-            <Badge src="https://cdn3.emoji.gg/emojis/601949-owner.png" label="GlueChat Owner" />
+            {badges.map((badge) => (
+              <Badge key={badge.id} src={badge.imageUrl} label={badge.name} />
+            ))}
           </div>
         </div>
 
@@ -170,7 +173,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
             About me
           </label>
           <p className="text-sm text-gray-300 leading-relaxed">
-            {bio|| 'This user has no bio yet.'}
+            {bio || 'This user has no bio yet.'}
           </p>
         </div>
       </div>

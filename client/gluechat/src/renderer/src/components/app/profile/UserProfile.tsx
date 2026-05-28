@@ -11,6 +11,8 @@ interface UserProfileProps {
 export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [badges, setBadges] = useState<{ id: string; name: string; imageUrl: string }[]>([])
+
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -24,6 +26,7 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
         if (response.ok) {
           const data = await response.json()
           setProfile(data)
+          setBadges(data.badges || [])
         }
       } catch (err) {
         console.error('Failed to fetch user profile', err)
@@ -50,7 +53,7 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
   const bannerColor = profile?.bannerColor || '#0d1935'
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6">
+    <div className="w-full max-w-3xl mx-auto p-6">
       <div className="relative h-120 rounded-2xl bg-gray-900/40 overflow-hidden border border-white/10 shadow-2xl">
         <div
           className="h-35 w-full"
@@ -79,8 +82,10 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
 
         <div className="font-bold flex-col mt-12 ml-6 flex justify-start">
           <h3 className="text-white text-xl">{nickname}</h3>
-          <div className={'flex gap-0.5 mt-1'}>
-            <Badge src="https://cdn3.emoji.gg/emojis/601949-owner.png" label="User" />
+          <div className={'flex gap-0.5'}>
+            {badges.map((badge) => (
+              <Badge key={badge.id} src={badge.imageUrl} label={badge.name} />
+            ))}
           </div>
         </div>
 

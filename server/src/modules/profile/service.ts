@@ -72,8 +72,26 @@ export abstract class ProfileService {
     }
 
     static async getProfile(userId: string) {
-        return prisma.profiles.findUnique({
-            where: { userId }
+        const profile = await prisma.profiles.findUnique({
+            where: { userId },
+            include: {
+                user: {
+                    include: {
+                        badges: {
+                            include: {
+                                badge: true
+                            }
+                        }
+                    }
+                }
+            }
         });
+
+        if (!profile) return null;
+
+        return {
+            ...profile,
+            badges: profile.user.badges.map(ub => ub.badge)
+        };
     }
 }

@@ -123,6 +123,8 @@ model User {
   sentRequests         Friendship[]     @relation("SentRequests")
   receivedRequests     Friendship[]     @relation("ReceivedRequests")
   sessions             Sessions[]
+  profiles             Profiles[]       @relation("SignedToUser")
+  badges               UserBadges[]
 }
 
 model PrivateRoom {
@@ -233,6 +235,34 @@ model OneTimePreKeys {
   @@index([userId, isUsed])
   @@index([userId])
 }
+
+model Badge {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  imageUrl String
+  users    UserBadges[]
+}
+
+model UserBadges {
+  userId  String
+  badgeId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, badgeId])
+}
+
+model Profiles {
+  id          Int     @id @default(autoincrement())
+  userId      String  @unique
+  avatarUrl   String?
+  bannerUrl   String?
+  bannerColor String? @default("#0d1935")
+  description String?
+  user        User    @relation("SignedToUser", fields: [userId], references: [id], onDelete: Cascade)
+}
+
 ```
 
 

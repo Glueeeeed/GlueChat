@@ -1,6 +1,7 @@
 import React, { useState,useEffect } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import { loadFriend } from '@renderer/assets/friends'
+import {checkIfAssetExists} from "@renderer/assets/profile";
 
 interface Friend {
   id: string
@@ -23,6 +24,9 @@ interface FriendsListProps {
 export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption, setFriends, friends }: FriendsListProps): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'online' | 'null'>('all')
+  const [userAvatar, setUserAvatar] = useState<Record<string, string | null>>({})
+
+  const userAvatarMap: Record<string, string | null> = {}
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -36,6 +40,16 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
       }
     };
     fetchFriends();
+
+    const getAvatars = async () => {
+      friends.map(async (friend) => {
+        userAvatarMap[friend.id] = await checkIfAssetExists('avatar', friend.id)
+      })
+      setUserAvatar(userAvatarMap)
+    }
+
+    getAvatars();
+
   }, [authToken]);
 
 
@@ -60,7 +74,10 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
         <h2 className="text-xl font-bold tracking-tight text-white uppercase">Friends</h2>
 
         <div className="relative group">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-violet-900 transition-colors" size={14} />
+          <FaSearch
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-violet-900 transition-colors"
+            size={14}
+          />
           <input
             type="text"
             placeholder="Search"
@@ -75,7 +92,9 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
             hidden={addFriendOption}
             onClick={() => setFilter('all')}
             className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-              filter === 'all' ? 'bg-violet-800 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+              filter === 'all'
+                ? 'bg-violet-800 text-white shadow-lg'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
           >
             ALL
@@ -84,7 +103,9 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
             hidden={addFriendOption}
             onClick={() => setFilter('online')}
             className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-              filter === 'online' ? 'bg-violet-800 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+              filter === 'online'
+                ? 'bg-violet-800 text-white shadow-lg'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
           >
             ONLINE
@@ -92,7 +113,9 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
           <button
             onClick={() => setAddFriend()}
             className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-              addFriendOption ? 'bg-violet-800 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+              addFriendOption
+                ? 'bg-violet-800 text-white shadow-lg'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
           >
             FRIENDS PANEL
@@ -101,51 +124,52 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-900/50 [&::-webkit-scrollbar-thumb]:bg-violet-950 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-violet-900">
-
-
-        {filteredFriends.length > 0 ? (
-          filteredFriends.map((friend) => (
-            <button
-              key={friend.id}
-              onClick={() => onSelectFriend?.(friend)}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group mb-1 ${
-                selectedFriendId === friend.id
-                  ? 'bg-violet-500/10 border border-violet-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)]'
-                  : 'hover:bg-white/5 border border-transparent hover:border-white/5'
-              }`}
-            >
-              <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
-                  {friend.nickname.substring(0, 2)}
+        {filteredFriends.length > 0
+          ? filteredFriends.map((friend) => (
+              <button
+                key={friend.id}
+                onClick={() => onSelectFriend?.(friend)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group mb-1 ${
+                  selectedFriendId === friend.id
+                    ? 'bg-violet-500/10 border border-violet-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)]'
+                    : 'hover:bg-white/5 border border-transparent hover:border-white/5'
+                }`}
+              >
+                <div className="relative">
+                  {userAvatar[friend.id] ? (
+                    <img className={'w-9 h-9 rounded-full'} src={userAvatar[friend.id]}></img>
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
+                      {friend.nickname.substring(0, 2)}
+                    </div>
+                  )}
+                  <div
+                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${
+                      friend.status === 'online' ? 'bg-violet-500' : 'bg-gray-500'
+                    }`}
+                  />
                 </div>
-                <div
-                  className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${
-                    friend.status === 'online' ? 'bg-violet-500' : 'bg-gray-500'
-                  }`}
-                />
-              </div>
 
-              <div className="flex flex-col items-start">
-                <span className={`font-semibold text-sm transition-colors ${
-                  selectedFriendId === friend.id ? 'text-white' : 'text-gray-300 group-hover:text-white'
-                }`}>
-                  {friend.nickname}
-                </span>
-                <span className="text-[10px] text-gray-500 uppercase">
-                  {friend.status}
-                </span>
+                <div className="flex flex-col items-start">
+                  <span
+                    className={`font-semibold text-sm transition-colors ${
+                      selectedFriendId === friend.id
+                        ? 'text-white'
+                        : 'text-gray-300 group-hover:text-white'
+                    }`}
+                  >
+                    {friend.nickname}
+                  </span>
+                  <span className="text-[10px] text-gray-500 uppercase">{friend.status}</span>
+                </div>
+              </button>
+            ))
+          : !addFriendOption && (
+              <div className="flex flex-col items-center justify-center h-40 opacity-30">
+                <p className="text-xs uppercase font-bold">No friends found</p>
               </div>
-            </button>
-          ))
-        ) : (
-          !addFriendOption && (
-          <div className="flex flex-col items-center justify-center h-40 opacity-30">
-          <p className="text-xs uppercase font-bold">No friends found</p>
-          </div>
-          )
-        )}
+            )}
       </div>
-
     </div>
   )
 }

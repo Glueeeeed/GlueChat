@@ -4,6 +4,7 @@ import {ChatMessage} from "@renderer/components/app/ChatMessage";
 import {useEffect, useRef, useState} from "react";
 import {validateOrRefreshToken} from "@renderer/assets/main";
 import {syncMessages, makeAsRead} from '@renderer/assets/e2ee'
+import { checkIfAssetExists } from '@renderer/assets/profile'
 
 
 interface Message {
@@ -26,9 +27,17 @@ interface ChatViewProps {
 export function ChatView({senderID, authKey, chatID, chatName, receiverID}: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
+  const [avatarURL, setAvatarURL] = useState<string | null>(null);
+
 
 
   useEffect(() => {
+
+    const loadAvatar = async () => {
+      const avatarUrl = await checkIfAssetExists('avatar', receiverID)
+      setAvatarURL(avatarUrl)
+    }
+
 
       const loadLocalHistory = async () => {
         try {
@@ -50,6 +59,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
         }
       }
 
+      loadAvatar()
       loadLocalHistory()
 
 
@@ -57,8 +67,6 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
         try {
         const authToken : string = await validateOrRefreshToken(authKey);
         const newPackages = await syncMessages(authToken, chatID);
-
-          console.log("PACKAGES " + JSON.stringify(newPackages));
 
           if (newPackages && newPackages.length > 0)  {
             for (const pkg of newPackages) {
@@ -197,9 +205,13 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
     <div className="flex flex-col h-full relative overflow-hidden">
       <header className="px-6 py-4 border-b border-white/5 bg-gray-950/40 backdrop-blur-md flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-linear-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-            {chatName.substring(0, 2).toUpperCase()}
-          </div>
+          {avatarURL ? (
+            <img className={'w-10 h-10 rounded-full'} src={avatarURL}></img>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
+              {chatName.substring(0, 2)}
+            </div>
+          )}
           <div>
             <h2 className="text-sm font-bold text-gray-100">{chatName}</h2>
           </div>
@@ -217,15 +229,25 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-30">
             <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center mb-4">
-               <Info size={32} />
+              <Info size={32} />
             </div>
             <p className="text-sm font-medium uppercase tracking-widest">No messages yet</p>
-            <p className="text-xs mt-2 max-w-50">Send a message to start the conversation with {chatName}</p>
+            <p className="text-xs mt-2 max-w-50">
+              Send a message to start the conversation with {chatName}
+            </p>
           </div>
         ) : (
           <div className="flex flex-col">
             {messages.map((m) => (
-               <ChatMessage isSeen={m.isSeen} key={m.id} text={m.content} isAuthor={m.isAuthor} timestamp={m.timestamp} nickname={m.sender} />
+              <ChatMessage
+                avatar={avatarURL}
+                isSeen={m.isSeen}
+                key={m.id}
+                text={m.content}
+                isAuthor={m.isAuthor}
+                timestamp={m.timestamp}
+                nickname={m.sender}
+              />
             ))}
           </div>
         )}
@@ -233,5 +255,5 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
       <ChatInput onSendMessage={handleSendMessage} />
     </div>
-  );
+  )
 }

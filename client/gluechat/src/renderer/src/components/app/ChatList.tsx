@@ -1,6 +1,8 @@
-import {FaSearch} from "react-icons/fa";
-import {useEffect, useState} from "react";
-import {loadChats} from "@renderer/assets/main";
+import { FaSearch } from 'react-icons/fa'
+import { useEffect, useState } from 'react'
+import { loadChats } from '@renderer/assets/main'
+import { checkIfAssetExists } from '@renderer/assets/profile'
+
 
 interface ChatInfo {
   id: string;
@@ -27,6 +29,7 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
   const [searchTerm, setSearchTerm] = useState('');
   const [chats, setChats] = useState<ChatInfo[]>([]);
   const [lastMessages, setLastMessages] = useState<Record<string, string>>({})
+  const [userAvatar, setUserAvatar] = useState<Record<string, string | null>>({})
 
 
   useEffect(() => {
@@ -38,9 +41,11 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
           setChats(chatsData)
 
           const messagesMap: Record<string, string> = {}
+          const userAvatarMap: Record<string, string | null> = {}
 
           await Promise.all(
             chatsData.map(async (chat) => {
+              userAvatarMap[chat.receiverID] = await checkIfAssetExists('avatar', chat.receiverID);
               const lastMsg = await window.e2ee.getLastMessage(chat)
               if (lastMsg) {
                 messagesMap[chat.id] = lastMsg.isAuthor
@@ -50,6 +55,7 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
             })
           )
 
+          setUserAvatar(userAvatarMap)
           setLastMessages(messagesMap)
         } catch (error) {
           console.error('Failed to load chats', error)
@@ -106,9 +112,13 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
               }`}
             >
               <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
-                  {chat.name.substring(0, 2)}
-                </div>
+                {userAvatar[chat.receiverID] ? (
+                  <img className={'w-9 h-9 rounded-full'} src={userAvatar[chat.receiverID]}></img>
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
+                    {chat.name.substring(0, 2)}
+                  </div>
+                )}
                 {chat.status === 'online' && (
                   <div
                     className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 bg-violet-500`}

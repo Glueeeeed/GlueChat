@@ -1,14 +1,22 @@
-import { useState, ChangeEvent } from 'react'
+import { useState, ChangeEvent, JSX } from 'react'
 import {Badge} from "@renderer/components/app/profile/Badge"
+import { validateOrRefreshToken } from '@renderer/assets/main'
 
-export function ProfileSettings() {
-  const [bio, setBio] = useState(localStorage.getItem('bio') || '')
+interface ProfileSettingsProps {
+  authToken: string | null
+}
+
+export function ProfileSettings({authToken}: ProfileSettingsProps) {
+  const [bio, setBio] = useState( "")
   const [avatar, setAvatar] = useState("")
   const [banner, setBanner] = useState('#0d1935')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [bannerFile, setBannerFile] = useState<File | null>(null)
 
   const handleBannerFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setBannerFile(file);
       const reader = new FileReader()
       reader.onloadend = () => {
         setBanner(reader.result as string)
@@ -21,6 +29,7 @@ export function ProfileSettings() {
   const handleAvatarFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setAvatarFile(file);
       const reader = new FileReader()
       reader.onloadend = () => {
         setAvatar(reader.result as string)
@@ -29,8 +38,29 @@ export function ProfileSettings() {
     }
   }
 
-  const handleSave = () => {
-    alert('Profile updatetd!')
+  const handleSave = async () => {
+    const authKey: string = await validateOrRefreshToken(authToken as string);
+
+    const formData = new FormData()
+    if (avatar) {
+      formData.append('avatar', avatarFile as File);
+    }
+    if (bannerFile) {
+      formData.append('banner', bannerFile as File);
+    } else {
+      formData.append('bannerColor', banner);
+    }
+
+
+    formData.append('description', bio);
+
+    await fetch('http://localhost:3000/api/profile/update', {
+      headers: {
+        Authorization: `Bearer ${authKey}`
+      },
+      method: 'POST',
+      body: formData
+    })
   }
 
   return (

@@ -10,6 +10,7 @@ import {ChatView} from "@renderer/components/app/ChatView";
 import { jwtDecode } from 'jwt-decode'
 import {Settings} from "@renderer/components/app/Settings";
 import { ProfileSettings } from '@renderer/components/app/profile/ProfileSettings'
+import {checkIfAssetExists} from "@renderer/assets/profile";
 
 export type Tab = 'chats' | 'friends' | 'settings';
 
@@ -34,6 +35,7 @@ export function App() {
   const [senderID, setSenderID] = useState<string | null>(null)
   const [receiverID, setReceiverID] = useState<string | null>(null)
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null)
+  const [avatarURL, setAvatarURL] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -47,7 +49,10 @@ export function App() {
       try {
         const token = await initAuthToken()
         if (isMounted) {
-          setAuthToken(token)
+          setAuthToken(token);
+          const decodedToken: any = jwtDecode(token);
+          const avatarUrl = await checkIfAssetExists("avatar", decodedToken.id);
+          setAvatarURL(avatarUrl);
         }
       } catch (e) {
         if (isMounted) {
@@ -128,9 +133,13 @@ export function App() {
         <div className="px-3 py-3 border-t border-white/5 bg-gray-950/20">
           <div className="flex items-center gap-3 px-2">
             <div className="relative">
-              <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
-                {nickname.substring(0, 2)}
-              </div>
+              {avatarURL ? (
+                <img className={'w-9 h-9 rounded-full'} src={avatarURL}></img>
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
+                  {nickname.substring(0,2)}
+                </div>
+              )}
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-gray-900" />
             </div>
             <div className="flex-1 min-w-0">
@@ -142,7 +151,6 @@ export function App() {
       </div>
 
       <div className="flex-1 flex flex-col bg-gray-950/50">
-
         {activeTab === 'chats' ? (
           selectedChat ? (
             <ChatView
@@ -189,7 +197,7 @@ export function App() {
         ) : activeTab === 'settings' ? (
           <div className="flex-1 overflow-y-auto">
             {selectedSetting === 'EditProfile' ? (
-              <ProfileSettings />
+              <ProfileSettings authToken={authToken} />
             ) : (
               <div className="flex-1 h-full flex items-center justify-center text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
@@ -200,7 +208,6 @@ export function App() {
           </div>
         ) : null}
       </div>
-
     </div>
   )
 }

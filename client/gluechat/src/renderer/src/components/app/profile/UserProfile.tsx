@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Badge } from '@renderer/components/app/profile/Badge'
 import { validateOrRefreshToken } from '@renderer/assets/main'
+import { API_BASE_URL } from '@renderer/assets/utils'
+
 
 interface UserProfileProps {
   authToken: string | null
@@ -19,7 +21,7 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
       if (!authToken || !userId) return
       try {
         const authKey = await validateOrRefreshToken(authToken)
-        const response = await fetch(`http://localhost:3000/api/profile/${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/profile/${userId}`, {
           headers: { Authorization: `Bearer ${authKey}` }
         })
 
@@ -45,10 +47,10 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
     )
 
   const avatarUrl = profile?.avatarUrl
-    ? `http://localhost:3000/api/profile/assets/avatar/${userId}`
+    ? `${API_BASE_URL}/api/profile/assets/avatar/${userId}`
     : null
   const bannerUrl = profile?.bannerUrl
-    ? `http://localhost:3000/api/profile/assets/banner/${userId}`
+    ? `${API_BASE_URL}/api/profile/assets/banner/${userId}`
     : null
   const bannerColor = profile?.bannerColor || '#0d1935'
 

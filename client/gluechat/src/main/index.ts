@@ -1,17 +1,20 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
-import { join } from 'path'
+import path, { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import icon from '../../resources/icon.jpg?asset'
 import keytar from 'keytar'
 import { randomBytes } from '@noble/post-quantum/utils.js'
 import ProtocolService from './Services/ProtocolService'
 import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore'
 import { ChatInfo, StorageService } from './Services/StorageService'
 import {messageData} from './Services/StorageService'
+import { SecretManager } from './Services/SecretManager'
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    title: "GlueChat",
+    icon: path.join(__dirname, '../../resources/icon.ico'),
     width: 1000,
     height: 670,
     minWidth: 850,
@@ -49,7 +52,9 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.gluechat.app');
+  app.name = 'GlueChat';
+
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -104,10 +109,10 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) : Prom
   const spkPubKey: string = Buffer.from(spk.publicKey).toString('base64');
   const spkKey: string = Buffer.from(spk.secretKey).toString('base64')
 
-  await keytar.setPassword('gluechat_' + accountName, 'identityKey', identityKey);
-  await keytar.setPassword('gluechat_' + accountName, 'identityPubKey', identityPubKey);
-  await keytar.setPassword('gluechat_' + accountName, 'signingPrivateKey',  spkKey);
-  await keytar.setPassword('gluechat_' + accountName, 'signingPubKey', spkPubKey);
+  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, 'identityKey', identityKey);
+  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, 'identityPubKey', identityPubKey);
+  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, 'signingPrivateKey',  spkKey);
+  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, 'signingPubKey', spkPubKey);
 
   const signature: string = Buffer.from(CryptoCore.sign(spk.publicKey, keys.secretKey)).toString(
     'base64');
@@ -116,7 +121,7 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) : Prom
     const keyPair: KeyPair = CryptoCore.generateNewKeyPair();
     const pubKey: string = Buffer.from(keyPair.publicKey).toString('base64');
     const privateKey: string = Buffer.from(keyPair.secretKey).toString('base64');
-    await keytar.setPassword('gluechat_' + accountName, oneTimeKeyID, privateKey);
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, oneTimeKeyID, privateKey);
     const oneTimeKey = {
       id: oneTimeKeyID,
       pubKey: pubKey
@@ -137,8 +142,8 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) : Prom
 
 })
 
-ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string) => {
-    const data = await ProtocolService.initializeEncrypt(authKey, content, roomID, senderID, receiverID)
+ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => {
+    const data = await ProtocolService.initializeEncrypt(authKey, content, roomID, senderID, receiverID, accountName)
     return data
   }
 )
@@ -148,15 +153,15 @@ ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: s
   return await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName,accountID)
 })
 
-ipcMain.handle('saveMessage', async (_,roomID: string, senderID: string, messageData  : messageData, nonce : string, chatName : string) => {
-  return await StorageService.saveMessage(roomID, senderID, messageData, nonce, chatName);
+ipcMain.handle('saveMessage', async (_,roomID: string, senderID: string, messageData  : messageData, nonce : string, chatName : string, accountName : string) => {
+  return await StorageService.saveMessage(roomID, senderID, messageData, nonce, chatName, accountName);
 })
 
-ipcMain.handle('getMessages', async (_, roomID: string) => {
-  return await StorageService.getHistory(roomID);
+ipcMain.handle('getMessages', async (_, roomID: string, accountName: string) => {
+  return await StorageService.getHistory(roomID, accountName);
 })
 
-ipcMain.handle('getLastMessage', async (_, roomID: ChatInfo) => {
-  return await StorageService.getLastMessage(roomID);
+ipcMain.handle('getLastMessage', async (_, roomID: ChatInfo, accountName: string) => {
+  return await StorageService.getLastMessage(roomID, accountName);
 })
 

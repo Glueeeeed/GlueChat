@@ -3,6 +3,8 @@ import Database from 'better-sqlite3';
 import {CryptoCore} from './CryptoCore'
 import path from 'path'
 import { randomBytes } from '@noble/post-quantum/utils.js'
+import { app } from 'electron'
+import { SecretManager } from './SecretManager'
 
 export interface SessionState {
   rootKey: Uint8Array
@@ -35,25 +37,38 @@ export interface ChatInfo {
   receiverID: string
 }
 
-const db = new Database(path.join(process.cwd(), `${process.argv[2] || 'DefaultUser'}_history.db`))
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS chat_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    roomID TEXT,
-    senderID TEXT,
-    senderName TEXT,
-    encryptedContent TEXT,
-    messageID TEXT UNIQUE,
-    isAuthor BOOLEAN DEFAULT NULL,
-    isSeen BOOLEAN DEFAULT NULL,
-    nonce TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`)
-
 
 export abstract class StorageService {
+  private static dbs: Map<string, any> = new Map()
+
+  private static getDb(accountName: string) {
+    if (this.dbs.has(accountName)) {
+      return this.dbs.get(accountName)
+    }
+
+    const userDataPath = app.getPath('userData')
+    const dbPath = path.join(userDataPath, `${accountName}_history.db`)
+    console.log(`dbPath: ${dbPath}`)
+
+    const db = new Database(dbPath)
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS chat_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        roomID TEXT,
+        senderID TEXT,
+        senderName TEXT,
+        encryptedContent TEXT,
+        messageID TEXT UNIQUE,
+        isAuthor BOOLEAN DEFAULT NULL,
+        isSeen BOOLEAN DEFAULT NULL,
+        nonce TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+
+    return db
+  }
   private static async getStorageKey(): Promise<Uint8Array> {
     let key = await keytar.getPassword('Gluechat', 'local_storage_key')
 
@@ -66,21 +81,13 @@ export abstract class StorageService {
     return Buffer.from(key, 'base64')
   }
 
-  static async saveMessage(
-    roomID: string,
-    senderID: string,
-    messageData: messageData,
-    nonce: string,
-    chatName: string
-  ): Promise<void> {
+  static async saveMessage(roomID: string, senderID: string, messageData: messageData, nonce: string, chatName: string, accountName: string): Promise<void> {
     const key = await this.getStorageKey()
+    const db = this.getDb(accountName)
 
     const encrypted = (CryptoCore as any).encryptData(messageData.content, key)
 
-    const stmt = db.prepare(`
-      INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, nonce)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `)
+    const stmt = db.prepare(`INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, nonce)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)  `)
 
     stmt.run(
       roomID,
@@ -94,7 +101,8 @@ export abstract class StorageService {
     )
   }
 
-  static async getHistory(roomID: string) {
+  static async getHistory(roomID: string, accountName: string) {
+    const db = this.getDb(accountName);
     const rows = db
       .prepare('SELECT * FROM chat_history WHERE roomID = ? ORDER BY timestamp ASC')
       .all(roomID)
@@ -118,13 +126,13 @@ export abstract class StorageService {
     })
   }
 
-  static async getLastMessage(data: ChatInfo) {
-
+  static async getLastMessage(data: ChatInfo, accountName: string) {
+    const db = this.getDb(accountName);
     const row: any = db
       .prepare('SELECT * FROM chat_history WHERE roomID = ? ORDER BY timestamp DESC LIMIT 1')
-      .get(data.id);
+      .get(data.id)
 
-    if (!row) return null;
+    if (!row) return null
     const key = await this.getStorageKey()
 
     const decrypted = (CryptoCore as any).decryptData(
@@ -140,32 +148,32 @@ export abstract class StorageService {
     }
   }
 
-  static async saveSession(roomID: string, data: string, accountID: string): Promise<void> {
+  static async saveSession(roomID: string, data: string, accountID: string, accountName: string): Promise<void> {
     const combinedName: string = accountID + '-' + roomID
-    await keytar.setPassword('gluechat', combinedName, data)
+    await SecretManager.setSecret(accountName, 'gluechat', combinedName, data)
   }
-  static async deleteSession(roomID: string, accountID: string): Promise<void> {
+  static async deleteSession(roomID: string, accountID: string, accountName: string): Promise<void> {
     const combinedName: string = accountID + '-' + roomID
-    await keytar.deletePassword('gluechat', combinedName)
+    await SecretManager.deleteSecret(accountName,'gluechat', combinedName);
   }
-  static async getSession(roomID: string, accountID: string): Promise<string | null> {
+  static async getSession(roomID: string, accountID: string, accountName: string): Promise<string | null> {
     const combinedName: string = accountID + '-' + roomID
-    return await keytar.getPassword('gluechat', combinedName)
+    return await SecretManager.getSecret(accountName, 'gluechat', combinedName)
   }
 
-  static async getSigningKey(account: string): Promise<string | null> {
-    return await keytar.getPassword('gluechat_' + account, 'signingPrivateKey')
+  static async getSigningKey(account: string, accountName: string): Promise<string | null> {
+    return await SecretManager.getSecret(accountName, 'gluechat_' + account, 'signingPrivateKey')
   }
 
-  static async getIdentityKey(account: string): Promise<string | null> {
-    return await keytar.getPassword('gluechat_' + account, 'identityKey')
+  static async getIdentityKey(account: string, accountName: string): Promise<string | null> {
+    return await SecretManager.getSecret(accountName, 'gluechat_' + account, 'identityKey')
   }
 
-  static async getPubIdentityKey(account: string): Promise<string | null> {
-    return await keytar.getPassword('gluechat_' + account, 'identityPubKey')
+  static async getPubIdentityKey(account: string, accountName: string): Promise<string | null> {
+    return await SecretManager.getSecret(accountName, 'gluechat_' + account, 'identityPubKey')
   }
 
-  static async getOneTimeKey(account: string, keyID: string): Promise<string | null> {
-    return await keytar.getPassword('gluechat_' + account, keyID)
+  static async getOneTimeKey(account: string, keyID: string, accountName: string): Promise<string | null> {
+    return await SecretManager.getSecret(accountName, 'gluechat_' + account, keyID)
   }
 }

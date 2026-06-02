@@ -37,7 +37,8 @@ contextBridge.exposeInMainWorld('e2ee', {
     content: string,
     roomID: string,
     senderID: string,
-    receiverID: string
+    receiverID: string,
+    accountName: string
   ) =>
     ipcRenderer.invoke(
       'initializeEncryptMessage',
@@ -45,14 +46,22 @@ contextBridge.exposeInMainWorld('e2ee', {
       content,
       roomID,
       senderID,
-      receiverID
+      receiverID,
+      accountName
     ),
   decryptMessage: (encryptedPackage: any, accountName: string, accountID: string) =>
     ipcRenderer.invoke('decryptMessage', encryptedPackage, accountName, accountID),
-  getMessages: (roomID: string) => ipcRenderer.invoke('getMessages', roomID),
-  saveMessage: (roomID: string, senderID: string, content: messageData, nonce : string, chatName: string) =>
-    ipcRenderer.invoke('saveMessage', roomID, senderID, content, nonce,chatName),
-  getLastMessage: (roomID: ChatInfo) => ipcRenderer.invoke('getLastMessage', roomID),
+  getMessages: (roomID: string, accountName: string) => ipcRenderer.invoke('getMessages', roomID,accountName),
+  saveMessage: (
+    roomID: string,
+    senderID: string,
+    content: messageData,
+    nonce: string,
+    chatName: string,
+    accountName: string
+  ) => ipcRenderer.invoke('saveMessage', roomID, senderID, content, nonce, chatName,accountName),
+  getLastMessage: (roomID: ChatInfo, accountName: string) =>
+    ipcRenderer.invoke('getLastMessage', roomID, accountName),
 })
 
 

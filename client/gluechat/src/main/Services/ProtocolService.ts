@@ -29,12 +29,12 @@ abstract class ProtocolService {
   private static temporarySessions = new Map<string, SessionState>()
   private static temporaryDecryptData = new Map<string, decryptData>()
 
-  private static async getOrLoadSession(roomID: string,accountID: string): Promise<SessionState | null> {
+  private static async getOrLoadSession(roomID: string, accountID: string, accountName: string): Promise<SessionState | null> {
     try {
       if (this.activeSessions.has(roomID)) {
         return this.activeSessions.get(roomID)!
       }
-      const stored = await StorageService.getSession(roomID,accountID)
+      const stored = await StorageService.getSession(roomID, accountID, accountName)
       if (stored) {
         const data = JSON.parse(stored)
         const session: SessionState = {
@@ -53,7 +53,7 @@ abstract class ProtocolService {
     }
   }
 
-  private static async preparePreKeyCapsule(roomID: string, authKey: string, receiverID: string, senderID: string): Promise<void> {
+  private static async preparePreKeyCapsule(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string): Promise<void> {
     try {
       const preKeys = await NetworkService.getPreKeys(authKey, receiverID)
       const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKeys.spk, 'base64'));
@@ -78,7 +78,7 @@ abstract class ProtocolService {
         lastSenderID: senderID
       })
 
-      // SAVE SESSION IN KEYTAR
+      // SAVE SESSION IN DATABASE
 
       const dataToSave = {
         rootKey: Buffer.from(rootKey).toString('base64'),
@@ -86,7 +86,7 @@ abstract class ProtocolService {
         lastSenderID: senderID
       }
 
-      await StorageService.saveSession(roomID, JSON.stringify(dataToSave), senderID)
+      await StorageService.saveSession(roomID, JSON.stringify(dataToSave), senderID, accountName)
     } catch (error) {
       console.error('Failed prepare session with pre keys', error)
     }
@@ -98,7 +98,7 @@ abstract class ProtocolService {
   */
 
 
-  private static async prepareSymmetricStep(roomID: string, session: SessionState,accountID: string): Promise<void> {
+  private static async prepareSymmetricStep(roomID: string, session: SessionState, accountID: string, accountName: string): Promise<void> {
     try {
       const salt = randomBytes(32)
 
@@ -116,19 +116,19 @@ abstract class ProtocolService {
         lastSenderID: session.lastSenderID
       }
 
-      await StorageService.saveSession(roomID, JSON.stringify(dataToSave),accountID)
+      await StorageService.saveSession(roomID, JSON.stringify(dataToSave), accountID, accountName)
     } catch (error) {
       console.error('Failed prepare symmetric ratchet', error)
     }
   }
 
-  static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string): Promise<pkgStructure> {
-    const session: SessionState | null = await this.getOrLoadSession(roomID,senderID);
+  static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string): Promise<pkgStructure> {
+    const session: SessionState | null = await this.getOrLoadSession(roomID, senderID, accountName);
 
     if (session === null) {
-      await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID)
+      await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName)
     } else {
-      await this.prepareSymmetricStep(roomID, session,senderID)
+      await this.prepareSymmetricStep(roomID, session, senderID, accountName)
     }
 
     const readySession = this.temporarySessions.get(roomID)
@@ -178,12 +178,12 @@ abstract class ProtocolService {
 
   static async initializeDecrypt(pkg: pkgStructure, roomID: string, account: string, accountID: string): Promise<string> {
     try {
-    const session: SessionState | null = await this.getOrLoadSession(roomID,accountID);
+    const session: SessionState | null = await this.getOrLoadSession(roomID, accountID, account);
     if (pkg.capsule !== null) {
       if (pkg.capsule.includes('|')) {
-        const spkPrivateKey = await StorageService.getSigningKey(account)
-        const opkPrivateKey = await StorageService.getOneTimeKey(account, pkg.opkId as string)
-        const identityPubKey = await StorageService.getPubIdentityKey(account)
+        const spkPrivateKey = await StorageService.getSigningKey(account, account)
+        const opkPrivateKey = await StorageService.getOneTimeKey(account, pkg.opkId as string, account)
+        const identityPubKey = await StorageService.getPubIdentityKey(account, account)
 
         if (spkPrivateKey !== null && opkPrivateKey !== null && identityPubKey !== null) {
           const [capsuleSPK, capsuleOPK] = pkg.capsule.split('|')
@@ -209,7 +209,7 @@ abstract class ProtocolService {
         lastSenderID: session.lastSenderID
       }
 
-      await StorageService.saveSession(roomID, JSON.stringify(dataToSave), accountID)
+      await StorageService.saveSession(roomID, JSON.stringify(dataToSave), accountID, account)
       this.temporaryDecryptData.delete(roomID)
 
       return decrypted

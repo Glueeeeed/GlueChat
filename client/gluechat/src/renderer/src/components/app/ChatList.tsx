@@ -46,7 +46,9 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
           await Promise.all(
             chatsData.map(async (chat) => {
               userAvatarMap[chat.receiverID] = await checkIfAssetExists('avatar', chat.receiverID);
-              const lastMsg = await window.e2ee.getLastMessage(chat)
+              const currentNickname = localStorage.getItem('nickname') || 'User'
+
+              const lastMsg = await window.e2ee.getLastMessage(chat,currentNickname)
               if (lastMsg) {
                 messagesMap[chat.id] = lastMsg.isAuthor
                   ? `You: ${lastMsg.content}`

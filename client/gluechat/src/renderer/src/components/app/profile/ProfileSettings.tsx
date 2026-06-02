@@ -2,6 +2,7 @@ import { useState, ChangeEvent, useEffect } from 'react'
 import {Badge} from "@renderer/components/app/profile/Badge"
 import { validateOrRefreshToken } from '@renderer/assets/main'
 import { jwtDecode } from 'jwt-decode'
+import { API_BASE_URL } from '@renderer/assets/utils'
 
 interface ProfileSettingsProps {
   authToken: string | null
@@ -24,7 +25,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
       }
       try {
         const authKey = await validateOrRefreshToken(authToken)
-        const response = await fetch('http://localhost:3000/api/profile/me', {
+        const response = await fetch(`${API_BASE_URL}/api/profile/me`, {
           headers: {
             Authorization: `Bearer ${authKey}`
           }
@@ -40,9 +41,9 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
 
             const decoded: any = jwtDecode(authKey)
             if (data.avatarUrl)
-              setAvatar(`http://localhost:3000/api/profile/assets/avatar/${decoded.id}`)
+              setAvatar(`${API_BASE_URL}/api/profile/assets/avatar/${decoded.id}`)
             if (data.bannerUrl)
-              setBanner(`http://localhost:3000/api/profile/assets/banner/${decoded.id}`)
+              setBanner(`${API_BASE_URL}/api/profile/assets/banner/${decoded.id}`)
           }
         }
       } catch (err) {
@@ -95,7 +96,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
       }
       formData.append('description', bio)
 
-      const response = await fetch('http://localhost:3000/api/profile/update', {
+      const response = await fetch(`${API_BASE_URL}/api/profile/update`, {
         headers: { Authorization: `Bearer ${authKey}` },
         method: 'POST',
         body: formData

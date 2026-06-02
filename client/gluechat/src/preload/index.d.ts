@@ -12,11 +12,11 @@ declare global {
     };
     e2ee: {
       generatePairKeys: (accountName: string) => Promise<string>;
-      initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string) => Promise<string | null>;
+      initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => Promise<string | null>;
       decryptMessage: (encryptedPackage: any, accountName: string, accountID: string) => Promise<string | null>;
-      getMessages: (roomID: string) => Promise<string | null>;
-      saveMessage: (roomID: string, senderID: string, content: messageData, nonce: string, chatName: string) => Promise<string | null>;
-      getLastMessage: (roomID: ChatInfo) => Promise<any | null>;
+      getMessages: (roomID: string,  accountName: string) => Promise<string | null>;
+      saveMessage: (roomID: string, senderID: string, content: messageData, nonce: string, chatName: string,  accountName: string) => Promise<string | null>;
+      getLastMessage: (roomID: ChatInfo,  accountName: string) => Promise<any | null>;
     }
   }
 }

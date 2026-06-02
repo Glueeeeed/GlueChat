@@ -41,7 +41,8 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
       const loadLocalHistory = async () => {
         try {
-          const history = await window.e2ee.getMessages(chatID)
+          const currentNickname = localStorage.getItem('nickname') || 'User'
+          const history = await window.e2ee.getMessages(chatID, currentNickname)
 
           if (history && history.length > 0) {
             const formattedMessages = history.map((msg: any) => ({
@@ -99,7 +100,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
                   isSeen: false
                 }
 
-                await window.e2ee.saveMessage(chatID, pkg.senderId, messageData, pkg.nonce, chatName);
+                await window.e2ee.saveMessage(chatID, pkg.senderId, messageData, pkg.nonce, chatName, currentNickname);
               }
             }
           }
@@ -158,7 +159,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
             isSeen: false
           }
 
-          await window.e2ee.saveMessage(chatID, data.payload.senderID, messageData, data.payload.nonce,chatName);
+          await window.e2ee.saveMessage(chatID, data.payload.senderID, messageData, data.payload.nonce,chatName, currentNickname);
         }
       }
     };
@@ -173,7 +174,8 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
 
     const authToken : string = await validateOrRefreshToken(authKey);
-    const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID,receiverID);
+    const currentNickname = localStorage.getItem('nickname') || 'User'
+    const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID, receiverID, currentNickname);
 
     if (result && socketRef.current?.readyState === WebSocket.OPEN) {
       const currentNickname = localStorage.getItem('nickname') || 'User'
@@ -197,7 +199,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
       const resultObj = JSON.parse(JSON.stringify(result));
       console.log(resultObj);
-      await window.e2ee.saveMessage(chatID, senderID, messageData, resultObj.nonce,currentNickname)
+      await window.e2ee.saveMessage(chatID, senderID, messageData, resultObj.nonce,currentNickname, currentNickname)
     }
   };
 

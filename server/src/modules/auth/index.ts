@@ -3,13 +3,15 @@ import {authModel} from "./model";
 import {AuthService} from "./service";
 import {AlreadyExistsError, InvalidDataFormatError, InvalidCredentialsError} from "../../utils/exceptions";
 import {generateAuthToken, generateRefreshToken, verifyRefreshToken} from "../../utils/jwt";
+import {join} from "path";
+require("dotenv").config({ path: join(__dirname, "../..env") });
 
 
 export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/register', async ({body}) =>  {
     try {
-        const {nickname, password, keys} = body;
+        const {nickname, password, accessCode, keys} = body;
 
         if (!keys) {
             return status(400, {
@@ -20,7 +22,7 @@ export const auth = new Elysia({ prefix: '/auth' })
 
         AuthService.validate(nickname, password, false);
         await AuthService.checkIfNicknameExists(nickname, false);
-        await AuthService.registerUser(nickname, password, keys as string);
+        await AuthService.registerUser(nickname, password, accessCode as string,keys as string );
 
         return status(201, {
             success: true,
@@ -29,12 +31,14 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 
     } catch (e) {
-        if (e instanceof InvalidDataFormatError || e instanceof AlreadyExistsError) {
+        console.error(e);
+        if (e instanceof InvalidDataFormatError || e instanceof AlreadyExistsError || e instanceof InvalidCredentialsError) {
             return status(e.statusCode, {
                 success: false,
                 message: e.message
             })
         }
+
 
         return status(500, {
             success: false,
@@ -122,6 +126,30 @@ export const auth = new Elysia({ prefix: '/auth' })
         201: authModel.authResponse,
     }
 })
+
+
+    .get('/access', async ({ request, set }) => {
+        const authHeader = request.headers.get('authorization');
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            set.status = 401;
+            return { success: false, message: 'Unauthorized: Missing or invalid Authorization header' };
+        }
+
+        const token = authHeader.split(' ')[1];
+
+        if (token !== process.env.ADMIN_API_KEY) {
+            set.status = 401;
+            return { success: false, message: 'Unauthorized' };
+        }
+
+        try {
+            const code = await AuthService.generateAccessCode();
+            return status(200, code);
+        } catch {
+            return status(500, { success: false, message: 'Error' });
+        }
+    })
 
 
 

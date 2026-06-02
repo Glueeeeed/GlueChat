@@ -198,12 +198,15 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
             Banner Settings
           </label>
           <div className="flex gap-4 items-center">
-            <input
-              type="color"
-              value={banner.startsWith('#') ? banner : '#07122b'}
-              onChange={(e) => setBanner(e.target.value)}
-              className="w-12 h-10 bg-transparent border-none cursor-pointer"
-            />
+
+            {/*TEMPORARY REMOVED */}
+
+            {/*<input*/}
+            {/*  type="color"*/}
+            {/*  value={banner.startsWith('#') ? banner : '#07122b'}*/}
+            {/*  onChange={(e) => setBanner(e.target.value)}*/}
+            {/*  className="w-12 h-10 bg-transparent border-none cursor-pointer"*/}
+            {/*/>*/}
             <input
               type="file"
               accept="image/*"

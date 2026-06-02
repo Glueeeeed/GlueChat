@@ -60,6 +60,8 @@ DATABASE_NAME="gluechat"
 DATABASE_HOST="localhost"
 DATABASE_PORT=3306
 JWT_SECRET="your_super_secret_key"
+ADMIN_API_KEY="your_strong_api_key"
+VERSION="APP VERSION"
 ```
 
 #### 2. Install Dependencies
@@ -113,6 +115,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   lastSeen  DateTime @default(now())
+  betaTester Boolean @default(false)
 
   oneTimePreKeys       OneTimePreKeys[] @relation("SignedToUser")
   signedPreKeys        SignedPreKeys[]  @relation("SignedToUser")
@@ -160,7 +163,7 @@ model Message {
   isSeen          Boolean
 
   privateRoom PrivateRoom @relation(fields: [roomID], references: [id], onDelete: Cascade)
-  sender      User        @relation(fields: [senderId], references: [id])
+  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@unique([nonce])
   @@index([roomID])
@@ -170,7 +173,7 @@ model Sessions {
   sessionID String @id
   userID    String
 
-  loggedUser User @relation(fields: [userID], references: [id])
+  loggedUser User @relation(fields: [userID], references: [id], onDelete: Cascade)
 }
 
 enum FriendshipStatus {
@@ -261,6 +264,12 @@ model Profiles {
   bannerColor String? @default("#0d1935")
   description String?
   user        User    @relation("SignedToUser", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AccessCodes {
+  id Int @id @default(autoincrement())
+  code String
+  isUsed  Boolean @default(false)
 }
 
 ```

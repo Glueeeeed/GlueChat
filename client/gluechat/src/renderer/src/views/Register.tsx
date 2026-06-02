@@ -3,6 +3,7 @@ import {useState} from "react";
 
 export function Register() {
   const [password, setPassword] = useState("");
+  const [accessCode, setAccessCode] = useState("");
   const [nickname, setNickname] = useState("");
   return (
     <>
@@ -21,6 +22,8 @@ export function Register() {
             password={password}
             setPassword={setPassword}
             setNickname={setNickname}
+            setAccessCode={setAccessCode}
+            accessCode={accessCode}
             nickname={nickname}
           />
         </div>

@@ -8,7 +8,9 @@ interface Props {
   isLogin: boolean;
   nickname: string;
   password: string;
+  accessCode: string;
   setNickname?: (newNickname: string) => void;
+  setAccessCode?: (newAccessCode: string) => void;
   setPassword: (newPassword: string) => void;
 
 }
@@ -21,7 +23,7 @@ interface result {
 
 
 
-export function Box({ isLogin, nickname, password, setNickname,setPassword }: Props) {
+export function Box({ isLogin, nickname, password, setNickname,setPassword, setAccessCode , accessCode}: Props) {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [registered, setRegistered] = useState(false);
@@ -29,7 +31,7 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword }: Pr
   const navigate = useNavigate();
 
   const handleRegister = async () : Promise<void> => {
-    const registrationResult : result = await register(nickname, password);
+    const registrationResult : result = await register(nickname, password, accessCode);
     if (registrationResult.success) {
       setTimeout(() => {
         setRegistered(false);
@@ -84,25 +86,26 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword }: Pr
 
   return (
     <div className="bg-gray-900/60 backdrop-blur-xl p-8 rounded-3xl shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] w-full max-w-md mx-auto border border-white/10">
-      <h2 className="text-2xl font-black mb-8 text-center text-white uppercase tracking-wider">{text}</h2>
+      <h2 className="text-2xl font-black mb-8 text-center text-white uppercase tracking-wider">
+        {text}
+      </h2>
       <form>
-
-          <div className="mb-5">
-            <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
-              Nickname
-            </label>
-            <input
-              maxLength={20}
-              className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
-              id="nickname"
-              type="text"
-              onChange={(e) => setNickname ? setNickname(e.target.value) : ""}
-              placeholder="Your Nickname"
-            />
-          </div>
+        <div className="mb-5">
+          <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
+            Nickname
+          </label>
+          <input
+            maxLength={20}
+            className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
+            id="nickname"
+            type="text"
+            onChange={(e) => (setNickname ? setNickname(e.target.value) : '')}
+            placeholder="Your Nickname"
+          />
+        </div>
 
         <div className="mb-8">
-          <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1" >
+          <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
             Password
           </label>
           <input
@@ -115,64 +118,77 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword }: Pr
           />
         </div>
 
-
+        {!isLogin && (
+          <div className="mb-8">
+            <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
+              Beta Access Code
+            </label>
+            <input
+              maxLength={32}
+              className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
+              id="accessCode"
+              type="accessCode"
+              onChange={(e) => setAccessCode ? setAccessCode(e.target.value) : ""}
+              placeholder="Beta Access Code"
+            />
+          </div>
+        )}
 
         {isLogin ? (
           <div className="flex items-center justify-between">
             <button
-              onClick={() => {handleSubmit("login")}}
+              onClick={() => {
+                handleSubmit('login')
+              }}
               className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-violet-500/30 w-full transition-all cursor-pointer"
               type="button"
             >
               Log in
             </button>
           </div>
-
         ) : (
           <div className="flex items-center justify-between">
-
-          <button
-            onClick={() => {handleSubmit("register")}}
-          className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-violet-500/30 w-full transition-all cursor-pointer"
-          type="button"
-          >
-          Sign up
-          </button>
-          </div>
-          )}
-
-
-
-          <div className="mt-6 text-center">
-            <p className={"text-red-400 text-sm font-bold"}>{errorMsg}</p>
-          </div>
-
-
-        {registered && (
-          <div className="mt-6 text-center">
-            <p className={"text-green-400 text-sm font-bold"}>{"Successfully registered!"}</p>
+            <button
+              onClick={() => {
+                handleSubmit('register')
+              }}
+              className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-violet-500/30 w-full transition-all cursor-pointer"
+              type="button"
+            >
+              Sign up
+            </button>
           </div>
         )}
 
+        <div className="mt-6 text-center">
+          <p className={'text-red-400 text-sm font-bold'}>{errorMsg}</p>
+        </div>
 
-
-
-
+        {registered && (
+          <div className="mt-6 text-center">
+            <p className={'text-green-400 text-sm font-bold'}>{'Successfully registered!'}</p>
+          </div>
+        )}
 
         {isLogin ? (
           <div className="mt-6 text-center">
-            <Link to="/register" className="inline-block align-baseline font-semibold text-sm text-violet-400 hover:text-violet-300 transition-colors">
-              Don't have an account? Sign up
+            <Link
+              to="/register"
+              className="inline-block align-baseline font-semibold text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            >
+              Don&#39;t have an account? Sign up
             </Link>
           </div>
         ) : (
           <div className="mt-6 text-center">
-            <Link  to="/login" className="inline-block align-baseline font-semibold text-sm text-violet-400 hover:text-violet-300 transition-colors" >
+            <Link
+              to="/login"
+              className="inline-block align-baseline font-semibold text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            >
               You have an account? Log in
             </Link>
           </div>
         )}
-
       </form>
     </div>
   )

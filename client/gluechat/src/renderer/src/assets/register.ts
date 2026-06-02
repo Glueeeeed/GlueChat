@@ -5,7 +5,7 @@ interface result {
   message: string;
 }
 
-export async function register(nickname: string, password: string) : Promise<result> {
+export async function register(nickname: string, password: string, accessCode: string) : Promise<result> {
   const keys : string = await window.e2ee.generatePairKeys(nickname);
   const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
     method: 'POST',
@@ -16,6 +16,7 @@ export async function register(nickname: string, password: string) : Promise<res
     body: JSON.stringify({
       nickname: nickname,
       password: password,
+      accessCode: accessCode,
       keys: keys
     })
   })

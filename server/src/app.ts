@@ -11,6 +11,7 @@ import {prisma} from "./lib/prisma";
 import {e2ee} from "./modules/e2ee";
 import {FriendsService} from "./modules/friends/service";
 import {profile} from "./modules/profile";
+import {gluechat} from "./modules/app";
 
 export const activeConnections = new Map<string, Set<any>>();
 
@@ -25,6 +26,7 @@ const app = new Elysia({
     .use(chats)
     .use(e2ee)
     .use(profile)
+    .use(gluechat)
     .ws('/ws', {
         body: t.Object({
             type: t.String(),

@@ -12,6 +12,8 @@ import {Settings} from "@renderer/components/app/Settings";
 import { ProfileSettings } from '@renderer/components/app/profile/ProfileSettings'
 import {checkIfAssetExists} from "@renderer/assets/profile";
 import {UserProfile} from "@renderer/components/app/profile/UserProfile";
+import { API_BASE_URL } from '@renderer/assets/utils'
+
 
 export type Tab = 'chats' | 'friends' | 'settings';
 
@@ -39,14 +41,48 @@ export function App() {
   const [avatarURL, setAvatarURL] = useState<string | null>(null)
   const navigate = useNavigate()
 
+
+  const CURRENT_VERSION = '0.1.0';
+
+  const checkIfUpdate = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/app/version`, {
+        method: 'GET'
+      })
+
+      if (response.ok) {
+        const latestVersion = await response.text()
+
+        if (latestVersion && latestVersion !== CURRENT_VERSION) {
+          if (Notification.permission === 'granted') {
+            new Notification('New Update!', {
+              body: `A new version of GlueChat (${latestVersion}) is available. Download it to enjoy the new features!`
+            })
+          } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then((permission) => {
+              if (permission === 'granted') {
+                new Notification('New Update!')
+              }
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check new version', error)
+    }
+  }
+
+
   useEffect(() => {
 
+     checkIfUpdate();
 
     let isMounted = true
     const currentNickname = localStorage.getItem('nickname')
     if (currentNickname && isMounted) {
       setNickname(currentNickname)
     }
+
 
     const checkAuth = async () => {
       try {

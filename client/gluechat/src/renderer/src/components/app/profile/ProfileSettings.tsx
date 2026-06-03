@@ -169,11 +169,11 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
           </div>
         </div>
 
-        <div className="flex flex-col w-[90%] bg-gray-950/40 rounded-xl mx-auto mt-6 p-4 border border-white/5">
+        <div className="flex flex-col w-[90%] bg-gray-950/40 rounded-xl mx-auto mt-6 p-4 border overflow-y-auto border-white/5">
           <label className="mb-2 font-bold text-[10px] uppercase text-gray-500 tracking-wider">
             About me
           </label>
-          <p className="text-sm text-gray-300 leading-relaxed">
+          <p className="text-sm text-gray-300 break-all leading-relaxed">
             {bio || 'This user has no bio yet.'}
           </p>
         </div>
@@ -187,8 +187,9 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="w-full bg-gray-700/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+            className="w-full bg-gray-700/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:ring-2 resize-none focus:ring-violet-500 outline-none transition-all"
             placeholder="GlueChat is awesome!"
+            maxLength={180}
             rows={3}
           />
         </div>
@@ -198,7 +199,6 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
             Banner Settings
           </label>
           <div className="flex gap-4 items-center">
-
             {/*TEMPORARY REMOVED */}
 
             {/*<input*/}

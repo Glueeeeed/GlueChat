@@ -26,5 +26,7 @@ export const profileModel = {
 
 
         description: z.string()
+            .max(180, "Description cannot be least than 180 characters")
+
     })
 }

@@ -3,6 +3,7 @@ import {Badge} from "@renderer/components/app/profile/Badge"
 import { validateOrRefreshToken } from '@renderer/assets/main'
 import { jwtDecode } from 'jwt-decode'
 import { API_BASE_URL } from '@renderer/assets/utils'
+import { FaTrash } from "react-icons/fa6";
 
 interface ProfileSettingsProps {
   authToken: string | null
@@ -18,6 +19,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>("Successfully updated profile!");
   useEffect(() => {
     const fetchProfile = async () => {
       if (!authToken)  {
@@ -80,6 +82,47 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
     }
   }
 
+  const handleRemoveBanner =  async () => {
+    const decoded: any = jwtDecode(authToken as string);
+     const response = await fetch(`${API_BASE_URL}/api/profile/assets/banner/${decoded.id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    })
+
+    if (response.ok) {
+      setBanner('')
+      setBannerFile(null)
+      setSuccess(true)
+      setSuccessMessage('Successfully removed banner!')
+      setTimeout(() => setSuccess(false), 2000);
+    } else {
+      setError(`Failed to remove banner!`)
+      setTimeout(() => setError(null), 2000)
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    const decoded: any = jwtDecode(authToken as string)
+    const response = await fetch(`${API_BASE_URL}/api/profile/assets/avatar/${decoded.id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    })
+    if (response.ok) {
+      setAvatar("");
+      setAvatarFile(null);
+      setSuccess(true)
+      setSuccessMessage("Successfully removed profile!");
+      setTimeout(() => setSuccess(false), 2000)
+    } else {
+      setError(`Failed to remove profile!`);
+      setTimeout(() => setError(null), 2000)
+    }
+  }
+
   const handleSave = async () => {
     setError(null)
     setSuccess(false)
@@ -109,6 +152,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
       }
 
       setSuccess(true)
+      setSuccessMessage('Successfully updated profile!')
       setAvatarFile(null)
       setBannerFile(null)
     } catch (err: any) {
@@ -128,7 +172,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
 
       {success && (
         <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-500 p-4 rounded-xl text-sm font-medium">
-          Successfully saved profile!
+          {successMessage}
         </div>
       )}
 
@@ -199,14 +243,22 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
             Banner Settings
           </label>
           <div className="flex gap-4 items-center">
-            {/*TEMPORARY REMOVED */}
+            {banner && !banner.startsWith('#') && (
+              <button
+                onClick={handleRemoveBanner}
+                title="Delete banner"
+                className=" p-1 flex items-center relative w-6 h-6  rounded-md bg-red-400 gap-2"
+              >
+                <FaTrash size={16} className={'absolute'} />
+              </button>
+            )}
 
-            {/*<input*/}
-            {/*  type="color"*/}
-            {/*  value={banner.startsWith('#') ? banner : '#07122b'}*/}
-            {/*  onChange={(e) => setBanner(e.target.value)}*/}
-            {/*  className="w-12 h-10 bg-transparent border-none cursor-pointer"*/}
-            {/*/>*/}
+            <input
+              type="color"
+              value={banner.startsWith('#') ? banner : '#07122b'}
+              onChange={(e) => setBanner(e.target.value)}
+              className="w-12 h-10 bg-transparent border-none cursor-pointer"
+            />
             <input
               type="file"
               accept="image/*"
@@ -215,11 +267,17 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
             />
           </div>
         </div>
-
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-            Avatar Image
-          </label>
+        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Avatar Image</label>
+        <div className={'flex gap-4 items-center'}>
+          {avatar && (
+            <button
+              title="Delete avatar"
+              onClick={handleRemoveAvatar}
+              className=" p-1 flex items-center relative w-6 h-6  rounded-md bg-red-400 gap-2"
+            >
+              <FaTrash size={16} className={'absolute'} />
+            </button>
+          )}
           <input
             type="file"
             accept="image/*"

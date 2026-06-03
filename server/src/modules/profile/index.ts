@@ -68,7 +68,7 @@ export const profile = new Elysia({ prefix: '/profile' })
             const profileData = await ProfileService.getProfile(user.id);
             return profileData;
         } catch (e) {
-            return status(500, { message: "Nie udało się pobrać profilu" });
+            return status(500, { message: "Failed to get user profile" });
         }
     })
     .post('/update', async ({ user, body }) => {
@@ -84,6 +84,24 @@ export const profile = new Elysia({ prefix: '/profile' })
         }
     }, {
         body: profileModel.updateProfile,
+    })
+
+
+    .delete('/assets/:type/:userId', async ({ params, set }) => {
+        try {
+
+            const assetPath : any =  await ProfileService.getProfileAssetsPath(params.userId, params.type);
+            if (!assetPath) {
+                return status(404);
+            }
+
+            const filePath = path.join(process.cwd(), "uploads", assetPath) ;
+            const file = Bun.file(filePath)
+            await file.delete();
+            return status(200, { success:true, message: "Successfully deleted profile",  });
+        } catch (e) {
+            return status(404)
+        }
     })
 
 

@@ -34,6 +34,9 @@ export function ChatMessage({ avatar, isSeen, text, isAuthor, timestamp, nicknam
           {text}
         </div>
 
+
+
+
         <div
           className={`text-[10px] flex flex-row items-center gap-1 font-medium px-1 text-gray-500 ${
             isAuthor ? 'justify-end' : 'justify-start'

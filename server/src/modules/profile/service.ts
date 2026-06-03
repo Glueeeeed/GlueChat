@@ -71,6 +71,28 @@ export abstract class ProfileService {
         }
     }
 
+    static async removeBannerColor(userId : string) {
+        await prisma.profiles.update({
+            where: {
+                userId: userId
+            },
+            data: {
+                bannerColor: null
+            }
+        })
+    }
+
+    static async removeBannerUrl(userId : string) {
+        await prisma.profiles.update({
+            where: {
+                userId: userId,
+            },
+            data: {
+                bannerUrl: null
+            }
+        })
+    }
+
     static async getProfile(userId: string) {
         const profile = await prisma.profiles.findUnique({
             where: { userId },

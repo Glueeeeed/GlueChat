@@ -2,6 +2,8 @@ import validator from 'validator';
 
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+export const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v1';
+export const APP_VERSION_NAME = import.meta.env.VITE_APP_VERSION_NAME || 'v1';
 
 export function validateNickname (nickname: string) : void {
     if (validator.isEmpty(nickname)) {

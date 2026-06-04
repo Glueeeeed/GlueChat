@@ -1,14 +1,15 @@
 import {Link, useNavigate} from "react-router-dom";
 import {useState} from "react";
-import { validateNickname, validatePassword} from "@renderer/assets/utils";
+import {  validateNickname, validatePassword } from '@renderer/assets/utils'
 import {register} from "@renderer/assets/register";
 import {login} from "@renderer/assets/login";
+import { Eye, EyeOff } from "lucide-react";
 
 interface Props {
   isLogin: boolean;
   nickname: string;
   password: string;
-  accessCode: string;
+  accessCode?: string;
   setNickname?: (newNickname: string) => void;
   setAccessCode?: (newAccessCode: string) => void;
   setPassword: (newPassword: string) => void;
@@ -27,6 +28,7 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
 
   const [errorMsg, setErrorMsg] = useState("");
   const [registered, setRegistered] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const text = isLogin ? "Login" : "Register";
   const navigate = useNavigate();
 
@@ -55,6 +57,17 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
         setErrorMsg("");
       },5000)
       setErrorMsg(loginResult.message);
+    }
+  }
+
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (!isLogin) {
+        await handleRegister()
+      } else {
+        await handleLogin()
+      }
     }
   }
 
@@ -100,6 +113,7 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
             id="nickname"
             type="text"
             onChange={(e) => (setNickname ? setNickname(e.target.value) : '')}
+            onKeyDown={handleKeyDown}
             placeholder="Your Nickname"
           />
         </div>
@@ -108,14 +122,24 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
           <label className="block text-gray-500 text-xs uppercase tracking-widest font-bold mb-2 ml-1">
             Password
           </label>
-          <input
-            maxLength={32}
-            className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
-            id="password"
-            type="password"
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••••••"
-          />
+          <div className="relative">
+            <input
+              maxLength={32}
+              className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 block w-full p-3.5 pr-12 outline-none transition-all placeholder-gray-600 shadow-inner"
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              onKeyDown={handleKeyDown}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors p-1"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
         </div>
 
         {!isLogin && (
@@ -128,7 +152,8 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
               className="bg-gray-950/50 border border-white/5 text-white text-base rounded-xl focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 block w-full p-3.5 outline-none transition-all placeholder-gray-600 shadow-inner"
               id="accessCode"
               type="accessCode"
-              onChange={(e) => setAccessCode ? setAccessCode(e.target.value) : ""}
+              onKeyDown={handleKeyDown}
+              onChange={(e) => (setAccessCode ? setAccessCode(e.target.value) : '')}
               placeholder="Beta Access Code"
             />
           </div>
@@ -160,13 +185,15 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
           </div>
         )}
 
-        <div className="mt-6 text-center">
-          <p className={'text-red-400 text-sm font-bold'}>{errorMsg}</p>
-        </div>
+        {errorMsg && (
+          <div className="mt-5 bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm font-medium">
+            {errorMsg}
+          </div>
+        )}
 
         {registered && (
-          <div className="mt-6 text-center">
-            <p className={'text-green-400 text-sm font-bold'}>{'Successfully registered!'}</p>
+          <div className="mt-5 bg-emerald-500/10 border border-emerald-500/50 text-emerald-500 p-4 rounded-xl text-sm font-medium">
+            <p>Successfully registered!</p>
           </div>
         )}
 

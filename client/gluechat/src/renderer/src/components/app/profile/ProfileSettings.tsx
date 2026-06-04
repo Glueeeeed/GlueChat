@@ -12,7 +12,8 @@ interface ProfileSettingsProps {
 export function ProfileSettings({authToken}: ProfileSettingsProps) {
   const [bio, setBio] = useState( "");
   const [avatar, setAvatar] = useState("");
-  const [banner, setBanner] = useState('#0d1935');
+  const [bannerColor, setBannerColor] = useState('#0d1935')
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [badges, setBadges] = useState<{ id: string; name: string; imageUrl: string }[]>([]);
@@ -37,15 +38,17 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
           const data = await response.json()
           if (data) {
             setBio(data.description || '')
-            setBanner(data.bannerColor || '#0d1935')
             setBadges(data.badges || [])
 
 
             const decoded: any = jwtDecode(authKey)
             if (data.avatarUrl)
               setAvatar(`${API_BASE_URL}/api/profile/assets/avatar/${decoded.id}`)
+            if (data.bannerColor) {
+              setBannerColor(data.bannerColor)
+            }
             if (data.bannerUrl)
-              setBanner(`${API_BASE_URL}/api/profile/assets/banner/${decoded.id}`)
+              setBannerPreview(`${API_BASE_URL}/api/profile/assets/banner/${decoded.id}`)
           }
         }
       } catch (err) {
@@ -55,6 +58,11 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
     fetchProfile()
   }, [authToken])
 
+  const changeBannerColor = (e) => {
+    setBannerPreview(null);
+    setBannerColor(e)
+  }
+
 
 
   const handleBannerFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -63,7 +71,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
       setBannerFile(file);
       const reader = new FileReader()
       reader.onloadend = () => {
-        setBanner(reader.result as string)
+        setBannerPreview(reader.result as string)
       }
       reader.readAsDataURL(file)
     }
@@ -92,14 +100,15 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
     })
 
     if (response.ok) {
-      setBanner('')
+      setBannerPreview('')
       setBannerFile(null)
       setSuccess(true)
       setSuccessMessage('Successfully removed banner!')
       setTimeout(() => setSuccess(false), 2000);
     } else {
-      setError(`Failed to remove banner!`)
-      setTimeout(() => setError(null), 2000)
+      setBannerFile(null)
+      setBannerPreview(null)
+      setBannerColor('#0d1935')
     }
   }
 
@@ -118,8 +127,8 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
       setSuccessMessage("Successfully removed profile!");
       setTimeout(() => setSuccess(false), 2000)
     } else {
-      setError(`Failed to remove profile!`);
-      setTimeout(() => setError(null), 2000)
+      setAvatarFile(null);
+      setAvatar("");
     }
   }
 
@@ -132,10 +141,9 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
       const formData = new FormData()
 
       if (avatarFile) formData.append('avatar', avatarFile)
+      formData.append('bannerColor', bannerColor)
       if (bannerFile) {
         formData.append('banner', bannerFile)
-      } else {
-        formData.append('bannerColor', banner)
       }
       formData.append('description', bio)
 
@@ -151,10 +159,11 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
         throw new Error(result.message || "Something went wrong")
       }
 
-      setSuccess(true)
-      setSuccessMessage('Successfully updated profile!')
+      setSuccess(true);
+      setSuccessMessage('Successfully updated profile!');
       setAvatarFile(null)
       setBannerFile(null)
+
     } catch (err: any) {
       setError(err.message)
     }
@@ -180,8 +189,8 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
         <div
           className="h-35 w-full"
           style={{
-            backgroundColor: banner.startsWith('#') ? banner : 'transparent',
-            backgroundImage: banner.startsWith('#') ? 'none' : `url(${banner})`,
+            backgroundColor: bannerColor,
+            backgroundImage: bannerPreview ? `url(${bannerPreview})` : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
@@ -243,7 +252,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
             Banner Settings
           </label>
           <div className="flex gap-4 items-center">
-            {banner && !banner.startsWith('#') && (
+            {bannerPreview && (
               <button
                 onClick={handleRemoveBanner}
                 title="Delete banner"
@@ -255,8 +264,8 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
 
             <input
               type="color"
-              value={banner.startsWith('#') ? banner : '#07122b'}
-              onChange={(e) => setBanner(e.target.value)}
+              value={bannerColor}
+              onChange={(e) => changeBannerColor(e.target.value)}
               className="w-12 h-10 bg-transparent border-none cursor-pointer"
             />
             <input

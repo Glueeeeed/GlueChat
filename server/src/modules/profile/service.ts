@@ -7,7 +7,7 @@ export abstract class ProfileService {
         const uploadDir = path.join(process.cwd(), "uploads");
 
         let avatarName: string | undefined;
-        let bannerName: string | undefined;
+        let bannerName: string | null;
 
         const currentProfile = await prisma.profiles.findUnique({
             where: { userId }
@@ -29,6 +29,12 @@ export abstract class ProfileService {
             }
             bannerName = `banner_${userId}.${banner.type.split("/")[1]}`;
             await Bun.write(path.join(uploadDir, bannerName), banner);
+        } else {
+            if (currentProfile?.bannerUrl) {
+                const oldPath = path.join(uploadDir, currentProfile.bannerUrl);
+                await fs.unlink(oldPath).catch(() => {});
+            }
+            bannerName = null;
         }
 
         return  prisma.profiles.upsert({
@@ -39,7 +45,7 @@ export abstract class ProfileService {
                 description,
                 bannerColor,
                 ...(avatarName && { avatarUrl: avatarName }),
-                ...(bannerName && { bannerUrl: bannerName }),
+                bannerUrl: bannerName,
             },
             create: {
                 userId,
@@ -82,7 +88,7 @@ export abstract class ProfileService {
         })
     }
 
-    static async removeBannerUrl(userId : string) {
+    private static async removeBannerUrl(userId : string) {
         await prisma.profiles.update({
             where: {
                 userId: userId,
@@ -91,6 +97,25 @@ export abstract class ProfileService {
                 bannerUrl: null
             }
         })
+    }
+
+    private static async removeAvatarUrl(userId : string) {
+        await prisma.profiles.update({
+            where: {
+                userId: userId
+            },
+            data: {
+                avatarUrl: null
+            }
+        })
+    }
+
+    static async handleRemove(type: string , userId: string) {
+        if (type === "avatar") {
+            await this.removeAvatarUrl(userId);
+        } else {
+            await this.removeBannerUrl(userId);
+        }
     }
 
     static async getProfile(userId: string) {

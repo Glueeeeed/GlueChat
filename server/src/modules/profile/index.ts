@@ -91,6 +91,7 @@ export const profile = new Elysia({ prefix: '/profile' })
         try {
 
             const assetPath : any =  await ProfileService.getProfileAssetsPath(params.userId, params.type);
+            await ProfileService.handleRemove(params.type, params.userId);
             if (!assetPath) {
                 return status(404);
             }

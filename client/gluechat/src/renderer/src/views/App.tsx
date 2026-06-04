@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
-import {initAuthToken} from "@renderer/assets/utils";
+import { initAuthToken } from '@renderer/assets/utils'
 import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
 import {AddFriend} from "@renderer/components/friends/AddFriend";
@@ -12,7 +12,7 @@ import {Settings} from "@renderer/components/app/Settings";
 import { ProfileSettings } from '@renderer/components/app/profile/ProfileSettings'
 import {checkIfAssetExists} from "@renderer/assets/profile";
 import {UserProfile} from "@renderer/components/app/profile/UserProfile";
-import { API_BASE_URL } from '@renderer/assets/utils'
+import { API_BASE_URL, APP_VERSION} from '@renderer/assets/utils'
 
 
 export type Tab = 'chats' | 'friends' | 'settings';
@@ -42,7 +42,6 @@ export function App() {
   const navigate = useNavigate()
 
 
-  const CURRENT_VERSION = '0.1.0';
 
   const checkIfUpdate = async () => {
     try {
@@ -53,18 +52,9 @@ export function App() {
       if (response.ok) {
         const latestVersion = await response.text()
 
-        if (latestVersion && latestVersion !== CURRENT_VERSION) {
-          if (Notification.permission === 'granted') {
-            new Notification('New Update!', {
-              body: `A new version of GlueChat (${latestVersion}) is available. Download it to enjoy the new features!`
-            })
-          } else if (Notification.permission !== 'denied') {
-            Notification.requestPermission().then((permission) => {
-              if (permission === 'granted') {
-                new Notification('New Update!')
-              }
-            })
-          }
+        console.log(APP_VERSION)
+        if (latestVersion && latestVersion !== APP_VERSION) {
+          alert(`A new version of GlueChat (${latestVersion}) is available. Download it to enjoy the new features!`)
         }
       }
     } catch (error) {

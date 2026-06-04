@@ -27,7 +27,16 @@ interface ChatViewProps {
 export function ChatView({senderID, authKey, chatID, chatName, receiverID}: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [avatarURL, setAvatarURL] = useState<string | null>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
 
 
@@ -251,6 +260,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
                 nickname={m.sender}
               />
             ))}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>

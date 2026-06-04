@@ -48,11 +48,12 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
               userAvatarMap[chat.receiverID] = await checkIfAssetExists('avatar', chat.receiverID);
               const currentNickname = localStorage.getItem('nickname') || 'User'
 
-              const lastMsg = await window.e2ee.getLastMessage(chat,currentNickname)
+              const lastMsg = await window.e2ee.getLastMessage(chat,currentNickname);
+              const formattedLastMessage = lastMsg.content.length > 20 ? lastMsg.content.slice(0, 20) + '...' : lastMsg.content
               if (lastMsg) {
                 messagesMap[chat.id] = lastMsg.isAuthor
-                  ? `You: ${lastMsg.content}`
-                  : `${lastMsg.senderName}: ${lastMsg.content}`
+                  ? `You: ${formattedLastMessage}`
+                  : `${lastMsg.senderName}: ${formattedLastMessage}`
               }
             })
           )

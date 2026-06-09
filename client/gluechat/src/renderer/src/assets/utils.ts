@@ -42,8 +42,6 @@ export async function initAuthToken(): Promise<string> {
     throw new Error('Refresh token not found.');
   }
 
-  console.log('refreshToken', refreshToken);
-
   const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
     method: 'POST',
     headers: {

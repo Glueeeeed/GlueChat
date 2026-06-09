@@ -52,7 +52,6 @@ export function App() {
       if (response.ok) {
         const latestVersion = await response.text()
 
-        console.log(APP_VERSION)
         if (latestVersion && latestVersion !== APP_VERSION) {
           alert(`A new version of GlueChat (${latestVersion}) is available. Download it to enjoy the new features!`)
         }

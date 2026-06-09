@@ -12,8 +12,7 @@ export async function syncMessages(authKey: string, roomID: string): Promise<any
     }
   )
 
-  if (!response.ok) {
-  console.error(response)
+  if (!response.ok && response.status !== 404) {
   throw new Error('Failed to sync messages')
 }
 

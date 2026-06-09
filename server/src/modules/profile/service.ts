@@ -123,10 +123,10 @@ export abstract class ProfileService {
             where: { userId },
             include: {
                 user: {
-                    include: {
+                    select: {
                         badges: {
                             include: {
-                                badge: true
+                                badge: true,
                             }
                         }
                     }

@@ -1,12 +1,15 @@
-import React, { useState,useEffect } from 'react'
+import React, { useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import { loadFriend } from '@renderer/assets/friends'
-import {checkIfAssetExists} from "@renderer/assets/profile";
+import { checkIfAssetExists } from '@renderer/assets/profile'
+import { useQuery } from '@tanstack/react-query'
+
 
 interface Friend {
   id: string
   nickname: string
   status: 'online' | 'offline'
+  avatar?: string | null
 }
 
 
@@ -21,52 +24,59 @@ interface FriendsListProps {
 }
 
 
-export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption, setFriends, friends }: FriendsListProps): React.JSX.Element {
+export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption, }: FriendsListProps): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'online' | 'null'>('all')
-  const [userAvatar, setUserAvatar] = useState<Record<string, string | null>>({})
 
-  const userAvatarMap: Record<string, string | null> = {}
+  const { data } = useQuery({
+    queryKey: ['friends', authToken],
+    queryFn: (): Promise<Friend[] | null> => loadFriends(),
+    enabled: !!authToken,
+    staleTime: 1000 * 60 * 3
+  })
 
-  useEffect(() => {
-    const fetchFriends = async () => {
-      if (authToken) {
-        try {
-          const data = await loadFriend(authToken);
-          setFriends(data as Friend[]);
-        } catch (error) {
-          console.error("Failed to load friends", error);
+
+
+  const loadFriends = async (): Promise<Friend[] | null> => {
+    return await fetchFriends()
+  }
+
+  const fetchFriends = async (): Promise<Friend[] | null> => {
+    if (authToken) {
+      try {
+        const friends = await loadFriend(authToken)
+        if (friends) {
+          return await Promise.all(
+            friends.map(async (f) => ({
+              ...f,
+              avatar: await checkIfAssetExists('avatar', f.id)
+            }))
+          )
         }
+      } catch (error) {
+        console.error('Failed to load friends', error)
       }
-    };
-    fetchFriends();
-
-    const getAvatars = async () => {
-      friends.map(async (friend) => {
-        userAvatarMap[friend.id] = await checkIfAssetExists('avatar', friend.id)
-      })
-      setUserAvatar(userAvatarMap)
     }
-
-    getAvatars();
-
-  }, [authToken]);
+    return null
+  }
 
 
   const setAddFriend = (): void => {
     setAddFriendOption(!addFriendOption)
-    setFilter("null")
+    setFilter('null')
   }
 
-  let filteredFriends: Friend[] = []
+
+  let filteredFriends: Friend[] | undefined = []
   if (!addFriendOption) {
-    filteredFriends = friends.filter((friend) => {
-      const matchesSearch = friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesFilter = filter === 'all' || friend.status === 'online'
+    filteredFriends = data?.filter((friend) => {
+      const matchesSearch: boolean = friend.nickname
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+      const matchesFilter: boolean = filter === 'all' || friend.status === 'online'
       return matchesSearch && matchesFilter
     })
   }
-
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -124,7 +134,7 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-900/50 [&::-webkit-scrollbar-thumb]:bg-violet-950 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-violet-900">
-        {filteredFriends.length > 0
+        {filteredFriends?.length && filteredFriends.length > 0
           ? filteredFriends.map((friend) => (
               <button
                 key={friend.id}
@@ -136,8 +146,8 @@ export function FriendsList({ authToken,onSelectFriend, selectedFriendId, setAdd
                 }`}
               >
                 <div className="relative">
-                  {userAvatar[friend.id] ? (
-                    <img className={'w-9 h-9 rounded-full'} src={userAvatar[friend.id]}></img>
+                  {friend.avatar ? (
+                    <img className={'w-9 h-9 rounded-full'} src={friend.avatar}></img>
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
                       {friend.nickname.substring(0, 2)}

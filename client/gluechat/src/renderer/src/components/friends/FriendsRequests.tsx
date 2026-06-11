@@ -1,6 +1,7 @@
 import {FaUserCircle, FaCheck, FaTimes } from "react-icons/fa";
 import {useEffect, useState} from "react";
 import {loadRequests, request} from "@renderer/assets/friends";
+import {useQueryClient} from '@tanstack/react-query'
 
 
 interface Friend {
@@ -19,6 +20,8 @@ interface friendsRequestsProps {
 export function FriendsRequests({authToken} : friendsRequestsProps) {
   const [requests, setRequets] = useState<Friend[]>([])
   const [error, setError] = useState("");
+  const queryClient = useQueryClient()
+
 
 
 
@@ -41,6 +44,8 @@ export function FriendsRequests({authToken} : friendsRequestsProps) {
     setError("");
     try {
       await request(requestID, accepted, authToken);
+       queryClient.invalidateQueries({ queryKey: ['friends'] })
+       queryClient.invalidateQueries({ queryKey: ['chats'] })
       setRequets((prev) => prev.filter((r) => r.id !== requestID));
     } catch (e: any) {
       setError(e?.message || "Failed to manage request");

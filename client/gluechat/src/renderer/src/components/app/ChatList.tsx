@@ -1,7 +1,8 @@
 import { FaSearch } from 'react-icons/fa'
-import { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { loadChats } from '@renderer/assets/main'
 import { checkIfAssetExists } from '@renderer/assets/profile'
+import { useQuery } from '@tanstack/react-query'
 
 
 interface ChatInfo {
@@ -12,6 +13,12 @@ interface ChatInfo {
   unreadCount: number;
   senderID: string;
   receiverID: string;
+}
+
+interface FetchChatsResponse {
+  chats: ChatInfo[]
+  userAvatar: Record<string, string | null>
+  lastMessages: Record<string, string>
 }
 
 
@@ -25,57 +32,57 @@ interface ChatProps {
   setSenderID: (senderID: string) => void
 }
 
-export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, setSelectedChat, setSelectedChatName}: ChatProps) {
+export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, setSelectedChat, setSelectedChatName}: ChatProps) : React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
-  const [chats, setChats] = useState<ChatInfo[]>([]);
-  const [lastMessages, setLastMessages] = useState<Record<string, string>>({})
-  const [userAvatar, setUserAvatar] = useState<Record<string, string | null>>({})
+
+  const { data } = useQuery<FetchChatsResponse | null>({
+    queryKey: ['chats', authToken],
+    queryFn: () : Promise<FetchChatsResponse | null>   => fetchChats(),
+    enabled: !!authToken,
+    staleTime: 1000 * 60 * 5
+  })
 
 
-  useEffect(() => {
-    const fetchChats = async () => {
-      if (authToken) {
-        try {
-          const data = await loadChats(authToken)
-          const chatsData = data as ChatInfo[]
-          setChats(chatsData)
+  const fetchChats = async () : Promise<FetchChatsResponse | null> => {
+    if (!authToken) return null;
 
-          const messagesMap: Record<string, string> = {}
-          const userAvatarMap: Record<string, string | null> = {}
+    const rawData = await loadChats(authToken)
+    const chatsData = rawData as ChatInfo[]
 
-          await Promise.all(
-            chatsData.map(async (chat) => {
-              userAvatarMap[chat.receiverID] = await checkIfAssetExists('avatar', chat.receiverID);
-              const currentNickname = localStorage.getItem('nickname') || 'User'
+    const messagesMap: Record<string, string> = {}
+    const userAvatarMap: Record<string, string | null> = {}
 
-              const lastMsg = await window.e2ee.getLastMessage(chat,currentNickname);
-              const formattedLastMessage = lastMsg.content.length > 20 ? lastMsg.content.slice(0, 20) + '...' : lastMsg.content
-              if (lastMsg) {
-                messagesMap[chat.id] = lastMsg.isAuthor
-                  ? `You: ${formattedLastMessage}`
-                  : `${lastMsg.senderName}: ${formattedLastMessage}`
-              }
-            })
-          )
+    await Promise.all(
+      chatsData.map(async (chat) => {
+        userAvatarMap[chat.receiverID] = await checkIfAssetExists('avatar', chat.receiverID)
+        const currentNickname = localStorage.getItem('nickname') || 'User'
 
-          setUserAvatar(userAvatarMap)
-          setLastMessages(messagesMap)
-        } catch (error) {
-          console.error('Failed to load chats', error)
+        const lastMsg = await window.e2ee.getLastMessage(chat, currentNickname)
+        if (lastMsg) {
+          const formattedLastMessage =
+            lastMsg.content.length > 20 ? lastMsg.content.slice(0, 20) + '...' : lastMsg.content
+
+          messagesMap[chat.id] = lastMsg.isAuthor
+            ? `You: ${formattedLastMessage}`
+            : `${lastMsg.senderName}: ${formattedLastMessage}`
         }
-      }
-    }
-    fetchChats()
-  }, [authToken])
+      })
+    )
 
-  const setSelectedChatData = (selectedChat: string , selectedChatName: string , senderID: string, receiverID) => {
+    return {
+      chats: chatsData,
+      userAvatar: userAvatarMap,
+      lastMessages: messagesMap
+    }
+  }
+
+  const setSelectedChatData = (selectedChat: string , selectedChatName: string , senderID: string, receiverID) : void => {
     setSelectedChat(selectedChat);
     setSelectedChatName(selectedChatName);
     setSenderID(senderID);
     setReceiverID(receiverID);
   }
-
-  const filteredChats = chats.filter((chat) => {
+  const filteredChats = (data?.chats || []).filter((chat) => {
     return chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   })
 
@@ -115,8 +122,12 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
               }`}
             >
               <div className="relative">
-                {userAvatar[chat.receiverID] ? (
-                  <img className={'w-9 h-9 rounded-full'} src={userAvatar[chat.receiverID]}></img>
+                {data?.userAvatar[chat.receiverID] ? (
+                  <img
+                    className={'w-9 h-9 rounded-full object-cover'}
+                    src={data.userAvatar[chat.receiverID]!}
+                    alt={chat.name}
+                  />
                 ) : (
                   <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
                     {chat.name.substring(0, 2)}
@@ -138,10 +149,10 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
                   {chat.name}
                 </span>
                 <p className="text-gray-400 text-xs">
-                  {lastMessages[chat.id]
-                    ? lastMessages[chat.id]
+                  {data?.lastMessages[chat.id]
+                    ? data.lastMessages[chat.id]
                     : `Send first message to ${chat.name}`}
-                </p>{' '}
+                </p>
               </div>
             </button>
           ))

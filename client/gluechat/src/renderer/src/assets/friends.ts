@@ -1,5 +1,13 @@
 import { API_BASE_URL, initAuthToken } from '@renderer/assets/utils'
 
+
+interface Friend {
+  id: string
+  nickname: string
+  status: 'online' | 'offline'
+}
+
+
 export async function addToFriend(nickname: string, authToken: string, tryAgain = false): Promise<boolean> {
   if (!nickname) {
     throw new Error("You must provide a nickname");
@@ -31,7 +39,7 @@ export async function addToFriend(nickname: string, authToken: string, tryAgain 
   throw new Error(errorMessage);
 }
 
-export async function loadFriend(authToken: string, tryAgain = false): Promise<object> {
+export async function loadFriend(authToken: string, tryAgain = false): Promise<Friend[] | null> {
   const response = await fetch(`${API_BASE_URL}/api/friends`, {
     method: 'GET',
     headers: {
@@ -49,7 +57,7 @@ export async function loadFriend(authToken: string, tryAgain = false): Promise<o
   if (response.status === 200) {
     return json.data;
   }
-  return [];
+  return null;
 }
 
 export async function loadRequests(authToken: string, tryAgain = false): Promise<object> {

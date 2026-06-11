@@ -1,4 +1,5 @@
 import { useState, ChangeEvent, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {Badge} from "@renderer/components/app/profile/Badge"
 import { validateOrRefreshToken } from '@renderer/assets/main'
 import { jwtDecode } from 'jwt-decode'
@@ -17,6 +18,8 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [badges, setBadges] = useState<{ id: string; name: string; imageUrl: string }[]>([]);
+
+  const queryClient = useQueryClient()
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -163,6 +166,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
       setSuccessMessage('Successfully updated profile!');
       setAvatarFile(null)
       setBannerFile(null)
+      await queryClient.invalidateQueries({ queryKey: ['currentUser'] })
 
     } catch (err: any) {
       setError(err.message)

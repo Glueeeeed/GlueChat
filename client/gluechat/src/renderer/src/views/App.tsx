@@ -1,5 +1,6 @@
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from '@tanstack/react-query'
 import { initAuthToken } from '@renderer/assets/utils'
 import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
@@ -7,7 +8,7 @@ import {AddFriend} from "@renderer/components/friends/AddFriend";
 import {FriendsRequests} from "@renderer/components/friends/FriendsRequests";
 import {ChatList} from "@renderer/components/app/ChatList";
 import {ChatView} from "@renderer/components/app/ChatView";
-import { jwtDecode } from 'jwt-decode'
+import {jwtDecode} from 'jwt-decode'
 import {Settings} from "@renderer/components/app/Settings";
 import { ProfileSettings } from '@renderer/components/app/profile/ProfileSettings'
 import {checkIfAssetExists} from "@renderer/assets/profile";
@@ -21,29 +22,57 @@ interface Friend {
   id: string;
   nickname: string;
   status: 'online' | 'offline';
-  avatar?: string;
+  avatar?: string | null;
 }
 
 
 
-export function App() {
-  const [authToken, setAuthToken] = useState<string | null>(null)
+export function App(): React.JSX.Element {
   const [friends, setFriends] = useState<Friend[]>([])
   const [activeTab, setActiveTab] = useState<Tab>('chats')
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null)
   const [addFriendOption, setAddFriendOption] = useState<boolean>(false)
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [selectedChatName, setSelectedChatName] = useState<string | null>(null)
-  const [nickname, setNickname] = useState<string>('User')
   const [senderID, setSenderID] = useState<string | null>(null)
   const [receiverID, setReceiverID] = useState<string | null>(null)
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null)
-  const [avatarURL, setAvatarURL] = useState<string | null>(null)
   const navigate = useNavigate()
 
 
 
-  const checkIfUpdate = async () => {
+
+  const { data: userData } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      try {
+        const token = await initAuthToken()
+        const decodedToken: any = jwtDecode(token)
+        const avatarUrl = await checkIfAssetExists('avatar', decodedToken.id)
+        const finalAvatarUrl = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null
+        const currentNickname = localStorage.getItem('nickname')
+
+        return {
+          token,
+          id: decodedToken.id,
+          avatarUrl: finalAvatarUrl,
+          currentNickname,
+        }
+      } catch (e) {
+        const accounts = JSON.parse(localStorage.getItem('accounts') || '[]')
+        navigate(accounts.length > 0 ? '/select-account' : '/login')
+        throw e
+      }
+    },
+    staleTime: 1000 * 60 * 5
+  })
+
+  const authToken : string | null = userData?.token || null
+  const avatarURL : string | null = userData?.avatarUrl || null
+  const currentNickname : string = userData?.currentNickname || "Unknown";
+
+
+  const checkIfUpdate = async () : Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/app/version`, {
         method: 'GET'
@@ -63,41 +92,7 @@ export function App() {
 
 
   useEffect(() => {
-
      checkIfUpdate();
-
-    let isMounted = true
-    const currentNickname = localStorage.getItem('nickname')
-    if (currentNickname && isMounted) {
-      setNickname(currentNickname)
-    }
-
-
-    const checkAuth = async () => {
-      try {
-        const token = await initAuthToken()
-        if (isMounted) {
-          setAuthToken(token);
-          const decodedToken: any = jwtDecode(token);
-          const avatarUrl = await checkIfAssetExists("avatar", decodedToken.id);
-          setAvatarURL(avatarUrl);
-        }
-      } catch (e) {
-        if (isMounted) {
-          const accounts = JSON.parse(localStorage.getItem('accounts') || '[]')
-          if (accounts.length > 0) {
-            navigate('/select-account')
-          } else {
-            navigate('/login')
-          }
-        }
-      }
-    }
-
-    checkAuth()
-    return () => {
-      isMounted = false
-    }
   }, [])
 
 
@@ -165,13 +160,13 @@ export function App() {
                 <img className={'w-9 h-9 rounded-full'} src={avatarURL}></img>
               ) : (
                 <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
-                  {nickname.substring(0, 2)}
+                  {currentNickname.substring(0, 2)}
                 </div>
               )}
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-violet-500 border-2 border-gray-900" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate text-gray-100">{nickname}</p>
+              <p className="text-sm font-semibold truncate text-gray-100">{currentNickname}</p>
               <p className="text-[11px] text-gray-500 font-medium">Active</p>
             </div>
           </div>

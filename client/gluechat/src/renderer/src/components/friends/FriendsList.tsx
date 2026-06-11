@@ -147,7 +147,11 @@ export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAd
               >
                 <div className="relative">
                   {friend.avatar ? (
-                    <img className={'w-9 h-9 rounded-full'} src={friend.avatar}></img>
+                    <img
+                      className={'w-9 h-9 rounded-full object-cover'}
+                      src={`${friend.avatar}?t=${Date.now()}`}
+                      alt={friend.nickname}
+                    />
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
                       {friend.nickname.substring(0, 2)}

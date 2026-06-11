@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { initAuthToken } from '@renderer/assets/utils'
 import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
@@ -39,6 +40,8 @@ export function App(): React.JSX.Element {
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null)
   const navigate = useNavigate()
 
+
+  const queryClient = useQueryClient()
 
 
 
@@ -118,6 +121,13 @@ export function App(): React.JSX.Element {
               f.id === data.payload.userID ? { ...f, status: data.payload.status } : f
             )
           )
+        }
+
+        if (data.type === 'PROFILE_UPDATED') {
+           queryClient.invalidateQueries({ queryKey: ['friends'] })
+          queryClient.invalidateQueries({ queryKey: ['chats'] })
+
+
         }
       }
     }

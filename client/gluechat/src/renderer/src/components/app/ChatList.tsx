@@ -125,7 +125,7 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
                 {data?.userAvatar[chat.receiverID] ? (
                   <img
                     className={'w-9 h-9 rounded-full object-cover'}
-                    src={data.userAvatar[chat.receiverID]!}
+                    src={`${data.userAvatar[chat.receiverID]}?t=${Date.now()}`}
                     alt={chat.name}
                   />
                 ) : (

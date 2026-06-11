@@ -1,6 +1,17 @@
 import {prisma} from "../../lib/prisma";
 import path from "path";
 import fs from "node:fs/promises";
+import {activeConnections} from "../../app";
+
+interface Friendship {
+    id: string;
+    senderId: string;
+    receiverId: string;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 
 export abstract class ProfileService {
     static async updateProfile(userId: string, avatar: File | undefined, banner: File | undefined, description: string | undefined, bannerColor: string | undefined) {
@@ -20,6 +31,43 @@ export abstract class ProfileService {
             }
             avatarName = `avatar_${userId}.${avatar.type.split("/")[1]}`;
             await Bun.write(path.join(uploadDir, avatarName), avatar);
+
+            const friends : Friendship[]  = await prisma.friendship.findMany({
+                where: {
+
+                    OR: [
+                        {
+                            receiverId: userId,
+                            status: 'ACCEPTED'
+                        },
+                        {
+                            receiverId: userId,
+                            status: 'ACCEPTED'
+                        },
+                    ]
+                },
+            })
+
+            let friend ;
+
+            friends.map((friend: Friendship) => {
+
+                    if (friend.senderId === userId) {
+                        const ws = activeConnections.get(friend.receiverId);
+                        ws?.forEach(conn => conn.send({
+                            type: 'PROFILE_UPDATED',
+                            payload: {},
+                        }))
+                    } else {
+                        const ws = activeConnections.get(friend.senderId);
+                        ws?.forEach(conn => conn.send({
+                            type: 'PROFILE_UPDATED',
+                            payload: {},
+                        }))
+                    }
+            });
+
+
         }
 
         if (banner) {

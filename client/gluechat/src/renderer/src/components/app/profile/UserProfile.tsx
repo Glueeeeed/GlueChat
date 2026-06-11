@@ -47,7 +47,7 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
     )
 
   const avatarUrl = profile?.avatarUrl
-    ? `${API_BASE_URL}/api/profile/assets/avatar/${userId}`
+    ? `${API_BASE_URL}/api/profile/assets/avatar/${userId}?t=${Date.now()}`
     : null
   const bannerUrl = profile?.bannerUrl
     ? `${API_BASE_URL}/api/profile/assets/banner/${userId}`

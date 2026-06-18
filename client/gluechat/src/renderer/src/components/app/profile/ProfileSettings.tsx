@@ -174,22 +174,24 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-8 overflow-y-auto h-full">
-      <h2 className="text-2xl font-bold uppercase tracking-widest text-white">Your Profile</h2>
-
+    <div className="p-8 w-full   mx-auto space-y-8 overflow-y-auto h-full">
+      <div>
+        <h2 className="text-2xl font-bold uppercase tracking-widest text-white">
+          Account
+        </h2>
+        <p className="text-gray-500 text-sm mt-1">Manage your account information</p>
+      </div>
       {error && (
         <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm font-medium">
           {error}
         </div>
       )}
-
       {success && (
         <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-500 p-4 rounded-xl text-sm font-medium">
           {successMessage}
         </div>
       )}
-
-      <div className="relative h-120 rounded-2xl bg-gray-900/40 overflow-hidden border border-white/10 shadow-2xl">
+      <div className="relative h-120 rounded-2xl   bg-gray-900/40 overflow-hidden border border-white/10 shadow-2xl">
         <div
           className="h-35 w-full"
           style={{
@@ -217,7 +219,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
           </div>
         </div>
 
-        <div className="font-bold flex-col mt-8 ml-10 flex justify-start">
+        <div className="font-bold  flex-col mt-8 ml-10 flex justify-start">
           <h3 className="text-white text-lg">{localStorage.getItem('nickname') || 'Nickname'}</h3>
           <div className={'flex gap-0.5'}>
             {badges.map((badge) => (
@@ -235,8 +237,7 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
           </p>
         </div>
       </div>
-
-      <div className="space-y-6 bg-white/5 p-6 rounded-2xl border border-white/5">
+      <div className="space-y-6  bg-white/5 p-6 rounded-2xl border border-white/5">
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
             Description (Bio)

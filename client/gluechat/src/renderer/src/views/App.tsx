@@ -15,6 +15,7 @@ import { ProfileSettings } from '@renderer/components/app/profile/ProfileSetting
 import {checkIfAssetExists} from "@renderer/assets/profile";
 import {UserProfile} from "@renderer/components/app/profile/UserProfile";
 import { API_BASE_URL, APP_VERSION} from '@renderer/assets/utils'
+import { Account } from '@renderer/components/app/account/Account'
 
 
 export type Tab = 'chats' | 'friends' | 'settings';
@@ -231,7 +232,9 @@ export function App(): React.JSX.Element {
           <div className="flex-1 overflow-y-auto">
             {selectedSetting === 'EditProfile' ? (
               <ProfileSettings authToken={authToken} />
-            ) : (
+            ) : selectedSetting === 'Security' ? (
+              <Account></Account>
+            ) :  (
               <div className="flex-1 h-full flex items-center justify-center text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
                   Select a setting from the list

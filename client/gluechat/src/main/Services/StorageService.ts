@@ -14,8 +14,8 @@ export interface SessionState {
   capsule?: string
   alicePrivateKey?: Uint8Array
   bobPublicKey?: Uint8Array
-  sendCounter: number
-  lastSenderID: string
+  sendCounter?: number
+  lastSenderID?: string
 }
 
 export interface messageData {

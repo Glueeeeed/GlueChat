@@ -5,7 +5,7 @@ import Database from 'better-sqlite3'
 export abstract class SecretManager {
   private static dbs: Map<string, any> = new Map()
 
-  private static getDb(accountName: string) {
+  private static getDb(accountName: string) : any {
     if (this.dbs.has(accountName)) {
       return this.dbs.get(accountName)
     }

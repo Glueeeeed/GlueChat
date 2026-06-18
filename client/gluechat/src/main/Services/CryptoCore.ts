@@ -7,8 +7,7 @@ import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 
 export interface mixedKeys {
-  nextChainKey: Uint8Array
-  messageKey: Uint8Array
+  rootKey: Uint8Array
 }
 
 export interface oneTimeKey {
@@ -48,12 +47,8 @@ export abstract class CryptoCore {
     return { nonce, cipherText }
   }
 
-   static mixKeys(newKey: Uint8Array, oldKey: Uint8Array, message: Uint8Array): mixedKeys {
-    const derived = hkdf(sha256, newKey, oldKey, message, 64)
-    return {
-      nextChainKey: derived.slice(0, 32),
-      messageKey: derived.slice(32, 64)
-    }
+   static mixKeys(newKey: Uint8Array, oldKey: Uint8Array, message: Uint8Array): Uint8Array {
+    return hkdf(sha256, newKey, oldKey, message, 32)
   }
 
   static generateNewKeyPair(): KeyPair {

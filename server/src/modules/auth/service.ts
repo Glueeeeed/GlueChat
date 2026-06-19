@@ -168,16 +168,12 @@ export abstract class AuthService {
             }
         }
 
-
-
-
         if (!validator.isLength(password, { min: 8, max: 32 })) {
             throw new InvalidDataFormatError("Password must be between 8 and 32 characters long.");
         }
         if (!validator.isStrongPassword(password)) {
             throw new InvalidDataFormatError("Password is too weak (must include uppercase, lowercase, number and symbol)");
         }
-
 
     }
 }

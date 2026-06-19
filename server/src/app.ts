@@ -12,6 +12,7 @@ import {e2ee} from "./modules/e2ee";
 import {FriendsService} from "./modules/friends/service";
 import {profile} from "./modules/profile";
 import {gluechat} from "./modules/app";
+import {account} from "./modules/account";
 
 export const activeConnections = new Map<string, Set<any>>();
 
@@ -27,6 +28,7 @@ const app = new Elysia({
     .use(e2ee)
     .use(profile)
     .use(gluechat)
+    .use(account)
     .ws('/ws', {
         body: t.Object({
             type: t.String(),

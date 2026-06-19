@@ -34,3 +34,5 @@ export async function login(nickname: string, password: string) : Promise<result
 
   return {success: true, message: "ok"};
 }
+
+

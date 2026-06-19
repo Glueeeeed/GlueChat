@@ -1,9 +1,37 @@
-import { IoEyeOffOutline, IoFlashOutline } from 'react-icons/io5'
+import { IoEyeOffOutline } from 'react-icons/io5'
 import { FaShieldHalved } from 'react-icons/fa6'
 import { IoIosUnlock, IoMdAlert } from 'react-icons/io'
 import { FaCheckCircle } from 'react-icons/fa'
+import { Eye, EyeOff } from 'lucide-react'
+import { JSX, useState } from 'react'
+import { validateOrRefreshToken } from '@renderer/assets/main'
+import { changePassword } from '@renderer/assets/account'
 
-export function Account() {
+interface Props {
+  authToken: string
+}
+
+export function Account({authToken} : Props) : JSX.Element {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [successMessage] = useState<string>('Successfully updated password!');
+
+  const handleChangePassword =  async (): Promise<void> => {
+    try {
+      const token : string = await validateOrRefreshToken(authToken as string);
+      await changePassword(token, currentPassword, newPassword);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err : any) {
+      setError(err.message);
+      setTimeout(() => setError(''), 3000);
+    }
+  }
   return (
     <div className="p-8 w-full mx-auto space-y-8 overflow-y-auto h-full [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-violet-950/50 [&::-webkit-scrollbar-thumb]:rounded-full">
       <div>
@@ -21,29 +49,60 @@ export function Account() {
             </h3>
           </div>
 
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm font-medium">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-500 p-4 rounded-xl text-sm font-medium">
+              {successMessage}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1">
                 Current
               </label>
-              <input
-                type="password"
-                className="w-full bg-gray-700/20 border border-white/10 rounded-xl p-2.5 text-xs text-white outline-none focus:ring-1 focus:ring-violet-500"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  className="w-full bg-gray-700/20 border border-white/10 rounded-xl p-2.5 pr-10 text-xs text-white outline-none focus:ring-1 focus:ring-violet-500"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors p-1"
+                >
+                  {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1">
                 New
               </label>
-              <input
-                type="password"
-                className="w-full bg-gray-700/20 border border-white/10 rounded-xl p-2.5 text-xs text-white outline-none focus:ring-1 focus:ring-violet-500"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  type={showNewPassword ? 'text' : 'password'}
+                  className="w-full bg-gray-700/20 border border-white/10 rounded-xl p-2.5 pr-10 text-xs text-white outline-none focus:ring-1 focus:ring-violet-500"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors p-1"
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
           </div>
-          <button className="w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-xl font-bold text-xs uppercase border border-white/5 transition-all active:scale-[0.98]">
+          <button onClick={handleChangePassword} className="w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-xl font-bold text-xs uppercase border border-white/5 transition-all active:scale-[0.98]">
             Update credentials
           </button>
         </div>
@@ -146,8 +205,8 @@ export function Account() {
 
           <div className="flex items-center justify-between p-1">
             <p className="text-xs text-gray-400 max-w-[70%]">
-              Set an alternative password that will unlock a "empty" version of the application in
-              dangerous situations.
+              Set an alternative password that will unlock a &#34;empty&#34; version of the
+              application in dangerous situations.
             </p>
             <button className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase transition-all">
               Configure
@@ -173,8 +232,8 @@ export function Account() {
           <div className="flex items-center p-1">
             <div className="flex items-center justify-between p-1">
               <p className="text-xs text-gray-400  max-w-[70%]">
-                If you don't log in for a selected period, your account and your data will be erased
-                permanently
+                If you don&#39;t log in for a selected period, your account and your data will be
+                erased permanently
               </p>
               <div className="flex items-center gap-3">
                 <select className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase xl:ml-80 transition-all">

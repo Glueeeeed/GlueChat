@@ -28,7 +28,7 @@ const router = createHashRouter([
     element: <Register />,
   },
   {
-    path: '/select-account',
+    path: '/select-accountSecurity',
     element: <SelectAccount />,
   },
 ])

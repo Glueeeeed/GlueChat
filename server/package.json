@@ -9,6 +9,7 @@
     "dotenv": "^17.4.0",
     "elysia": "^1.4.28",
     "jsonwebtoken": "^9.0.3",
+    "otpauth": "^9.5.1",
     "tsx": "^4.22.3",
     "validator": "^13.15.35",
     "zod": "^4.4.3"

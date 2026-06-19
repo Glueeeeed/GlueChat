@@ -57,10 +57,28 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/login', async ({body}) =>  {
     try {
-        const {nickname,password} = body;
-        AuthService.validate(nickname, password,true);
+        const {nickname, password, code2fa} = body;
+        AuthService.validate(nickname, password, true);
         await AuthService.checkIfNicknameExists(nickname, true);
         const userID : string = await AuthService.loginUser(nickname, password);
+
+        const is2faEnabled = await AuthService.is2FAEnabled(userID);
+
+        if (is2faEnabled) {
+            if (!code2fa) {
+                return {
+                    success: true,
+                    message: 'MFA required',
+                    mfaRequired: true
+                }
+            }
+
+            const is2faValid = await AuthService.verify2FACode(userID, code2fa);
+            if (!is2faValid) {
+                throw new InvalidCredentialsError("Invalid 2FA code");
+            }
+        }
+
         const authToken : string = generateAuthToken(userID);
         const refreshToken : string = await generateRefreshToken(userID);
         return {

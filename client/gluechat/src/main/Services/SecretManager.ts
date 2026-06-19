@@ -36,13 +36,13 @@ export abstract class SecretManager {
 
   static async getSecret(accountName: string ,service: string ,account: string) : Promise<string | null> {
     const db = this.getDb(accountName);
-    const row = db.prepare('SELECT value FROM secrets WHERE service = ? AND account = ?').get(service,account) as { value?: string } | undefined;
+    const row = db.prepare('SELECT value FROM secrets WHERE service = ? AND accountSecurity = ?').get(service,account) as { value?: string } | undefined;
     return row && typeof row.value === 'string' ? row.value : null;
   }
 
   static async deleteSecret(accountName: string ,service: string, account: string ) : Promise<void> {
     const db = this.getDb(accountName);
-    const stmt = db.prepare('DELETE FROM secrets WHERE service = ? AND account = ?');
+    const stmt = db.prepare('DELETE FROM secrets WHERE service = ? AND accountSecurity = ?');
     stmt.run(service,account);
   }
 

@@ -6,8 +6,19 @@ export const accountData = {
         newPassword: t.String(),
     }),
 
+    twoFactorData: t.Object({
+        code: t.String()
+    }),
+
     response: t.Object({
         success: t.Boolean(),
         message: t.String(),
+        twoFactorUrl: t.Optional(
+            t.String()
+        ),
+        twoFactorSecret: t.Optional(
+            t.String()
+        ),
+        enabled: t.Optional(t.Boolean())
     })
 }

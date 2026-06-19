@@ -1,8 +1,10 @@
 import { prisma } from "../../lib/prisma";
 import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
 import validator from 'validator';
+import * as OTPAuth from "otpauth";
 import {isForbiddenNick} from "../../utils/validation";
 import {randomBytes} from "node:crypto";
+import {AccountService} from "../account/service";
 
 interface UserData {
     password: string;
@@ -140,6 +142,32 @@ export abstract class AuthService {
 
     }
 
+    static async is2FAEnabled(userID: string): Promise<boolean> {
+        const record = await prisma.secrets2FA.findFirst({
+            where: { userId: userID },
+            select: { status: true }
+        });
+        return record?.status === 'ACTIVE';
+    }
+
+    static async verify2FACode(userID: string, code: string): Promise<boolean> {
+        const record = await prisma.secrets2FA.findFirst({
+            where: { userId: userID },
+            select: { secretCode: true }
+        });
+
+        if (!record) return false;
+
+        const decryptedUri = AccountService.decrypt(record.secretCode);
+        const totp = OTPAuth.URI.parse(decryptedUri);
+        const delta = totp.validate({
+            token: code,
+            window: 1
+        });
+
+        return delta !== null;
+    }
+
     static async generateAccessCode() : Promise<string> {
         const accessCode : string = Buffer.from(randomBytes(6)).toString("base64url");
         await prisma.accessCodes.create({
@@ -155,8 +183,8 @@ export abstract class AuthService {
         if (validator.isEmail(nickname as string)) {
             throw new InvalidDataFormatError("Nickname cannot be an email address");
         }
-        if (!validator.isLength(nickname as string, { min: 4, max: 20 })) {
-            throw new InvalidDataFormatError("Nickname must be between 4 and 20 characters");
+        if (!validator.isLength(nickname as string, { min: 3, max: 20 })) {
+            throw new InvalidDataFormatError("Nickname must be between 3 and 20 characters");
         }
         if (!validator.isAlphanumeric(nickname as string)) {
             throw new InvalidDataFormatError("Nickname can only contain letters and numbers");

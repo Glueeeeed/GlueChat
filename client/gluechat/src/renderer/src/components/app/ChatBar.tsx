@@ -15,7 +15,7 @@ export function ChatBar({ activeTab, setActiveTab }: ChatBarProps) {
 
   const handleLogout = () => {
     localStorage.removeItem("nickname");
-    navigate("/select-account");
+    navigate("/select-accountSecurity");
   };
 
   return (
@@ -52,7 +52,7 @@ export function ChatBar({ activeTab, setActiveTab }: ChatBarProps) {
         <button
           onClick={handleLogout}
           className="p-3 rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-all duration-200 cursor-pointer group"
-          title="Switch Account / Logout"
+          title="Switch AccountSecurity / Logout"
         >
           <FaSignOutAlt size={24} className="transition-transform group-hover:scale-110" />
         </button>

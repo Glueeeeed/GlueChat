@@ -5,9 +5,10 @@ interface result {
   message: string;
   authToken?: string;
   refreshToken?: string;
+  mfaRequired?: boolean;
 }
 
-export async function login(nickname: string, password: string) : Promise<result> {
+export async function login(nickname: string, password: string, code2fa?: string) : Promise<result> {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: 'POST',
     headers: {
@@ -16,13 +17,19 @@ export async function login(nickname: string, password: string) : Promise<result
     },
     body: JSON.stringify({
       nickname: nickname,
-      password: password
+      password: password,
+      code2fa: code2fa
     })
   })
   const json = await response.json();
   if (!response.ok) {
     return {success: false, message: json.message };
   }
+
+  if (json.mfaRequired) {
+    return { success: true, message: "MFA required", mfaRequired: true };
+  }
+
   await window.auth.setRefreshToken(nickname, json.refreshToken);
   localStorage.setItem("nickname", nickname);
 

@@ -13,8 +13,8 @@ export function validateNickname (nickname: string) : void {
       throw new Error('Nickname cannot be email');
     }
 
-    if (!validator.isLength(nickname, {min: 4 , max: 20})) {
-      throw new Error('Nickname must be between 4 and 20 characters long');
+    if (!validator.isLength(nickname, {min: 3 , max: 20})) {
+      throw new Error('Nickname must be between 3 and 20 characters long');
     }
 
 }

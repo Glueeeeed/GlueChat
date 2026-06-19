@@ -3,26 +3,45 @@ import { FaShieldHalved } from 'react-icons/fa6'
 import { IoIosUnlock, IoMdAlert } from 'react-icons/io'
 import { FaCheckCircle } from 'react-icons/fa'
 import { Eye, EyeOff } from 'lucide-react'
-import { JSX, useState } from 'react'
+import { JSX, useEffect, useState } from 'react'
 import { validateOrRefreshToken } from '@renderer/assets/main'
-import { changePassword } from '@renderer/assets/account'
+import { changePassword, disable2fa, get2faStatus } from '@renderer/assets/account'
+import { Setup2FA } from '@renderer/components/app/accountSecurity/secureFeatures/2faSetup'
 
 interface Props {
   authToken: string
 }
 
-export function Account({authToken} : Props) : JSX.Element {
+export function AccountSecurity({authToken} : Props) : JSX.Element {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [activeSubView, setActiveSubView] = useState<'main' | '2fa' | 'recovery'>('main')
 
+  const [is2faEnabled, setIs2faEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [successMessage] = useState<string>('Successfully updated password!');
+  const [successMessage, setSuccessMessage] = useState<string>('Successfully updated password!');
+
+  useEffect(() => {
+    const fetch2FAStatus = async () => {
+      try {
+        const token = await validateOrRefreshToken(authToken);
+        const enabled = await get2faStatus(token);
+        setIs2faEnabled(enabled);
+      } catch (err) {
+        console.error("Failed to fetch 2FA status", err);
+      }
+    };
+    if (activeSubView === 'main') {
+      fetch2FAStatus();
+    }
+  }, [authToken, activeSubView]);
 
   const handleChangePassword =  async (): Promise<void> => {
     try {
+      setSuccessMessage('Successfully updated password!');
       const token : string = await validateOrRefreshToken(authToken as string);
       await changePassword(token, currentPassword, newPassword);
       setSuccess(true);
@@ -32,6 +51,26 @@ export function Account({authToken} : Props) : JSX.Element {
       setTimeout(() => setError(''), 3000);
     }
   }
+
+  const handleDisable2FA = async () => {
+    try {
+      const token = await validateOrRefreshToken(authToken);
+      await disable2fa(token);
+      setIs2faEnabled(false);
+      setSuccessMessage('2FA has been disabled');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message);
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  if (activeSubView === '2fa') {
+    return <Setup2FA onBack={() => setActiveSubView('main')} authToken={authToken} />
+  }
+
+
   return (
     <div className="p-8 w-full mx-auto space-y-8 overflow-y-auto h-full [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-violet-950/50 [&::-webkit-scrollbar-thumb]:rounded-full">
       <div>
@@ -128,9 +167,27 @@ export function Account({authToken} : Props) : JSX.Element {
             <p className="text-xs text-gray-400 max-w-[70%]">
               Add an extra layer of protection to your account
             </p>
-            <button className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase transition-all">
-              Configure
-            </button>
+            <div className="flex gap-2">
+              {is2faEnabled && (
+                <button
+                  onClick={handleDisable2FA}
+                  className="text-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg border border-red-500/20 font-bold uppercase transition-all"
+                >
+                  Disable
+                </button>
+              )}
+              <button
+                disabled={is2faEnabled}
+                onClick={() => setActiveSubView('2fa')}
+                className={`text-[10px] px-4 py-2 rounded-lg border font-bold uppercase transition-all ${
+                  is2faEnabled
+                    ? 'bg-gray-800/50 text-gray-500 border-white/5 cursor-not-allowed'
+                    : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                }`}
+              >
+                Configure
+              </button>
+            </div>
           </div>
         </div>
 
@@ -169,7 +226,7 @@ export function Account({authToken} : Props) : JSX.Element {
               </div>
               <div>
                 <h3 className="text-white font-bold uppercase text-sm tracking-wider">
-                  GlueLock Protection
+                  GlueLock
                 </h3>
                 <p className="text-[10px] text-gray-500 uppercase font-medium">
                   Brute-Force Protection

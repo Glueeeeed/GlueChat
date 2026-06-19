@@ -12,6 +12,9 @@ export const authModel = {
         keys: t.Optional(
             t.String(),
         ),
+        code2fa: t.Optional(
+            t.String(),
+        ),
     }),
 
     authResponse: t.Object({
@@ -22,6 +25,9 @@ export const authModel = {
         ),
         refreshToken: t.Optional(
             t.String(),
+        ),
+        mfaRequired: t.Optional(
+            t.Boolean(),
         ),
     }),
 

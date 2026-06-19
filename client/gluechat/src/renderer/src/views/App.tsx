@@ -15,7 +15,7 @@ import { ProfileSettings } from '@renderer/components/app/profile/ProfileSetting
 import {checkIfAssetExists} from "@renderer/assets/profile";
 import {UserProfile} from "@renderer/components/app/profile/UserProfile";
 import { API_BASE_URL, APP_VERSION} from '@renderer/assets/utils'
-import { Account } from '@renderer/components/app/account/Account'
+import { AccountSecurity } from '@renderer/components/app/accountSecurity/AccountSecurity'
 
 
 export type Tab = 'chats' | 'friends' | 'settings';
@@ -64,7 +64,7 @@ export function App(): React.JSX.Element {
         }
       } catch (e) {
         const accounts = JSON.parse(localStorage.getItem('accounts') || '[]')
-        navigate(accounts.length > 0 ? '/select-account' : '/login')
+        navigate(accounts.length > 0 ? '/select-accountSecurity' : '/login')
         throw e
       }
     },
@@ -233,7 +233,7 @@ export function App(): React.JSX.Element {
             {selectedSetting === 'EditProfile' ? (
               <ProfileSettings authToken={authToken} />
             ) : selectedSetting === 'Security' ? (
-              <Account></Account>
+              <AccountSecurity authToken={authToken as string}></AccountSecurity>
             ) :  (
               <div className="flex-1 h-full flex items-center justify-center text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">

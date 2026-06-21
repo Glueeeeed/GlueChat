@@ -2,9 +2,13 @@ import { prisma } from "../../lib/prisma";
 import * as bun from "bun";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
-import {InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
+import OTPEmail from '../../emails/otp';
+import * as React from 'react'
+import { render } from '@react-email/render';
+import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
 import {join} from "path";
-require("dotenv").config({ path: join(__dirname, "../..env") });
+import {transporter} from "../../utils/nodemailer";
+require("dotenv").config({ path: join(__dirname, "../../../.env") });
 
 
 export interface TwoFactorData {
@@ -12,7 +16,7 @@ export interface TwoFactorData {
     secret: string,
 }
 
-export abstract class AccountService {
+abstract class AccountService {
     static decrypt(encryptedData: string): string {
         const key = process.env.ENCRYPT_KEY_2FA;
         if (!key) {
@@ -153,5 +157,114 @@ export abstract class AccountService {
         });
     }
 
+    static async setupRecovery(userId: string , email: string) {
+        const emailRecord  = await prisma.user.findFirst({
+            where: {
+                resetEmail: email
+            }
+        })
+        if (emailRecord) {
+            throw new AlreadyExistsError("Email already used");
+        }
+
+
+
+        const secret  = new OTPAuth.Secret({size: 32});
+        const totp = new OTPAuth.TOTP({
+            issuer: "GlueChat",
+            label: email,
+            algorithm: "SHA1",
+            digits: 6,
+            period: 600,
+            secret: secret,
+
+        });
+        const url = totp.toString();
+        const key = process.env.ENCRYPT_KEY_2FA;
+        const nonce = crypto.randomBytes(16);
+        const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(key as string, 'base64'), nonce);
+        let encrypted = cipher.update(url, 'utf8', 'hex');
+        encrypted += cipher.final('hex');
+        const authTag = cipher.getAuthTag().toString('hex');
+        const dbValue = `${nonce.toString('hex')}:${encrypted}:${authTag}`;
+
+
+        const verifyCode : string = totp.generate({
+            timestamp: Date.now(),
+        });
+
+
+        const html : string = await render(
+            React.createElement(OTPEmail, { code: verifyCode })
+        );
+        await transporter.sendMail({
+            from: process.env.MAIL_USER,
+            to: email,
+            subject: "DON'T REPLY | VERIFY YOUR EMAIL",
+            html: html
+        });
+
+        await prisma.secretsRecovery.create({
+            data: {
+                userId: userId,
+                secretCode: dbValue,
+            }
+        })
+    }
+
+    static async verifySetupRecovery(userID: string, code: string, email: string): Promise<void> {
+        const record = await prisma.secretsRecovery.findFirst({
+            where: { userId: userID },
+            select: { secretCode: true }
+        })
+
+
+        if (!record) {
+            throw new InvalidDataFormatError("Recovery is not set up for this user");
+        }
+
+        const decryptedUri = this.decrypt(record.secretCode);
+        const totp = OTPAuth.URI.parse(decryptedUri);
+
+        const delta = totp.validate({
+            timestamp: Date.now(),
+            token: code,
+            window: 1
+        });
+
+
+        if (delta === null) {
+            throw new InvalidCredentialsError("Invalid verification code");
+        }
+
+        await prisma.secretsRecovery.update({
+            where: {
+                userId: userID,
+            },
+            data: {
+                status: "VERIFIED"
+            }
+        })
+
+        const recoveryEmailRecord = await prisma.user.findFirst({
+            where: { resetEmail: email }
+        })
+
+        if (recoveryEmailRecord) {
+            throw new AlreadyExistsError("Recovery already set up for this user");
+        }
+        const hashedEmail : string =  await bun.password.hash(email);
+        await prisma.user.update({
+            where: {
+                id: userID
+            },
+            data: {
+                resetEmail: hashedEmail
+            }
+        })
+    }
+
 
 }
+
+export default AccountService

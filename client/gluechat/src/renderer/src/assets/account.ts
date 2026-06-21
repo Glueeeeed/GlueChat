@@ -92,3 +92,39 @@ export async function disable2fa(authToken: string): Promise<void> {
     throw new Error(json.message)
   }
 }
+
+
+export async function recoverySetup(authToken: string, email: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/account/recovery/setup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`
+    },
+    body: JSON.stringify({
+      email: email
+    })
+  })
+  const json = await response.json()
+  if (!response.ok) {
+    throw new Error(json.message);
+  }
+}
+
+export async function recoveryCode(authToken: string, email: string, code: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/account/recovery/setup/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`
+    },
+    body: JSON.stringify({
+      code: code,
+      email: email
+    })
+  })
+  const json = await response.json()
+  if (!response.ok) {
+    throw new Error(json.message);
+  }
+}

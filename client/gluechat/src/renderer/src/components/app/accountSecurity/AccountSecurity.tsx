@@ -7,6 +7,7 @@ import { JSX, useEffect, useState } from 'react'
 import { validateOrRefreshToken } from '@renderer/assets/main'
 import { changePassword, disable2fa, get2faStatus } from '@renderer/assets/account'
 import { Setup2FA } from '@renderer/components/app/accountSecurity/secureFeatures/2faSetup'
+import { RecoveryAccount } from '@renderer/components/app/accountSecurity/secureFeatures/accountRecovery'
 
 interface Props {
   authToken: string
@@ -25,7 +26,7 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
   const [successMessage, setSuccessMessage] = useState<string>('Successfully updated password!');
 
   useEffect(() => {
-    const fetch2FAStatus = async () => {
+    const fetch2FAStatus = async () : Promise<void> => {
       try {
         const token = await validateOrRefreshToken(authToken);
         const enabled = await get2faStatus(token);
@@ -52,7 +53,7 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
     }
   }
 
-  const handleDisable2FA = async () => {
+  const handleDisable2FA = async () : Promise<void> => {
     try {
       const token = await validateOrRefreshToken(authToken);
       await disable2fa(token);
@@ -70,6 +71,10 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
     return <Setup2FA onBack={() => setActiveSubView('main')} authToken={authToken} />
   }
 
+  if (activeSubView === 'recovery') {
+    return <RecoveryAccount onBack={() => setActiveSubView('main')} authToken={authToken} />
+  }
+
 
   return (
     <div className="p-8 w-full mx-auto space-y-8 overflow-y-auto h-full [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-violet-950/50 [&::-webkit-scrollbar-thumb]:rounded-full">
@@ -80,6 +85,17 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
         </p>
       </div>
 
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm font-medium">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-500 p-4 rounded-xl text-sm font-medium">
+          {successMessage}
+        </div>
+      )}
+
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-2xl border border-white/5 space-y-4">
           <div className="flex items-center gap-3 mb-2">
@@ -87,17 +103,6 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
               Change Password
             </h3>
           </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm font-medium">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-500 p-4 rounded-xl text-sm font-medium">
-              {successMessage}
-            </div>
-          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -141,7 +146,10 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
               </div>
             </div>
           </div>
-          <button onClick={handleChangePassword} className="w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-xl font-bold text-xs uppercase border border-white/5 transition-all active:scale-[0.98]">
+          <button
+            onClick={handleChangePassword}
+            className="w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-xl font-bold text-xs uppercase border border-white/5 transition-all active:scale-[0.98]"
+          >
             Update credentials
           </button>
         </div>
@@ -212,7 +220,10 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
             <p className="text-xs text-gray-400 max-w-[70%]">
               Restore Access to Your Account If You Lose It{' '}
             </p>
-            <button className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase transition-all">
+            <button
+              onClick={() => setActiveSubView('recovery')}
+              className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase transition-all"
+            >
               Configure
             </button>
           </div>
@@ -225,9 +236,7 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
                 <FaShieldHalved className="text-violet-500 text-xl" />
               </div>
               <div>
-                <h3 className="text-white font-bold uppercase text-sm tracking-wider">
-                  GlueLock
-                </h3>
+                <h3 className="text-white font-bold uppercase text-sm tracking-wider">GlueLock</h3>
                 <p className="text-[10px] text-gray-500 uppercase font-medium">
                   Brute-Force Protection
                 </p>

@@ -10,7 +10,7 @@ export function validateNickname (nickname: string) : void {
        throw new Error('Nickname is required');
     }
     if (validator.isEmail(nickname)) {
-      throw new Error('Nickname cannot be email');
+      throw new Error('Nickname cannot be emails');
     }
 
     if (!validator.isLength(nickname, {min: 3 , max: 20})) {

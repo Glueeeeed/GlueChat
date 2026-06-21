@@ -6,22 +6,32 @@
     "@prisma/adapter-mariadb": "^7.6.0",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.8.0",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.9",
     "dotenv": "^17.4.0",
     "elysia": "^1.4.28",
     "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^9.0.1",
     "otpauth": "^9.5.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "tsx": "^4.22.3",
     "validator": "^13.15.35",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@react-email/ui": "^6.6.3",
     "@types/bun": "^1.3.11",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.5.2",
+    "@types/nodemailer": "^8.0.1",
+    "@types/react-dom": "^19.2.3",
     "@types/validator": "^13.15.10",
-    "prisma": "^7.8.0"
+    "prisma": "^7.8.0",
+    "react-email": "^6.6.3"
   },
   "scripts": {
+    "email": "email dev --dir src/emails",
     "dev": "bun --watch src/app.ts",
     "build": "bun build src/app.ts --target bun --outdir ./dist",
     "start": "NODE_ENV=production bun dist/index.js",

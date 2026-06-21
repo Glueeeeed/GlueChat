@@ -10,6 +10,13 @@ export const accountData = {
         code: t.String()
     }),
 
+    recoverySetupData: t.Object({
+        email: t.String(),
+        code: t.Optional(
+            t.String()
+        )
+    }),
+
     response: t.Object({
         success: t.Boolean(),
         message: t.String(),

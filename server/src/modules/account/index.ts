@@ -2,9 +2,9 @@ import {Elysia, status} from "elysia";
 import {bearer} from "@elysiajs/bearer";
 import {jwt} from "@elysiajs/jwt";
 import {accountData} from "./model";
-import {AccountService, TwoFactorData} from "./service";
+import AccountService, {TwoFactorData} from "./service";
 import {AuthService} from "../auth/service";
-import {InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
+import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
 
 export const account = new Elysia({ prefix: '/account' })
     .use(bearer())
@@ -152,6 +152,61 @@ export const account = new Elysia({ prefix: '/account' })
             })
         }
     }, {
+        response: {
+            201: accountData.response
+        }
+    })
+
+    .post('/recovery/setup', async ({body, user}) => {
+        try {
+            const {email} = body;
+            await AccountService.setupRecovery(user.id, email);
+            return status(200, {
+                success: true,
+                message: "Successfully sent verification email",
+            })
+
+        } catch (e) {
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
+    }, {
+        body: accountData.recoverySetupData,
+        response: {
+            201: accountData.response
+        }
+    })
+
+
+    .post('/recovery/setup/verify', async ({body, user}) => {
+        try {
+            const {email, code} = body;
+            if (!code) {
+                throw new InvalidDataFormatError("Code is required");
+            }
+             await AccountService.verifySetupRecovery(user.id, code,email);
+            return status(200, {
+                success: true,
+                message: "Successfully enabled account recovery",
+            })
+        } catch (e) {
+            console.error(e);
+            if (e instanceof InvalidDataFormatError  || e instanceof InvalidCredentialsError || e instanceof AlreadyExistsError) {
+                return status(e.statusCode, {
+                    success: false,
+                    message: e.message
+                })
+            }
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
+    },{
+        body: accountData.recoverySetupData,
         response: {
             201: accountData.response
         }

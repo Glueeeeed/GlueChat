@@ -1,9 +1,14 @@
 import QRCode from 'react-qr-code'
-import { useEffect, useState } from 'react'
+import { JSX, useEffect, useState } from 'react'
 import { validateOrRefreshToken } from '@renderer/assets/main'
 import { generate2faSecret, TwoFactorData, verify2faCode } from '@renderer/assets/account'
 
-export function Setup2FA({ onBack, authToken }: { onBack: () => void; authToken: string }) {
+interface Props {
+  onBack: () => void,
+  authToken: string
+}
+
+export function Setup2FA({ onBack, authToken }: Props ) : JSX.Element {
   const [url, setUrl] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);

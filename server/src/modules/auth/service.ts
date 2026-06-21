@@ -4,7 +4,7 @@ import validator from 'validator';
 import * as OTPAuth from "otpauth";
 import {isForbiddenNick} from "../../utils/validation";
 import {randomBytes} from "node:crypto";
-import {AccountService} from "../account/service";
+import AccountService from "../account/service";
 
 interface UserData {
     password: string;

@@ -172,14 +172,14 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
           </div>
 
           <div className="flex items-center justify-between p-1">
-            <p className="text-xs text-gray-400 max-w-[70%]">
+            <p className="text-xs text-gray-400 max-w-[80%]">
               Add an extra layer of protection to your account
             </p>
             <div className="flex gap-2">
               {is2faEnabled && (
                 <button
                   onClick={handleDisable2FA}
-                  className="text-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg border border-red-500/20 font-bold uppercase transition-all"
+                  className="text-[10px] ml-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg border border-red-500/20 font-bold uppercase transition-all"
                 >
                   Disable
                 </button>

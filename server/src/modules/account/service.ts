@@ -204,12 +204,20 @@ abstract class AccountService {
             html: html
         });
 
-        await prisma.secretsRecovery.create({
-            data: {
+        await prisma.secretsRecovery.upsert({
+            where: {
+                userId: userId
+            },
+            update: {
+                status: 'UNVERIFIED',
+                secretCode: dbValue
+            },
+            create: {
                 userId: userId,
-                secretCode: dbValue,
+                status: 'UNVERIFIED',
+                secretCode: dbValue
             }
-        })
+        });
     }
 
     static async verifySetupRecovery(userID: string, code: string, email: string): Promise<void> {

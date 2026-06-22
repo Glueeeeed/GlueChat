@@ -1,6 +1,7 @@
 import { Elysia,t } from 'elysia'
 import {MessageHandler} from "./utils/messageHandler";
 import { cors } from '@elysiajs/cors'
+import { staticPlugin } from '@elysiajs/static'
 
 
 import {test} from './modules/test'
@@ -20,6 +21,10 @@ const app = new Elysia({
     name: 'glue-chat backend server',
     prefix: '/api'
 })
+app.use(staticPlugin({
+    assets: './src/public',
+    prefix: '/auth/',
+}))
     .use(cors())
     .use(test)
     .use(auth)

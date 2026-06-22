@@ -1,5 +1,5 @@
 import {Link, useNavigate} from "react-router-dom";
-import {useState} from "react";
+import { JSX, useState } from 'react'
 import {  validateNickname, validatePassword } from '@renderer/assets/utils'
 import {register} from "@renderer/assets/register";
 import {login} from "@renderer/assets/login";
@@ -22,7 +22,7 @@ interface result {
   mfaRequired?: boolean;
 }
 
-export function Box({ isLogin, nickname, password, setNickname,setPassword, setAccessCode , accessCode}: Props) {
+export function Box({ isLogin, nickname, password, setNickname,setPassword, setAccessCode , accessCode}: Props) : JSX.Element {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [registered, setRegistered] = useState(false);
@@ -245,7 +245,13 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
         )}
 
         {isLogin ? (
-          <div className="mt-6 text-center">
+          <div className="mt-6 flex flex-col gap-2  text-center">
+            <Link
+              to="/recovery"
+              className="inline-block align-baseline font-semibold text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            >
+              Reset Password
+            </Link>
             <Link
               to="/register"
               className="inline-block align-baseline font-semibold text-sm text-violet-400 hover:text-violet-300 transition-colors"

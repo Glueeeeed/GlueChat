@@ -5,7 +5,13 @@ import { FaCheckCircle } from 'react-icons/fa'
 import { Eye, EyeOff } from 'lucide-react'
 import { JSX, useEffect, useState } from 'react'
 import { validateOrRefreshToken } from '@renderer/assets/main'
-import { changePassword, disable2fa, get2faStatus } from '@renderer/assets/account'
+import {
+  changePassword,
+  disable2fa,
+  get2faStatus,
+  getRecoveryStatus,
+  removeRecovery
+} from '@renderer/assets/account'
 import { Setup2FA } from '@renderer/components/app/accountSecurity/secureFeatures/2faSetup'
 import { RecoveryAccount } from '@renderer/components/app/accountSecurity/secureFeatures/accountRecovery'
 
@@ -21,6 +27,7 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
   const [activeSubView, setActiveSubView] = useState<'main' | '2fa' | 'recovery'>('main')
 
   const [is2faEnabled, setIs2faEnabled] = useState(false);
+  const [isRecoveryEnabled, setIsRecoveryEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('Successfully updated password!');
@@ -38,6 +45,22 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
     if (activeSubView === 'main') {
       fetch2FAStatus();
     }
+
+
+    const fetchRecoveryStatus = async (): Promise<void> => {
+      try {
+        const token = await validateOrRefreshToken(authToken);
+        const enabled = await getRecoveryStatus(token);
+        setIsRecoveryEnabled(enabled);
+      } catch (err) {
+        console.error('Failed to fetch 2FA status', err)
+      }
+    }
+    if (activeSubView === 'main') {
+      fetchRecoveryStatus();
+    }
+
+
   }, [authToken, activeSubView]);
 
   const handleChangePassword =  async (): Promise<void> => {
@@ -66,6 +89,20 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
       setTimeout(() => setError(''), 3000);
     }
   };
+
+  const handleRemoveRecovery = async (): Promise<void> => {
+    try {
+      const token = await validateOrRefreshToken(authToken)
+      await removeRecovery(token)
+      setIsRecoveryEnabled(false)
+      setSuccessMessage('Account Recovery has been disabled')
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err: any) {
+      setError(err.message)
+      setTimeout(() => setError(''), 3000)
+    }
+  }
 
   if (activeSubView === '2fa') {
     return <Setup2FA onBack={() => setActiveSubView('main')} authToken={authToken} />
@@ -216,16 +253,31 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-1">
-            <p className="text-xs text-gray-400 max-w-[70%]">
+          <div className="flex items-center justify-between p-1 ">
+            <p className="text-xs text-gray-400 max-w-[80%]">
               Restore Access to Your Account If You Lose It{' '}
             </p>
-            <button
-              onClick={() => setActiveSubView('recovery')}
-              className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase transition-all"
-            >
-              Configure
-            </button>
+            <div className={'flex gap-2 '}>
+              {isRecoveryEnabled && (
+                <button
+                  onClick={handleRemoveRecovery}
+                  className="text-[10px] ml-10 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg border border-red-500/20 font-bold uppercase transition-all"
+                >
+                  Remove
+                </button>
+              )}
+              <button
+                disabled={isRecoveryEnabled}
+                onClick={() => setActiveSubView('recovery')}
+                className={`text-[10px] px-4 py-2 rounded-lg border font-bold uppercase transition-all ${
+                  isRecoveryEnabled
+                    ? 'bg-gray-800/50 text-gray-500 border-white/5 cursor-not-allowed'
+                    : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                }`}
+              >
+                Configure
+              </button>
+            </div>
           </div>
         </div>
 
@@ -248,8 +300,12 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
             <p className="text-xs text-gray-400 max-w-[70%]">
               Your account will be automatically &#34;frozen&#34; for too many attempts
             </p>
-            <button className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase transition-all">
-              Configure
+            <button
+              disabled={true}
+              className={`text-[10px] px-4 py-2 rounded-lg border font-bold uppercase transition-all bg-gray-800/50 text-gray-500 border-white/5 cursor-not-allowed
+              `}
+            >
+              Soon
             </button>
           </div>
         </div>
@@ -274,8 +330,12 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
               Set an alternative password that will unlock a &#34;empty&#34; version of the
               application in dangerous situations.
             </p>
-            <button className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase transition-all">
-              Configure
+            <button
+              disabled={true}
+              className={`text-[10px] px-4 py-2 rounded-lg border font-bold uppercase transition-all bg-gray-800/50 text-gray-500 border-white/5 cursor-not-allowed
+              `}
+            >
+              Soon
             </button>
           </div>
         </div>
@@ -302,11 +362,14 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
                 erased permanently
               </p>
               <div className="flex items-center gap-3">
-                <select className="text-[10px] bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 font-bold uppercase xl:ml-80 transition-all">
-                  <option>Never</option>
-                  <option>1 month</option>
-                  <option>3 months</option>
-                  <option>6 months</option>
+                <select
+                  disabled={true}
+                  className="text-[10px] px-4 py-2 rounded-lg border  font-bold uppercase xl:ml-80 transition-all bg-gray-800/50 text-gray-500 border-white/5 cursor-not-allowed"
+                >
+                  <option>Soon</option>
+                  {/*<option>1 month</option>*/}
+                  {/*<option>3 months</option>*/}
+                  {/*<option>6 months</option>*/}
                 </select>
               </div>
             </div>

@@ -10,6 +10,7 @@ import {Login} from "@renderer/views/Login";
 import {Register} from "@renderer/views/Register";
 import {App} from "@renderer/views/App";
 import {SelectAccount} from "@renderer/views/SelectAccount";
+import { AccountRecovery } from '@renderer/views/AccountRecovery'
 
 const queryClient = new QueryClient()
 
@@ -31,6 +32,10 @@ const router = createHashRouter([
     path: '/select-accountSecurity',
     element: <SelectAccount />,
   },
+  {
+    path: '/recovery',
+    element: <AccountRecovery />
+  }
 ])
 
 createRoot(document.getElementById('root')!).render(

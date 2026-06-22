@@ -78,9 +78,60 @@ export async function get2faStatus(authToken: string): Promise<boolean> {
   return json.enabled
 }
 
+
+export async function getRecoveryStatus(authToken: string): Promise<boolean> {
+  const response = await fetch(`${API_BASE_URL}/api/account/recovery/status`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`
+    }
+  })
+
+  const json = await response.json()
+  if (!response.ok) {
+    throw new Error(json.message)
+  }
+
+  return json.enabled
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/reset-password/request`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      email: email
+    })
+  })
+
+  const json = await response.json()
+  if (!response.ok) {
+    throw new Error(json.message)
+  }
+}
+
 export async function disable2fa(authToken: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/account/2fa/disable`, {
-    method: 'POST',
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`
+    }
+  })
+
+  const json = await response.json()
+  if (!response.ok) {
+    throw new Error(json.message)
+  }
+}
+
+export async function removeRecovery(authToken: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/account/recovery/remove`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${authToken}`

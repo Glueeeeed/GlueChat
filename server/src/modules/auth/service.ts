@@ -5,6 +5,16 @@ import * as OTPAuth from "otpauth";
 import {isForbiddenNick} from "../../utils/validation";
 import {randomBytes} from "node:crypto";
 import AccountService from "../account/service";
+import {join} from "path";
+import * as bun from "bun";
+import * as jwtLib from 'jsonwebtoken';
+import {render} from "@react-email/render";
+import * as React from "react";
+import OTPEmail from "../../emails/otp";
+import Recovery from "../../emails/recovery";
+import {transporter} from "../../utils/nodemailer";
+require("dotenv").config({ path: join(__dirname, "../../../.env") });
+
 
 interface UserData {
     password: string;
@@ -204,4 +214,87 @@ export abstract class AuthService {
         }
 
     }
+
+    static async resetPasswordRequest(email : string) : Promise<void> {
+        const hasher = new bun.CryptoHasher('sha512', process.env.HMAC_KEY);
+        hasher.update(email);
+        const hashedEmail : string = hasher.digest('base64');
+        const record = await prisma.user.findFirst({
+            where: {
+                resetEmail: hashedEmail
+            },
+            select: {
+                id: true
+            }
+        })
+        if (!record) {
+            console.log('not found associated email with account. abort');
+            return;
+        }
+
+        const sessionId = randomBytes(5).toString("hex");
+
+        const token  = jwtLib.sign(
+            {id: record.id, session: sessionId},
+            process.env.RECOVERY_SECRET as string,
+            {expiresIn: '10m'}
+        )
+
+        await prisma.recoverySessions.create({
+            data: {
+                userId: record.id,
+                sessionId: sessionId
+            }
+        })
+
+        const url = `${process.env.BASE_URL}/api/auth/reset-password/${token}`;
+
+        const html : string = await render(
+            React.createElement(Recovery, { url: url })
+        );
+
+        await transporter.sendMail({
+            from: process.env.MAIL_USER,
+            to: email,
+            subject: "DON'T REPLY | ACCOUNT RECOVERY",
+            html: html
+        });
+
+
+    }
+
+    static async resetPassword(userID: string, sessionID: string , password: string, repeatPassword: string) : Promise<void> {
+        if (password !== repeatPassword) {
+            throw new InvalidDataFormatError("Passwords don't match");
+        }
+        if (!validator.isLength(password, { min: 8, max: 32 })) {
+            throw new InvalidDataFormatError("Password must be between 8 and 32 characters long.");
+        }
+        if (!validator.isStrongPassword(password)) {
+            throw new InvalidDataFormatError("Password is too weak (must include uppercase, lowercase, number and symbol)");
+        }
+
+        const hashedPassword = await bun.password.hash(password);
+
+        await prisma.recoverySessions.update({
+            where: {
+                sessionId: sessionID
+            },
+            data: {
+                isUsed: true
+            }
+        })
+
+        await prisma.user.update({
+            where: {
+                id: userID
+            },
+            data: {
+                password: hashedPassword
+            }
+        })
+
+
+    }
+
 }

@@ -137,13 +137,50 @@ export const account = new Elysia({ prefix: '/account' })
         }
     })
 
-    .post('/2fa/disable', async ({user}) => {
+    .get('/recovery/status', async ({user}) => {
         try {
-            await AccountService.disable2FA(user.id);
+            const {enabled} = await AccountService.getRecoveryStatus(user.id);
             return {
                 success: true,
-                message: "2FA disabled successfully"
+                message: "Status fetched successfully",
+                enabled
             }
+        } catch (e) {
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
+    })
+
+    .get('/2fa/disable', async ({user}) => {
+        try {
+            await AccountService.disable2FA(user.id);
+            return status(200, {
+                success: true,
+                message: "Disabled 2fa successfully",
+            })
+        } catch (e) {
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
+    }, {
+        response: {
+            201: accountData.response
+        }
+    })
+
+    .get('/recovery/remove', async ({user}) => {
+        try {
+            await AccountService.removeRecovery(user.id);
+            return status(200, {
+                success: true,
+                message: "Removed recovery successfully",
+            })
         } catch (e) {
             console.error(e);
             return status(500, {

@@ -33,6 +33,15 @@ export const authModel = {
 
     refreshBody: t.Object({
         refreshToken: t.String(),
+    }),
+
+    resetPasswordRequest: t.Object({
+        email: t.String({ format: 'email' })
+    }),
+
+    resetPassword: t.Object({
+        password: t.String(),
+        repeatPassword: t.String(),
     })
 
 }

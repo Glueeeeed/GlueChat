@@ -151,10 +151,35 @@ abstract class AccountService {
         };
     }
 
+    static async getRecoveryStatus(userID: string): Promise<{ enabled: boolean }> {
+        const record = await prisma.secretsRecovery.findFirst({
+            where: { userId: userID },
+            select: { status: true }
+        });
+
+        return {
+            enabled: record?.status === 'VERIFIED'
+        };
+    }
+
     static async disable2FA(userID: string): Promise<void> {
         await prisma.secrets2FA.delete({
             where: { userId: userID }
         });
+    }
+
+    static async removeRecovery(userID: string): Promise<void> {
+        await prisma.secretsRecovery.delete({
+            where: { userId: userID }
+        });
+        await prisma.user.update({
+            where: {
+                id: userID
+            },
+            data: {
+                resetEmail: null
+            }
+        })
     }
 
     static async setupRecovery(userId: string , email: string) {
@@ -261,7 +286,9 @@ abstract class AccountService {
         if (recoveryEmailRecord) {
             throw new AlreadyExistsError("Recovery already set up for this user");
         }
-        const hashedEmail : string =  await bun.password.hash(email);
+        const hasher = new bun.CryptoHasher('sha512', process.env.HMAC_KEY )
+        hasher.update(email);
+        const hashedEmail : string = hasher.digest("base64");
         await prisma.user.update({
             where: {
                 id: userID

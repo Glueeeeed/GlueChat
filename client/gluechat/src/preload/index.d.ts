@@ -11,7 +11,7 @@ declare global {
       deleteRefreshToken: (accountName: string) => Promise<void>;
     };
     e2ee: {
-      generatePairKeys: (accountName: string) => Promise<string>;
+      generatePairKeys: (accountName: string, tempToken: string) => Promise<void>;
       initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => Promise<string | null>;
       decryptMessage: (encryptedPackage: any, accountName: string, accountID: string) => Promise<string | null>;
       getMessages: (roomID: string,  accountName: string) => Promise<string | null>;

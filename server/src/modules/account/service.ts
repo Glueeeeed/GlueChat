@@ -16,6 +16,19 @@ export interface TwoFactorData {
     secret: string,
 }
 
+
+interface OneTimeKey {
+    id: string;
+    pubKey: string;
+}
+
+interface DeviceKeys {
+    identityPubKey: string;
+    spkPubKey: string;
+    signature: string;
+    oneTimeKeys: OneTimeKey[];
+}
+
 abstract class AccountService {
     static decrypt(encryptedData: string): string {
         const key = process.env.ENCRYPT_KEY_2FA;
@@ -296,6 +309,59 @@ abstract class AccountService {
             data: {
                 resetEmail: hashedEmail
             }
+        })
+    }
+
+    static async registerDevice(deviceId: string, userId: string, keys: string): Promise<void> {
+        const parsedKey : DeviceKeys = JSON.parse(keys);
+        const record = await prisma.registeredDevices.findFirst({
+            where: {
+                deviceId: deviceId,
+                userId: userId
+            }
+        })
+        if (record) {
+            throw new AlreadyExistsError("Device already registered");
+        }
+
+        await prisma.registeredDevices.create({
+            data: {
+                deviceId: deviceId,
+                userId: userId,
+            }
+        })
+
+        await prisma.$transaction(async (t) => {
+
+            await t.identityKeys.create({
+                data: {
+                    userID: userId,
+                    identityKey: parsedKey.identityPubKey,
+                    deviceId: deviceId,
+                }
+            })
+
+            await t.signedPreKeys.create({
+                data: {
+                    userID: userId,
+                    signedPubKey: parsedKey.spkPubKey,
+                    signature: parsedKey.signature,
+                    deviceId: deviceId,
+                }
+            })
+
+            if (parsedKey.oneTimeKeys && parsedKey.oneTimeKeys.length > 0) {
+                await t.oneTimePreKeys.createMany({
+                    data: parsedKey.oneTimeKeys.map(key => ({
+                        userId: userId,
+                        keyId: key.id,
+                        publicKey: key.pubKey,
+                        deviceId: deviceId,
+                    }))
+                });
+            }
+
+
         })
     }
 

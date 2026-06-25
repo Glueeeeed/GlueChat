@@ -9,9 +9,6 @@ export const authModel = {
         accessCode: t.Optional(
             t.String(),
         ),
-        keys: t.Optional(
-            t.String(),
-        ),
         code2fa: t.Optional(
             t.String(),
         ),

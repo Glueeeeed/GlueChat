@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config'
+import keytar from 'keytar'
 
 interface preKeysPackage {
   pubKey: string
@@ -9,7 +10,7 @@ interface preKeysPackage {
 }
 
 export abstract class NetworkService {
-   static async getPreKeys(authKey: string, userID: string): Promise<preKeysPackage> {
+  static async getPreKeys(authKey: string, userID: string): Promise<preKeysPackage> {
     const response = await fetch(`${API_BASE_URL}/api/e2ee/pre-keys/${userID}`, {
       method: 'GET',
       headers: {
@@ -25,5 +26,34 @@ export abstract class NetworkService {
 
     const json = await response.json()
     return JSON.parse(json.data)
+  }
+
+  static async registerDevice(account: string, deviceId: string, keys: string, tempToken : string): Promise<void> {
+    console.info("TEMP TOKEN: " + tempToken)
+    const token  = tempToken ? tempToken : await keytar.getPassword('gluechat', account);
+    if (!token) {
+      throw new Error(` token not found for account ${account}`)
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/account/register-device`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        deviceId: deviceId,
+        keys: keys
+      })
+    })
+
+
+    const json = await response.json()
+    console.log('RESPONSE FROM SERVER: ' + JSON.stringify(json))
+    if (!response.ok) {
+      throw new Error(`could not register device`)
+    }
+
   }
 }

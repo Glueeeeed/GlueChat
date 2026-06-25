@@ -29,7 +29,7 @@ const router = createHashRouter([
     element: <Register />,
   },
   {
-    path: '/select-accountSecurity',
+    path: '/select-account',
     element: <SelectAccount />,
   },
   {

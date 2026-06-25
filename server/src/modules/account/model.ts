@@ -27,5 +27,10 @@ export const accountData = {
             t.String()
         ),
         enabled: t.Optional(t.Boolean())
+    }),
+
+    registerDevice: t.Object({
+        deviceId: t.String(),
+        keys: t.String(),
     })
 }

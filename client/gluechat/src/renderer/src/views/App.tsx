@@ -64,7 +64,7 @@ export function App(): React.JSX.Element {
         }
       } catch (e) {
         const accounts = JSON.parse(localStorage.getItem('accounts') || '[]')
-        navigate(accounts.length > 0 ? '/select-accountSecurity' : '/login')
+        navigate(accounts.length > 0 ? '/select-account' : '/login')
         throw e
       }
     },

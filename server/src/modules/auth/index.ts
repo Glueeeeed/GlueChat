@@ -11,22 +11,19 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/register', async ({body}) =>  {
     try {
-        const {nickname, password, accessCode, keys} = body;
-
-        if (!keys) {
-            return status(400, {
-                success: false,
-                message: "Keys are required"
-            })
-        }
+        const {nickname, password, accessCode} = body;
 
         AuthService.validate(nickname, password, false);
         await AuthService.checkIfNicknameExists(nickname, false);
-        await AuthService.registerUser(nickname, password, accessCode as string,keys as string );
+        const id = await AuthService.registerUser(nickname, password, accessCode as string);
+        const authToken : string = generateAuthToken(id as string);
+
+        console.log("authToken ", authToken);
 
         return status(201, {
             success: true,
             message: 'User registered successfully',
+            authToken: authToken,
         })
 
 

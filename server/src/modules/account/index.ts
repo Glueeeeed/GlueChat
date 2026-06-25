@@ -248,3 +248,32 @@ export const account = new Elysia({ prefix: '/account' })
             201: accountData.response
         }
     })
+
+
+    .post('/register-device', async ({body, user}) => {
+        try {
+            const {deviceId, keys} = body;
+            await AccountService.registerDevice(deviceId,user.id,  keys);
+            return status(200, {
+                success: true,
+                message: "Successfully registered device",
+            })
+        } catch (e) {
+            console.error(e);
+            if (e instanceof AlreadyExistsError) {
+                return status(e.statusCode, {
+                    success: false,
+                    message: e.message
+                })
+            }
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
+    }, {
+        body: accountData.registerDevice,
+        response: {
+            201: accountData.response
+        }
+    })

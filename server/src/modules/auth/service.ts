@@ -21,17 +21,8 @@ interface UserData {
     id: string;
 }
 
-interface OneTimeKey {
-    id: string;
-    pubKey: string;
-}
 
-interface RegistrationKeys {
-    identityPubKey: string;
-    spkPubKey: string;
-    signature: string;
-    oneTimeKeys: OneTimeKey[];
-}
+
 
 export abstract class AuthService {
 
@@ -69,10 +60,8 @@ export abstract class AuthService {
 
 
 
-    static async registerUser(nickname: string , password: string, accessCode: string, keys : string): Promise<void> {
+    static async registerUser(nickname: string , password: string, accessCode: string): Promise<string | void> {
         const passwordHash = await Bun.password.hash(password);
-        const parsedKey : RegistrationKeys = JSON.parse(keys);
-        const {identityPubKey, spkPubKey, signature, oneTimeKeys} = parsedKey;
 
 
         await this.verifyAccessToken(accessCode);
@@ -87,7 +76,7 @@ export abstract class AuthService {
         })
 
         await prisma.$transaction(async (t) => {
-            const user = await t.user.create({
+             await t.user.create({
                 data: {
                     nickname: nickname,
                     password: passwordHash,
@@ -95,35 +84,21 @@ export abstract class AuthService {
                 }
             })
 
-            await t.identityKeys.create({
-                data: {
-                    userID: user.id,
-                    identityKey: identityPubKey,
-                }
-            })
-
-            await t.signedPreKeys.create({
-                data: {
-                    userID: user.id,
-                    signedPubKey: spkPubKey,
-                    signature: signature,
-                }
-            })
-
-            if (oneTimeKeys && oneTimeKeys.length > 0) {
-                await t.oneTimePreKeys.createMany({
-                    data: oneTimeKeys.map(key => ({
-                        userId: user.id,
-                        keyId: key.id,
-                        publicKey: key.pubKey
-                    }))
-                });
-            }
-
-
         })
 
-        console.log("Registered user with nickname", nickname)
+        const id = await prisma.user.findFirst({
+            where: {
+                nickname: nickname
+            },
+            select: {
+                id: true
+            }
+        })
+
+        if (id) {
+            return id.id;
+        }
+        return;
 
     }
 

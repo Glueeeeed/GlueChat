@@ -121,19 +121,21 @@ model User {
   lastSeen   DateTime @default(now())
   betaTester Boolean  @default(false)
 
-  oneTimePreKeys       OneTimePreKeys[] @relation("SignedToUser")
-  signedPreKeys        SignedPreKeys[]  @relation("SignedToUser")
-  identityKeys         IdentityKeys[]   @relation("SignedToUser")
+  oneTimePreKeys       OneTimePreKeys[]    @relation("SignedToUser")
+  signedPreKeys        SignedPreKeys[]     @relation("SignedToUser")
+  identityKeys         IdentityKeys[]      @relation("SignedToUser")
   sentMessages         Message[]
-  privateRoomsAsFirst  PrivateRoom[]    @relation("PrivateRoomUser1")
-  privateRoomsAsSecond PrivateRoom[]    @relation("PrivateRoomUser2")
-  sentRequests         Friendship[]     @relation("SentRequests")
-  receivedRequests     Friendship[]     @relation("ReceivedRequests")
+  privateRoomsAsFirst  PrivateRoom[]       @relation("PrivateRoomUser1")
+  privateRoomsAsSecond PrivateRoom[]       @relation("PrivateRoomUser2")
+  sentRequests         Friendship[]        @relation("SentRequests")
+  receivedRequests     Friendship[]        @relation("ReceivedRequests")
   sessions             Sessions[]
-  profiles             Profiles[]       @relation("SignedToUser")
+  profiles             Profiles[]          @relation("SignedToUser")
   badges               UserBadges[]
   Secrets2FA           Secrets2FA[]
   SecretsRecovery      SecretsRecovery[]
+  RecoverySessions     RecoverySessions[]
+  RegisteredDevices    RegisteredDevices[]
 }
 
 model PrivateRoom {
@@ -208,10 +210,12 @@ model IdentityKeys {
   id          Int    @id @default(autoincrement())
   userID      String
   identityKey String @db.LongText // base64(ML-DSA public key)
+  deviceId    String
 
-  user User @relation("SignedToUser", fields: [userID], references: [id], onDelete: Cascade)
+  user              User              @relation("SignedToUser", fields: [userID], references: [id], onDelete: Cascade)
+  registeredDevices RegisteredDevices @relation(fields: [userID, deviceId], references: [userId, deviceId], onDelete: Cascade)
 
-  @@unique([userID])
+  @@unique([userID, deviceId])
   @@index([userID])
 }
 
@@ -220,17 +224,20 @@ model SignedPreKeys {
   userID       String
   signedPubKey String @db.LongText
   signature    String @db.LongText
+  deviceId     String
 
-  user User @relation("SignedToUser", fields: [userID], references: [id], onDelete: Cascade)
+  user              User              @relation("SignedToUser", fields: [userID], references: [id], onDelete: Cascade)
+  registeredDevices RegisteredDevices @relation(fields: [userID, deviceId], references: [userId, deviceId], onDelete: Cascade)
 
-  @@unique([userID])
+  @@unique([userID, deviceId])
   @@index([userID])
 }
 
 model OneTimePreKeys {
-  id     Int    @id @default(autoincrement())
-  userId String
-  keyId  String
+  id       Int    @id @default(autoincrement())
+  userId   String
+  keyId    String
+  deviceId String
 
   publicKey String @db.LongText // base64(X-Wing public key)
 
@@ -238,9 +245,10 @@ model OneTimePreKeys {
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
-  user User @relation("SignedToUser", fields: [userId], references: [id], onDelete: Cascade)
+  user              User              @relation("SignedToUser", fields: [userId], references: [id], onDelete: Cascade)
+  registeredDevices RegisteredDevices @relation(fields: [userId, deviceId], references: [userId, deviceId], onDelete: Cascade)
 
-  @@unique([userId, keyId])
+  @@unique([userId, keyId, deviceId])
   @@index([userId, isUsed])
   @@index([userId])
 }
@@ -285,6 +293,11 @@ enum Status2FA {
   ACTIVE
 }
 
+enum StatusRecovery {
+  UNVERIFIED
+  VERIFIED
+}
+
 model Secrets2FA {
   id         Int       @id @default(autoincrement())
   userId     String    @unique
@@ -294,15 +307,37 @@ model Secrets2FA {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model RegisteredDevices {
+  id       Int    @id @default(autoincrement())
+  userId   String
+  deviceId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  signedPreKeys SignedPreKeys[]
+  identityKeys  IdentityKeys[]
+  oneTimeKey    OneTimePreKeys[]
+
+  @@unique([userId, deviceId])
+}
+
 model SecretsRecovery {
-  id Int @id @default(autoincrement())
-  userId String @unique
-  secretCode String @db.Text
-  status Status2FA
+  id         Int            @id @default(autoincrement())
+  userId     String         @unique
+  secretCode String         @db.Text
+  status     StatusRecovery @default(UNVERIFIED)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
 }
+
+model RecoverySessions {
+  id        Int     @id @default(autoincrement())
+  userId    String
+  sessionId String  @unique
+  isUsed    Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 
 
 ```

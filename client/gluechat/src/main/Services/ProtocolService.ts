@@ -1,11 +1,13 @@
 import { SessionState, StorageService} from './StorageService'
-import { NetworkService } from './NetworkService'
-import { CryptoCore } from './CryptoCore'
+import { NetworkService, preKeysPackage } from './NetworkService'
+import { CryptoCore, EncryptedData } from './CryptoCore'
 import {randomBytes} from "@noble/post-quantum/utils.js";
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 
+
 interface pkgStructure {
+  deviceId: string
   roomID: string,
   senderID: string,
   messageNumber: number,
@@ -15,6 +17,8 @@ interface pkgStructure {
   ephemeralPubKey: string | null,
   content: string,
   nonce: string,
+  encryptedMessageKey: string,
+  messageKeyNonce: string,
   isDeleted: boolean,
 }
 
@@ -26,15 +30,16 @@ interface decryptData {
 
 abstract class ProtocolService {
   private static activeSessions = new Map<string, SessionState>()
+  private static bobDevices : string[] = [];
   private static temporarySessions = new Map<string, SessionState>()
   private static temporaryDecryptData = new Map<string, decryptData>()
 
-  private static async getOrLoadSession(roomID: string, accountID: string, accountName: string): Promise<SessionState | null> {
+  private static async getOrLoadSession(roomID: string, accountID: string, accountName: string, deviceId : string): Promise<SessionState | null> {
     try {
       if (this.activeSessions.has(roomID)) {
         return this.activeSessions.get(roomID)!
       }
-      const stored = await StorageService.getSession(roomID, accountID, accountName)
+      const stored = await StorageService.getSession(roomID, accountID, accountName,deviceId);
       if (stored) {
         const data = JSON.parse(stored)
         const session: SessionState = {
@@ -55,40 +60,50 @@ abstract class ProtocolService {
 
   private static async preparePreKeyCapsule(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string): Promise<void> {
     try {
-      const preKeys = await NetworkService.getPreKeys(authKey, receiverID);
-      const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKeys.spk, 'base64'));
-      const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKeys.opk, 'base64'));
-      const info : Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
-      const rootKey : Uint8Array = hkdf(sha256, ssSPK, ssOPK, info, 32);
 
-      console.log("Root keyy " + Buffer.from(rootKey).toString("base64"));
-      const capsule: string = Buffer.from(capsuleSPK).toString('base64') + '|' + Buffer.from(capsuleOPK).toString('base64')
+      // Get all Bob devices (pre-keys per device)
 
-      // SAVE SESSION IN RAM
+      const preKeysPackages : preKeysPackage[] = await NetworkService.getPreKeys(authKey, receiverID);
 
-      this.activeSessions.set(roomID, {
-        rootKey: rootKey,
-        sendCounter: 1,
-        lastSenderID: senderID
-      })
+      for (const preKeys of preKeysPackages) {
+        const deviceId : string = preKeys.deviceId;
+        this.bobDevices.push(deviceId);
+        const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKeys.spk, 'base64'));
+        const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKeys.opk, 'base64'));
+        const info: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
+        const rootKey: Uint8Array = hkdf(sha256, ssSPK, ssOPK, info, 32);
 
-      this.temporarySessions.set(roomID, {
-        rootKey: rootKey,
-        capsule: capsule,
-        opkId: preKeys.opkId,
-        sendCounter: 1,
-        lastSenderID: senderID
-      })
+        const capsule: string = Buffer.from(capsuleSPK).toString('base64') + '|' + Buffer.from(capsuleOPK).toString('base64')
 
-      // SAVE SESSION IN DATABASE
+        // SAVE SESSION IN RAM
 
-      const dataToSave = {
-        rootKey: Buffer.from(rootKey).toString('base64'),
-        sendCounter: 1,
-        lastSenderID: senderID
+        const combinedMapKey : string = roomID + "-" + deviceId;
+
+        this.activeSessions.set(combinedMapKey, {
+          rootKey: rootKey,
+          sendCounter: 1,
+          lastSenderID: senderID
+        })
+
+        this.temporarySessions.set(combinedMapKey, {
+          rootKey: rootKey,
+          capsule: capsule,
+          opkId: preKeys.opkId,
+          sendCounter: 1,
+          lastSenderID: senderID
+        })
+
+        // SAVE SESSION IN DATABASE
+
+        const dataToSave = {
+          rootKey: Buffer.from(rootKey).toString('base64'),
+          sendCounter: 1,
+          lastSenderID: senderID
+        }
+
+        await StorageService.saveSession(roomID, JSON.stringify(dataToSave), senderID, accountName,deviceId)
       }
 
-      await StorageService.saveSession(roomID, JSON.stringify(dataToSave), senderID, accountName)
     } catch (error) {
       console.error('Failed prepare session with pre keys', error)
     }
@@ -126,8 +141,11 @@ abstract class ProtocolService {
     }
   }
 
-  static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string): Promise<pkgStructure> {
-    const session: SessionState | null = await this.getOrLoadSession(roomID, senderID, accountName);
+  static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string): Promise<pkgStructure[]> {
+    const deviceId: string = await StorageService.generateDeviceId();
+    const session: SessionState | null = await this.getOrLoadSession(roomID, senderID, accountName, deviceId);
+
+    const pkgs: pkgStructure[] = [];
 
     if (session === null) {
       await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName)
@@ -135,33 +153,43 @@ abstract class ProtocolService {
       await this.prepareSymmetricStep(roomID, session, senderID, accountName)
     }
 
-    const readySession = this.temporarySessions.get(roomID)
-    if (!readySession || !readySession.rootKey) {
-      throw new Error('Failed to initialize encrypt session')
+
+    // Key used to encrypt message for all devices
+    const masterKey : Uint8Array<ArrayBufferLike> = randomBytes(32);
+
+    for (const device of this.bobDevices) {
+      const combinedMapKey: string = roomID + '-' + device;
+      const readySession = this.temporarySessions.get(combinedMapKey);
+      if (!readySession || !readySession.rootKey) {
+        throw new Error('Failed to initialize encrypt session')
+      }
+
+      // Message encrypted using a master key
+      const encryptedMessage : EncryptedData = CryptoCore.encryptData(content, masterKey);
+
+      // Encrypted master key for specific device
+      const encryptedMessageKey : EncryptedData = CryptoCore.encryptData(masterKey,readySession.messageKey as Uint8Array);
+
+      const pkg = {
+        deviceId: deviceId,
+        roomID: roomID,
+        senderID: senderID,
+        messageNumber: readySession.sendCounter as number,
+        opkId: readySession.opkId ? readySession.opkId : null,
+        salt: readySession.salt ? Buffer.from(readySession.salt).toString('base64') : null,
+        capsule: readySession.capsule || null,
+        ephemeralPubKey: null,
+        content: Buffer.from(encryptedMessage.cipherText).toString('base64'),
+        nonce: Buffer.from(encryptedMessage.nonce).toString('base64'),
+        encryptedMessageKey: Buffer.from(encryptedMessageKey.cipherText).toString('base64'),
+        messageKeyNonce: Buffer.from(encryptedMessageKey.nonce).toString('base64'),
+        isDeleted: false
+      }
+      this.temporarySessions.delete(combinedMapKey);
+      pkgs.push(pkg)
     }
 
-
-    console.log('Session key used to encrypt: ' + Buffer.from(readySession.rootKey).toString('base64'));
-    const encrypted = CryptoCore.encryptData(content, readySession.rootKey);
-
-
-    const pkg = {
-      roomID: roomID,
-      senderID: senderID,
-      messageNumber: readySession.sendCounter,
-      opkId: readySession.opkId ? readySession.opkId : null,
-      salt: readySession.salt ? Buffer.from(readySession.salt).toString('base64') : null,
-      capsule: readySession.capsule || null,
-      ephemeralPubKey: null,
-      content: Buffer.from(encrypted.cipherText).toString('base64'),
-      nonce: Buffer.from(encrypted.nonce).toString('base64'),
-      isDeleted: false
-    }
-
-
-    this.temporarySessions.delete(roomID);
-
-    return pkg
+    return pkgs
   }
 
   private static decapsulateOpkCapsule(capsuleSPK: string, capsuleOPK: string, roomID: string, spkPrivateKey: string | null, opkPrivateKey: string | null, identityPubKey: string | null, senderID : string): void {

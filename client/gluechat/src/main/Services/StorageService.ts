@@ -50,16 +50,12 @@ export abstract class StorageService {
     return HistoryManager.getLastMessage(data, accountName);
   }
 
-  static async saveSession(roomID: string, data: string, accountID: string, accountName: string): Promise<void> {
-    const combinedName: string = accountID + '-' + roomID;
-    await SecretManager.setSecret(accountName, 'gluechat', combinedName, data);
+  static async saveSession(roomID: string, data: string, accountID: string, accountName: string, deviceId: string): Promise<void> {
+    const combinedName: string = accountID + '-' + roomID + '-' + deviceId;
+    await SecretManager.setSecret(accountName, 'gluechat', combinedName, data)
   }
-  static async deleteSession(roomID: string, accountID: string, accountName: string): Promise<void> {
-    const combinedName: string = accountID + '-' + roomID;
-    await SecretManager.deleteSecret(accountName,'gluechat', combinedName);
-  }
-  static async getSession(roomID: string, accountID: string, accountName: string): Promise<string | null> {
-    const combinedName: string = accountID + '-' + roomID;
+  static async getSession(roomID: string, accountID: string, accountName: string, deviceId: string): Promise<string | null> {
+    const combinedName: string = accountID + '-' + roomID + '-' + deviceId;
     return await SecretManager.getSecret(accountName, 'gluechat', combinedName);
   }
 
@@ -103,7 +99,7 @@ export abstract class StorageService {
     return deviceId;
   }
 
-  private static async checkIfDeviceExists() : Promise<string | null> {
+  private static async checkIfDeviceExists(): Promise<string | null> {
     return await keytar.getPassword('gluechat_device', 'id');
   }
 

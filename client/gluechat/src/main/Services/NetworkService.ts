@@ -1,7 +1,8 @@
 import { API_BASE_URL } from '../config'
 import keytar from 'keytar'
 
-interface preKeysPackage {
+export interface preKeysPackage {
+  deviceId: string
   pubKey: string
   spk: string
   signature: string
@@ -10,7 +11,7 @@ interface preKeysPackage {
 }
 
 export abstract class NetworkService {
-  static async getPreKeys(authKey: string, userID: string): Promise<preKeysPackage> {
+  static async getPreKeys(authKey: string, userID: string): Promise<preKeysPackage[]> {
     const response = await fetch(`${API_BASE_URL}/api/e2ee/pre-keys/${userID}`, {
       method: 'GET',
       headers: {

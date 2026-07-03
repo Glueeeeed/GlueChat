@@ -39,12 +39,13 @@ export abstract class CryptoCore {
     return new TextDecoder().decode(decrypted)
   }
 
-  static encryptData(content: string, key: Uint8Array<ArrayBufferLike>): EncryptedData {
-    const nonce: Uint8Array<ArrayBufferLike> = randomBytes(12)
-    const data: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(content)
-    const aes: Cipher = gcm(key, nonce)
-    const cipherText: Uint8Array<ArrayBufferLike> = aes.encrypt(data)
-    return { nonce, cipherText }
+
+  static encryptData(content: string | Uint8Array<ArrayBufferLike>, key: Uint8Array<ArrayBufferLike>): EncryptedData {
+    const nonce: Uint8Array<ArrayBufferLike> = randomBytes(12);
+    const data: Uint8Array<ArrayBufferLike> = typeof content === 'string' ? new TextEncoder().encode(content) : content;
+    const aes: Cipher = gcm(key, nonce);
+    const cipherText: Uint8Array<ArrayBufferLike> = aes.encrypt(data);
+    return { nonce, cipherText };
   }
 
    static mixKeys(newKey: Uint8Array, oldKey: Uint8Array, message: Uint8Array): Uint8Array {

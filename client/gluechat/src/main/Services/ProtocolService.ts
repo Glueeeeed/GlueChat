@@ -55,7 +55,7 @@ abstract class ProtocolService {
 
   private static async preparePreKeyCapsule(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string): Promise<void> {
     try {
-      const preKeys = await NetworkService.getPreKeys(authKey, receiverID)
+      const preKeys = await NetworkService.getPreKeys(authKey, receiverID);
       const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKeys.spk, 'base64'));
       const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKeys.opk, 'base64'));
       const info : Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
@@ -213,11 +213,13 @@ abstract class ProtocolService {
       this.deriveSymmetricStep(Buffer.from(pkg.salt,'base64'), roomID, session);
     }
 
-      // if (!session) {
-      //   throw new Error('Failed to initialize decrypt session: SESSION not found');
-      // }
-
       const tempData : SessionState | undefined = this.temporarySessions.get(roomID);
+      if (!tempData) {
+        throw new Error('Failed to initialize decrypt session: SESSION not found')
+      }
+      if (!tempData) {
+        throw new Error('Failed to initialize decrypt session: SESSION not found')
+      }
       console.log("key used for decrypt" + Buffer.from(tempData?.rootKey).toString("base64"));
       const decrypted : string = CryptoCore.decryptData(Buffer.from(pkg.content, 'base64'), Buffer.from(pkg.nonce, 'base64'), tempData?.rootKey as Uint8Array)
 

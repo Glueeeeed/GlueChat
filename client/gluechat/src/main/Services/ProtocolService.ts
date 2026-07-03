@@ -115,27 +115,45 @@ abstract class ProtocolService {
   */
 
 
-  private static async prepareSymmetricStep(roomID: string, session: SessionState, accountID: string, accountName: string): Promise<void> {
+  private static async prepareSymmetricStep(authKey: string, receiverID: string, roomID: string, accountID: string, accountName: string): Promise<void> {
     try {
-      const info : Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
-      const salt : Uint8Array<ArrayBufferLike> = randomBytes(32);
-      const rootKey : Uint8Array<ArrayBufferLike> = CryptoCore.mixKeys(salt,session.rootKey,info);
 
-      this.temporarySessions.set(roomID, {
-        ...session,
-        // messageKey: messageKey,
-        rootKey: rootKey,
-        salt: salt,
-        capsule: undefined
-      })
+      const devices = await NetworkService.getAllBobDevices(authKey,receiverID);
 
-      const dataToSave = {
-        rootKey: Buffer.from(rootKey).toString('base64'),
-        sendCounter: session.sendCounter,
-        lastSenderID: session.lastSenderID
+      for (const device of devices) {
+        const deviceId : string = device.deviceId;
+        const combinedMapKey: string = roomID + '-' + deviceId;
+
+        const session = await StorageService.getSession(roomID, accountID, accountName, device.deviceId);
+        if (!session) {
+          continue
+        }
+        const data = JSON.parse(session);
+
+
+        const info: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID)
+        const salt: Uint8Array<ArrayBufferLike> = randomBytes(32)
+        const rootKey: Uint8Array<ArrayBufferLike> = CryptoCore.mixKeys(salt, data.rootKey, info)
+
+        this.temporarySessions.set(combinedMapKey, {
+          ...data,
+          // messageKey: messageKey,
+          rootKey: rootKey,
+          salt: salt,
+          capsule: undefined
+        })
+
+        const dataToSave = {
+          rootKey: Buffer.from(rootKey).toString('base64'),
+          sendCounter: data.sendCounter,
+          lastSenderID: data.lastSenderID
+        }
+
+        this.bobDevices.push(deviceId);
+
+        await StorageService.saveSession(roomID, JSON.stringify(dataToSave), accountID, accountName,deviceId);
       }
 
-      await StorageService.saveSession(roomID, JSON.stringify(dataToSave), accountID, accountName)
     } catch (error) {
       console.error('Failed prepare symmetric ratchet', error)
     }
@@ -143,15 +161,19 @@ abstract class ProtocolService {
 
   static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string): Promise<pkgStructure[]> {
     const deviceId: string = await StorageService.generateDeviceId();
-    const session: SessionState | null = await this.getOrLoadSession(roomID, senderID, accountName, deviceId);
-
     const pkgs: pkgStructure[] = [];
 
-    if (session === null) {
-      await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName)
-    } else {
-      await this.prepareSymmetricStep(roomID, session, senderID, accountName)
+    const devices = await NetworkService.getAllBobDevices(authKey, receiverID);
+
+    for (const device of devices) {
+      const session = await this.getOrLoadSession(roomID, receiverID, accountName, device.deviceId);
+      if (session === null) {
+        await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName)
+      } else {
+        await this.prepareSymmetricStep(authKey, receiverID, roomID, senderID, accountName)
+      }
     }
+
 
 
     // Key used to encrypt message for all devices
@@ -168,7 +190,7 @@ abstract class ProtocolService {
       const encryptedMessage : EncryptedData = CryptoCore.encryptData(content, masterKey);
 
       // Encrypted master key for specific device
-      const encryptedMessageKey : EncryptedData = CryptoCore.encryptData(masterKey,readySession.messageKey as Uint8Array);
+      const encryptedMessageKey : EncryptedData = CryptoCore.encryptData(masterKey,readySession.rootKey as Uint8Array);
 
       const pkg = {
         deviceId: deviceId,

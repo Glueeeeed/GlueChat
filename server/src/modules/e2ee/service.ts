@@ -49,6 +49,22 @@ export abstract class E2EEService {
 
         return JSON.stringify(devicesWithKeys);
     }
+
+    static async getUserDevices(userId: string, id : string) {
+        const isFriends : boolean = await FriendsService.checkIfTheyAreFriends(userId, id);
+        if (!isFriends) throw new NotFoundError("Devices do not exist");
+
+        return prisma.registeredDevices.findMany({
+            where: {
+                userId: userId,
+            },
+            select: {
+                deviceId: true,
+            }
+        })
+    }
+
+
     static async syncMessages(roomID: string, userID : string) {
         const data = await prisma.message.findMany({
             where: {

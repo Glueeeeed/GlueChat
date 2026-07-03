@@ -10,6 +10,10 @@ export interface preKeysPackage {
   opk: string
 }
 
+export interface device {
+  deviceId: string
+}
+
 export abstract class NetworkService {
   static async getPreKeys(authKey: string, userID: string): Promise<preKeysPackage[]> {
     const response = await fetch(`${API_BASE_URL}/api/e2ee/pre-keys/${userID}`, {
@@ -27,6 +31,22 @@ export abstract class NetworkService {
 
     const json = await response.json()
     return JSON.parse(json.data)
+  }
+
+  static async getAllBobDevices(authKey: string , userId: string): Promise<device[]> {
+    const response = await fetch(`${API_BASE_URL}/api/e2ee/devices/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${authKey}`
+      }
+    })
+    if (!response.ok) {
+      throw new Error(response.statusText)
+    }
+    const json = await response.json()
+    return json.devices
   }
 
   static async registerDevice(account: string, deviceId: string, keys: string, tempToken : string): Promise<void> {

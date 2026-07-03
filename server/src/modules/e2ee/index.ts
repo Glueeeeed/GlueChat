@@ -59,6 +59,29 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
         }
     })
 
+    .get('/devices/:id', async ({params: {id}, user}) => {
+        try {
+
+            const devices = await E2EEService.getUserDevices(user.id, id);
+            return status(200, {
+                devices,
+            })
+
+
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                return status(404, {
+                    success: false,
+                    message: e.message
+                })
+            }
+            return status(500, {
+                success: false,
+                message: 'Something went wrong',
+            })
+        }
+    })
+
     .get('/check-token', async ({body} ) =>  {
         try {
            return status(200, {

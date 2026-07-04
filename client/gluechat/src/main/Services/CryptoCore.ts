@@ -39,6 +39,11 @@ export abstract class CryptoCore {
     return new TextDecoder().decode(decrypted)
   }
 
+  static decrypt(cipherText: Uint8Array, nonce: Uint8Array, key: Uint8Array) : Uint8Array {
+    const cipher: Cipher = xchacha20poly1305(key, nonce);
+    return cipher.decrypt(cipherText);
+  }
+
 
   static encryptData(content: string | Uint8Array<ArrayBufferLike>, key: Uint8Array<ArrayBufferLike>): EncryptedData {
     const nonce: Uint8Array<ArrayBufferLike> = randomBytes(24);

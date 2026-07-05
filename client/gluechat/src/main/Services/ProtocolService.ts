@@ -67,6 +67,26 @@ abstract class ProtocolService {
 
       for (const preKeys of preKeysPackages) {
         const deviceId : string = preKeys.deviceId;
+
+        // console.log("pre keys: " + JSON.stringify(preKeys));
+
+
+        const identityKey = await NetworkService.getIdentityKey(authKey,deviceId, receiverID);
+
+        if (!preKeys.signature || !preKeys.spk || !preKeys.opk || !identityKey) {
+          console.error(`Data is missing for device: ${deviceId}:`, {
+            signature: !!preKeys.signature,
+            spk: !!preKeys.spk,
+            opk: !!preKeys.opk,
+            identityKey: !!identityKey
+          })
+          continue
+        }
+        const isValid = CryptoCore.verifySignature(Buffer.from(preKeys.signature,'base64'), Buffer.from(preKeys.spk,'base64'), Buffer.from(identityKey,'base64'));
+        if (!isValid) {
+          throw new Error('Failed to verify signature of pre-key')
+        }
+
         this.bobDevices.push(deviceId);
         const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKeys.spk, 'base64'));
         const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKeys.opk, 'base64'));
@@ -166,7 +186,7 @@ abstract class ProtocolService {
     const devices = await NetworkService.getAllBobDevices(authKey, receiverID);
 
     for (const device of devices) {
-      const session = await this.getOrLoadSession(roomID, receiverIDr, accountName, device.deviceId);
+      const session = await this.getOrLoadSession(roomID, receiverID, accountName, device.deviceId);
       if (session === null) {
         await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName)
       } else {
@@ -193,7 +213,7 @@ abstract class ProtocolService {
       const encryptedMessageKey : EncryptedData = CryptoCore.encryptData(masterKey,readySession.rootKey as Uint8Array);
 
       const pkg = {
-        deviceId: deviceId,
+        deviceId: device,
         roomID: roomID,
         senderID: senderID,
         messageNumber: readySession.sendCounter as number,
@@ -214,7 +234,8 @@ abstract class ProtocolService {
     return pkgs
   }
 
-  private static decapsulateOpkCapsule(capsuleSPK: string, capsuleOPK: string, roomID: string, spkPrivateKey: string | null, opkPrivateKey: string | null, identityPubKey: string | null, senderID : string, deviceId: string): void {
+
+  private static decapsulateOpkCapsule(capsuleSPK: string, capsuleOPK: string, roomID: string, spkPrivateKey: string | null, opkPrivateKey: string | null,senderID : string, deviceId: string): void {
     const ss1: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey as string, 'base64'));
     const ss2: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey as string, 'base64'));
 
@@ -246,13 +267,12 @@ abstract class ProtocolService {
     const session: SessionState | null = await this.getOrLoadSession(roomID, accountID, account, deviceId);
     if (pkg.capsule !== null) {
       if (pkg.capsule.includes('|')) {
-        const spkPrivateKey = await StorageService.getSigningKey(account, account)
-        const opkPrivateKey = await StorageService.getOneTimeKey(account, pkg.opkId as string, account)
-        const identityPubKey = await StorageService.getPubIdentityKey(account, account)
+        const spkPrivateKey = await StorageService.getSigningKey(account, account);
+        const opkPrivateKey = await StorageService.getOneTimeKey(account, pkg.opkId as string, account);
 
-        if (spkPrivateKey !== null && opkPrivateKey !== null && identityPubKey !== null) {
+        if (spkPrivateKey !== null && opkPrivateKey !== null) {
           const [capsuleSPK, capsuleOPK] = pkg.capsule.split('|')
-          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, identityPubKey, pkg.senderID, deviceId)
+          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, pkg.senderID, deviceId)
         } else {
           throw new Error('Failed to initialize decrypt session: OPK , SPK, OR IDENTITY NOT FOUND')
         }

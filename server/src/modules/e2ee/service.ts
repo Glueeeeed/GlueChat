@@ -39,7 +39,6 @@ export abstract class E2EEService {
 
             return {
                 deviceId: device.deviceId,
-                identityKey: device.identityKeys[0]?.identityKey,
                 spk: device.signedPreKeys[0]?.signedPubKey,
                 signature: device.signedPreKeys[0]?.signature,
                 opkId: opk?.keyId,
@@ -48,6 +47,20 @@ export abstract class E2EEService {
         }));
 
         return JSON.stringify(devicesWithKeys);
+    }
+
+    static async getIdentityKey(deviceId: string , userId : string): Promise<string> {
+        const record = await prisma.identityKeys.findFirst({
+            where: {
+                userID: userId,
+                deviceId: deviceId,
+            },
+            select: {
+                identityKey: true,
+            }
+        })
+        if (!record) throw new NotFoundError("Identity key not found");
+        return record.identityKey;
     }
 
     static async getUserDevices(userId: string, id : string) {

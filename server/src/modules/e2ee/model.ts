@@ -15,6 +15,10 @@ export const e2eeModel = {
 
     request: t.Object({
         id: t.String(),
+    }),
+
+    query: t.Object({
+        userId: t.String(),
     })
 
 }

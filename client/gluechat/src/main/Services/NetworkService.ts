@@ -25,11 +25,12 @@ export abstract class NetworkService {
     })
 
     if (!response.ok) {
-      console.error(response)
+      console.error(response);
       throw new Error(response.statusText)
     }
 
     const json = await response.json()
+    // console.log("REPONSE " + JSON.stringify(json))
     return JSON.parse(json.data)
   }
 
@@ -75,6 +76,23 @@ export abstract class NetworkService {
     if (!response.ok) {
       throw new Error(`could not register device`)
     }
+  }
 
+  static async getIdentityKey(authKey: string, deviceId: string, userId: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/api/e2ee/identity-key/${deviceId}?userId=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${authKey}`
+      }
+    })
+    if (!response.ok) {
+      console.error(response);
+      throw new Error(response.statusText);
+    }
+    console.log("RESPONSE: " + JSON.stringify(response))
+    const json = await response.json();
+    return json.data;
   }
 }

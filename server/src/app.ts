@@ -77,14 +77,14 @@ app.use(staticPlugin({
 
 
             if (data.type === 'send-message') {
-                const id =  MessageHandler.sendMessage(data.chatID, data.payload).then(result => {
-                    ws.publish(data.chatID, {
-                        type: 'receive-message',
-                        payload: data.payload,
-                        messageID: result
-                    });
+                const id =  MessageHandler.sendMessage(data.chatID as string, data.payload).then(result => {
+                    // ws.publish(data.chatID, {
+                    //     type: 'receive-message',
+                    //     payload: data.payload,
+                    //     messageID: result
+                    // });
                 })
-                console.log(data.payload)
+                // console.log(data.payload);
             }
 
             if (data.type === 'mark-as-read') {

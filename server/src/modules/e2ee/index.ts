@@ -4,6 +4,7 @@ import {e2eeModel} from "./model";
 import {jwt} from "@elysiajs/jwt";
 import {E2EEService} from "./service";
 import {authModel} from "../auth/model";
+import {FriendsService} from "../friends/service";
 
 
 export const e2ee = new Elysia({ prefix: '/e2ee' })
@@ -33,7 +34,7 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
         try {
 
             const preKeys : string = await E2EEService.getBobPreKeys(user.id, id)
-            console.log(`pre-keys ${preKeys}`)
+
             return status(200, {
                 success: true,
                 message: 'Pre key found',
@@ -57,6 +58,33 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
         response: {
             201: e2eeModel.response
         }
+    })
+
+    .get('/identity-key/:deviceId', async ({params: {deviceId}, query, user}) => {
+        try {
+            if (!query) return status(400, { success: false, message: "Missing parameters" });
+            const isFriends = await FriendsService.checkIfTheyAreFriends(user.id, query.userId);
+            if (!isFriends) throw new NotFoundError('identity key not found ddd');
+            const data : string = await E2EEService.getIdentityKey(deviceId, query.userId);
+            return status(200, {
+                success: true,
+                message: 'Identity key found',
+                data
+            })
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                return status(404, {
+                    success: false,
+                    message: e.message
+                })
+            }
+            return status(500, {
+                success: false,
+                message: 'Something went wrong',
+            })
+        }
+    }, {
+        query: e2eeModel.query,
     })
 
     .get('/devices/:id', async ({params: {id}, user}) => {

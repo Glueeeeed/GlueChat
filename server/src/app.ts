@@ -15,7 +15,8 @@ import {profile} from "./modules/profile";
 import {gluechat} from "./modules/app";
 import {account} from "./modules/account";
 
-export const activeConnections = new Map<string, Set<any>>();
+export const activeConnections = new Map<string, Map<string, Set<any>>>();
+
 
 const app = new Elysia({
     name: 'glue-chat backend server',
@@ -50,11 +51,21 @@ app.use(staticPlugin({
 
             if (data.type === 'authenticate') {
                 ws.data.userID = data.payload.userID;
-                console.log("connected user" + ws.data.userID);
+                ws.data.deviceId = data.payload.deviceId;
+
                 if (!activeConnections.has(ws.data.userID)) {
-                    activeConnections.set(ws.data.userID, new Set());
+                    activeConnections.set(ws.data.userID, new Map());
                 }
-                activeConnections.get(ws.data.userID)?.add(ws);
+
+                const userConnections = activeConnections.get(ws.data.userID)!;
+
+                if (!userConnections.has(ws.data.deviceId)) {
+                    userConnections.set(ws.data.deviceId, new Set());
+                }
+
+                userConnections.get(ws.data.deviceId)?.add(ws);
+                console.log(`User ${ws.data.userID} connected on device ${ws.data.deviceId}`);
+
 
                 const friends = await FriendsService.getAllFriend(ws.data.userID);
                 friends.forEach(friend => {
@@ -77,12 +88,10 @@ app.use(staticPlugin({
 
 
             if (data.type === 'send-message') {
-                const id =  MessageHandler.sendMessage(data.chatID as string, data.payload).then(result => {
-                    // ws.publish(data.chatID, {
-                    //     type: 'receive-message',
-                    //     payload: data.payload,
-                    //     messageID: result
-                    // });
+                MessageHandler.sendMessage(data.chatID as string, data.payload).then(result => {
+                    for (const message of data.payload) {
+                        console.log("MESSAGE 2: " + JSON.stringify(message));
+                    }
                 })
                 // console.log(data.payload);
             }

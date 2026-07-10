@@ -17,6 +17,9 @@ declare global {
       getMessages: (roomID: string,  accountName: string) => Promise<string | null>;
       saveMessage: (roomID: string, senderID: string, content: messageData, nonce: string, chatName: string,  accountName: string) => Promise<string | null>;
       getLastMessage: (roomID: ChatInfo,  accountName: string) => Promise<any | null>;
+    },
+    app: {
+      getDeviceID: () => Promise<string>;
     }
   }
 }

@@ -166,6 +166,10 @@ ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: s
   }
 )
 
+ipcMain.handle('getDevice', async () => {
+  return await StorageService.generateDeviceId();
+})
+
 
 ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string, accountID) => {
   return await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName,accountID)

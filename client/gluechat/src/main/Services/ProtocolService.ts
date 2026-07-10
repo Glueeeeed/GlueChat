@@ -36,8 +36,9 @@ abstract class ProtocolService {
 
   private static async getOrLoadSession(roomID: string, accountID: string, accountName: string, deviceId : string): Promise<SessionState | null> {
     try {
-      if (this.activeSessions.has(roomID)) {
-        return this.activeSessions.get(roomID)!
+      const combinedName: string = accountID + '-' + roomID + '-' + deviceId;
+      if (this.activeSessions.has(combinedName)) {
+        return this.activeSessions.get(combinedName)!
       }
       const stored = await StorageService.getSession(roomID, accountID, accountName,deviceId);
       if (stored) {
@@ -47,7 +48,7 @@ abstract class ProtocolService {
           rootKey: Buffer.from(data.rootKey, 'base64'),
         }
 
-        this.activeSessions.set(roomID, session)
+        this.activeSessions.set(combinedName, session)
         return session
       }
 
@@ -67,8 +68,6 @@ abstract class ProtocolService {
 
       for (const preKeys of preKeysPackages) {
         const deviceId : string = preKeys.deviceId;
-
-        // console.log("pre keys: " + JSON.stringify(preKeys));
 
 
         const identityKey = await NetworkService.getIdentityKey(authKey,deviceId, receiverID);
@@ -97,7 +96,7 @@ abstract class ProtocolService {
 
         // SAVE SESSION IN RAM
 
-        const combinedMapKey : string = roomID + "-" + deviceId;
+        const combinedMapKey: string = senderID + '-' + roomID + '-' + deviceId
 
         this.activeSessions.set(combinedMapKey, {
           rootKey: rootKey,
@@ -142,21 +141,20 @@ abstract class ProtocolService {
 
       for (const device of devices) {
         const deviceId : string = device.deviceId;
-        const combinedMapKey: string = roomID + '-' + deviceId;
+        const combinedMapKey: string = accountID + '-' + roomID + '-' + deviceId
 
-        const session = await StorageService.getSession(roomID, accountID, accountName, device.deviceId);
+        const session = await this.getOrLoadSession(roomID,accountID,accountName,deviceId);
         if (!session) {
           continue
         }
-        const data = JSON.parse(session);
 
 
         const info: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID)
         const salt: Uint8Array<ArrayBufferLike> = randomBytes(32)
-        const rootKey: Uint8Array<ArrayBufferLike> = CryptoCore.mixKeys(salt, data.rootKey, info)
+        const rootKey: Uint8Array<ArrayBufferLike> = CryptoCore.mixKeys(salt, session.rootKey, info)
 
         this.temporarySessions.set(combinedMapKey, {
-          ...data,
+          ...session,
           // messageKey: messageKey,
           rootKey: rootKey,
           salt: salt,
@@ -165,8 +163,8 @@ abstract class ProtocolService {
 
         const dataToSave = {
           rootKey: Buffer.from(rootKey).toString('base64'),
-          sendCounter: data.sendCounter,
-          lastSenderID: data.lastSenderID
+          sendCounter: session.sendCounter,
+          lastSenderID: session.lastSenderID
         }
 
         this.bobDevices.push(deviceId);
@@ -180,13 +178,15 @@ abstract class ProtocolService {
   }
 
   static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string): Promise<pkgStructure[]> {
-    const deviceId: string = await StorageService.generateDeviceId();
+    this.bobDevices = []
+    this.temporarySessions.clear()
     const pkgs: pkgStructure[] = [];
 
     const devices = await NetworkService.getAllBobDevices(authKey, receiverID);
 
     for (const device of devices) {
-      const session = await this.getOrLoadSession(roomID, receiverID, accountName, device.deviceId);
+      const session = await this.getOrLoadSession(roomID, senderID, accountName, device.deviceId);
+      console.log("SESJA" + JSON.stringify(session));
       if (session === null) {
         await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName)
       } else {
@@ -200,7 +200,7 @@ abstract class ProtocolService {
     const masterKey : Uint8Array<ArrayBufferLike> = randomBytes(32);
 
     for (const device of this.bobDevices) {
-      const combinedMapKey: string = roomID + '-' + device;
+      const combinedMapKey: string = senderID + '-' + roomID + '-' + device;
       const readySession = this.temporarySessions.get(combinedMapKey);
       if (!readySession || !readySession.rootKey) {
         throw new Error('Failed to initialize encrypt session')
@@ -242,7 +242,7 @@ abstract class ProtocolService {
     const info : Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
     const rootKey: Uint8Array = hkdf(sha256, ss1, ss2, info, 32);
 
-    const combinedMapKey = `${roomID}-${deviceId}`
+    const combinedMapKey = `${senderID}-${roomID}-${deviceId}`
     this.temporarySessions.set(combinedMapKey, {
       rootKey: rootKey,
       lastSenderID: senderID
@@ -271,8 +271,9 @@ abstract class ProtocolService {
         const opkPrivateKey = await StorageService.getOneTimeKey(account, pkg.opkId as string, account);
 
         if (spkPrivateKey !== null && opkPrivateKey !== null) {
-          const [capsuleSPK, capsuleOPK] = pkg.capsule.split('|')
-          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, pkg.senderID, deviceId)
+          const [capsuleSPK, capsuleOPK] = pkg.capsule.split('|');
+          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, pkg.senderID, deviceId);
+          await StorageService.removeOneTimeKey(accountID, pkg.opkId as string, account);
         } else {
           throw new Error('Failed to initialize decrypt session: OPK , SPK, OR IDENTITY NOT FOUND')
         }

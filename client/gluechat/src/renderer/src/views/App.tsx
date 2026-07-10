@@ -45,19 +45,20 @@ export function App(): React.JSX.Element {
   const queryClient = useQueryClient()
 
 
-
   const { data: userData } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
       try {
-        const token = await initAuthToken()
-        const decodedToken: any = jwtDecode(token)
-        const avatarUrl = await checkIfAssetExists('avatar', decodedToken.id)
-        const finalAvatarUrl = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null
-        const currentNickname = localStorage.getItem('nickname')
+        const token = await initAuthToken();
+        const decodedToken: any = jwtDecode(token);
+        const avatarUrl : string | null = await checkIfAssetExists('avatar', decodedToken.id);
+        const deviceId : string = await window.app.getDeviceID();
+        const finalAvatarUrl : string | null = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null
+        const currentNickname : string | null = localStorage.getItem('nickname')
 
         return {
           token,
+          deviceId,
           id: decodedToken.id,
           avatarUrl: finalAvatarUrl,
           currentNickname,
@@ -74,6 +75,7 @@ export function App(): React.JSX.Element {
   const authToken : string | null = userData?.token || null
   const avatarURL : string | null = userData?.avatarUrl || null
   const currentNickname : string = userData?.currentNickname || "Unknown";
+  const deviceId : string | undefined = userData?.deviceId;
 
 
   const checkIfUpdate = async () : Promise<void> => {
@@ -102,14 +104,14 @@ export function App(): React.JSX.Element {
 
   useEffect(() => {
     if (authToken) {
-      const decodedToken : any = jwtDecode(authToken)
+      const decodedToken : any = jwtDecode(authToken);
       const ws = new WebSocket('ws://localhost:3000/api/ws')
 
       ws.onopen = () => {
         ws.send(
           JSON.stringify({
             type: 'authenticate',
-            payload: { userID: decodedToken.id }
+            payload: { userID: decodedToken.id, deviceId: deviceId }
           })
         )
       }

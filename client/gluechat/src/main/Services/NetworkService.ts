@@ -88,11 +88,13 @@ export abstract class NetworkService {
       }
     })
     if (!response.ok) {
+      const json = await response.json()
+      console.log('RESPONSE: ' + JSON.stringify(json))
       console.error(response);
       throw new Error(response.statusText);
     }
-    console.log("RESPONSE: " + JSON.stringify(response))
-    const json = await response.json();
+
+    const json = await response.json()
     return json.data;
   }
 }

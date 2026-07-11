@@ -89,11 +89,12 @@ app.use(staticPlugin({
 
             if (data.type === 'send-message') {
                 MessageHandler.sendMessage(data.chatID as string, data.payload).then(result => {
-                    for (const message of data.payload) {
-                        console.log("MESSAGE 2: " + JSON.stringify(message));
-                    }
+                    ws.publish(data.chatID, {
+                        type: 'receive-message',
+                        payload: data.payload,
+                        messageID: result
+                    });
                 })
-                // console.log(data.payload);
             }
 
             if (data.type === 'mark-as-read') {

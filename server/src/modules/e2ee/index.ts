@@ -131,13 +131,13 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
         }
     })
 
-    .get('/messages/sync', async ({ query: { roomID }, user  }) => {
+    .get('/messages/sync', async ({ query: { roomID, deviceId }, user  }) => {
         try {
             if (!roomID) {
                 return status(400, { success: false, message: "Missing parameters" });
             }
 
-            const newMessages = await E2EEService.syncMessages(roomID, user.id);
+            const newMessages = await E2EEService.syncMessages(roomID, user.id, deviceId);
 
             return status(200, {
                 success: true,
@@ -152,7 +152,7 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
             }
             return status(500, {
                 success: false,
-                message: e.message
+                message: "Something went wrong"
             });
         }
     })

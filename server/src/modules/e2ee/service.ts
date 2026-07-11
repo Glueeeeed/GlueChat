@@ -78,10 +78,11 @@ export abstract class E2EEService {
     }
 
 
-    static async syncMessages(roomID: string, userID : string) {
+    static async syncMessages(roomID: string, userID : string, deviceId : string) {
         const data = await prisma.message.findMany({
             where: {
                 roomID: roomID,
+                deviceId: deviceId,
                 NOT: {
                     senderId: userID
                 },

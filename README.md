@@ -25,10 +25,10 @@ ___
 
 ## 🏴‍☠️ Core Philosophy: Pure Anonymity
 
-1. **No PII Storage:** We do not store emails, phone numbers, IP addresses, or plaintext usernames.
-2. **Blind Indexing (Memory-Hard):** Your username is hashed client-side using Argon2id (64MB memory cost). The server only sees a random hash (`usernameHash`) and cannot reverse it, protecting against offline brute-force attacks.
+1. **No PII Storage:** We do not store phone numbers, IP addresses, or plaintext usernames and emails.
+2. **Blind Indexing (Memory-Hard):** Your username is hashed client-side using HMAC-SHA256. The server only sees a random hash (`usernameHash`) and cannot reverse it, protecting against offline brute-force attacks.
 3. **Ghost Profiles:** Your name, bio, and avatar are encrypted locally with a symmetric `ProfileKey`. This key is shared *only* with trusted contacts via secure E2EE payloads. To the server, your profile is an indecipherable blob.
-4. **Local-First Sovereignty:** Your chat history lives **exclusively** on your device's IndexedDB. We never sync plaintext history to the cloud.
+4. **Local-First Sovereignty:** Your chat history lives exclusively on your device's SQLite. We never sync plaintext history to the cloud.
 
 ---
 
@@ -124,16 +124,17 @@ GlueChat is currently in the **Beta** phase.
 
 **Completed milestones:**
 - [x] Security foundations: implementation of hybrid key generation (X-Wing).
-- [x] Secure local storage using system vaults.
+- [x] Secure local storage using SQLite.
 - [x] Real-time communication: WebSockets with E2EE.
 - [x] Relationship management: friend invitation system.
 - [x] Saving decrypted messages to local history.
+- [x] Support for synchronization between multiple devices.
 
 **Next steps:**
 - [ ] Full implementation of the Double Ratchet protocol.
-- [ ] Support for synchronization between multiple devices.
-- [ ] Group chat functionality.
-
+- [ ] Send files and images with E2EE.
+- [ ] Group chat functionality with end-to-end encryption.
+- [ ] Voice and video calls with end-to-end encryption.
 ---
 
 

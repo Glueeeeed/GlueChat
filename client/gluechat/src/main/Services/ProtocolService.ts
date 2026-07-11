@@ -284,10 +284,12 @@ abstract class ProtocolService {
       }
       this.deriveSymmetricStep(Buffer.from(pkg.salt, 'base64'), roomID, session, deviceId)
     }
+    const combinedMapKey =
+      pkg.capsule !== null
+        ? `${pkg.senderID}-${roomID}-${pkg.deviceId}`
+        : `${roomID}-${pkg.deviceId}`
 
-    const combinedMapKey = `${roomID}-${pkg.deviceId}`
-
-    const tempData : SessionState | undefined = this.temporarySessions.get(combinedMapKey);
+    const tempData: SessionState | undefined = this.temporarySessions.get(combinedMapKey)
       if (!tempData) {
         throw new Error('Failed to initialize decrypt session: SESSION not found')
       }

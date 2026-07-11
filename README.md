@@ -136,6 +136,36 @@ GlueChat is currently in the **Beta** phase.
 
 ---
 
+
+## 👨‍💻 Author
+
+**Glueeed**
+*Creator & Lead Architect of GlueChat*
+
+- 🐙 GitHub: [@Glueeed](https://github.com/glueeeeed)
+- 🌐 Website: [portfolio](https://glueeed.dev)
+
+---
+
+## ⚖️ License & Commercial Use
+
+GlueChat is distributed under the **[AGPL-3.0 License](LICENSE)**.
+
+This guarantees that GlueChat remains free and open-source for the community. However, network use (SaaS) of this software requires you to open-source your entire project.
+
+**What this means:** You are free to use, modify, and distribute this software. However, if you modify NYX and run it as a public service (SaaS), you **must** release your modified source code to your users under the same AGPLv3 license.
+
+---
+
+<pre>
+ ██████╗ ██╗     ██╗   ██╗███████╗ ██████╗██╗  ██╗ █████╗ ████████╗
+██╔════╝ ██║     ██║   ██║██╔════╝██╔════╝██║  ██║██╔══██╗╚══██╔══╝
+██║  ███╗██║     ██║   ██║█████╗  ██║     ███████║███████║   ██║   
+██║   ██║██║     ██║   ██║██╔══╝  ██║     ██╔══██║██╔══██║   ██║   
+╚██████╔╝███████╗╚██████╔╝███████╗╚██████╗██║  ██║██║  ██║   ██║   
+ ╚═════╝ ╚══════╝ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   
+</pre>
+
 <div align="center">
   <p>GlueChat &copy; 2026</p>
 </div>

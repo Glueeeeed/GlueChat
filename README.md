@@ -23,12 +23,13 @@ GlueChat is a desktop messaging app built around a “Privacy-First” philosoph
 
 ___
 
-## 🏴‍☠️ Core Philosophy: Pure Anonymity
+## 🏴‍☠️ Core Philosophy: Strong Anonymity
 
-1. **No PII Storage:** We do not store phone numbers, IP addresses, or plaintext usernames and emails.
-2. **Blind Indexing (Memory-Hard):** Your username is hashed client-side using HMAC-SHA256. The server only sees a random hash (`usernameHash`) and cannot reverse it, protecting against offline brute-force attacks.
-3. **Ghost Profiles:** Your name, bio, and avatar are encrypted locally with a symmetric `ProfileKey`. This key is shared *only* with trusted contacts via secure E2EE payloads. To the server, your profile is an indecipherable blob.
-4. **Local-First Sovereignty:** Your chat history lives exclusively on your device's SQLite. We never sync plaintext history to the cloud.
+1. **Minimal PII:** We do not store phone numbers, IP addresses, and plaintext emails.
+2. **Local-First:** Your chat history lives exclusively on your device's SQLite. We never sync plaintext history to the cloud. 
+3. **Strict Ephemeral Messages:** The server stores messages only temporarily for offline users. Once a message has been delivered and read by the recipient, it is immediately deleted from the server.
+
+**Note:** Email addresses are used exclusively for optional account recovery and password reset. They are stored in hashed form only and never in plaintext.
 
 ---
 

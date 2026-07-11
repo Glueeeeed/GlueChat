@@ -30,19 +30,19 @@ interface Friend {
 
 
 export function App(): React.JSX.Element {
-  const [friends, setFriends] = useState<Friend[]>([])
-  const [activeTab, setActiveTab] = useState<Tab>('chats')
-  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null)
-  const [addFriendOption, setAddFriendOption] = useState<boolean>(false)
-  const [selectedChat, setSelectedChat] = useState<string | null>(null)
-  const [selectedChatName, setSelectedChatName] = useState<string | null>(null)
-  const [senderID, setSenderID] = useState<string | null>(null)
-  const [receiverID, setReceiverID] = useState<string | null>(null)
-  const [selectedSetting, setSelectedSetting] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>('chats');
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+  const [addFriendOption, setAddFriendOption] = useState<boolean>(false);
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [selectedChatName, setSelectedChatName] = useState<string | null>(null);
+  const [senderID, setSenderID] = useState<string | null>(null);
+  const [receiverID, setReceiverID] = useState<string | null>(null);
+  const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
+  const navigate = useNavigate();
 
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
 
   const { data: userData } = useQuery({
@@ -129,8 +129,6 @@ export function App(): React.JSX.Element {
         if (data.type === 'PROFILE_UPDATED') {
            queryClient.invalidateQueries({ queryKey: ['friends'] })
           queryClient.invalidateQueries({ queryKey: ['chats'] })
-
-
         }
       }
     }
@@ -189,13 +187,7 @@ export function App(): React.JSX.Element {
       <div className="flex-1 flex flex-col bg-gray-950/50">
         {activeTab === 'chats' ? (
           selectedChat ? (
-            <ChatView
-              receiverID={receiverID}
-              senderID={senderID as string}
-              authKey={authToken as string}
-              chatID={selectedChat}
-              chatName={selectedChatName as string}
-            />
+            <ChatView deviceId={deviceId as string} receiverID={receiverID} senderID={senderID as string} authKey={authToken as string} chatID={selectedChat} chatName={selectedChatName as string}/>
           ) : (
             <div className="flex-1 flex items-center justify-center text-center opacity-40">
               <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">

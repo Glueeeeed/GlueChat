@@ -1,7 +1,6 @@
 import * as jwtLib from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import { prisma } from "../lib/prisma";
-import {AlreadyExistsError} from "./exceptions";
 
 
 
@@ -50,6 +49,25 @@ export async function verifyRefreshToken(token: string): Promise<string | undefi
         throw new Error("Refresh token is invalid or expired.");
 
     }
+}
+
+export async function verifyResetPasswordToken(token: string) {
+    const decoded: any = jwtLib.verify(token, process.env.RECOVERY_SECRET as string);
+    const sessionID = decoded.session;
+
+    const record = await prisma.recoverySessions.findFirst({
+        where: {
+            sessionId: sessionID,
+            isUsed: false
+        }
+    })
+
+    if (!record) {
+        throw new Error("Invalid session or already used");
+    }
+
+    return decoded
+
 }
 
 

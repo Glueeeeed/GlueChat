@@ -8,7 +8,8 @@ import ProtocolService from './Services/ProtocolService'
 import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore'
 import { ChatInfo, StorageService } from './Services/StorageService'
 import {messageData} from './Services/StorageService'
-import { SecretManager } from './Services/SecretManager'
+import { SecretManager } from './Managers/SecretManager'
+import { NetworkService } from './Services/NetworkService'
 
 function createWindow(): void {
   // Create the browser window.
@@ -46,6 +47,7 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
+
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -100,36 +102,53 @@ ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
   return await keytar.deletePassword("gluechat", accountName);
 });
 
-ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) : Promise<string> => {
-  const oneTimeKeys: oneTimeKey[] = []
-  const keys: KeyPair = CryptoCore.generateSignKeyPair();
-  const identityPubKey: string = Buffer.from(keys.publicKey).toString('base64');
-  const identityKey: string = Buffer.from(keys.secretKey).toString('base64');
-  const spk: KeyPair = CryptoCore.generateNewKeyPair() // Signed PreKey Pair
-  const spkPubKey: string = Buffer.from(spk.publicKey).toString('base64');
-  const spkKey: string = Buffer.from(spk.secretKey).toString('base64')
+ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempToken: string, forceReset: boolean) : Promise<void> => {
+  const deviceId: string = await StorageService.generateDeviceId();
+  const prefix = `device-${deviceId}`;
+  const exists: string | null = await SecretManager.getSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`);
 
-  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, 'identityKey', identityKey);
-  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, 'identityPubKey', identityPubKey);
-  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, 'signingPrivateKey',  spkKey);
-  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, 'signingPubKey', spkPubKey);
+  if (exists && !forceReset) {
+    return;
+  } else {
+    await SecretManager.resetAllSecrets(accountName);
+  }
 
-  const signature: string = Buffer.from(CryptoCore.sign(spk.publicKey, keys.secretKey)).toString(
-    'base64');
-  for (let i: number = 1; i <= 50; i++) {
+  const oneTimeKeys: oneTimeKey[] = [];
+
+  // Generates Keys
+
+  const identityKP: KeyPair = CryptoCore.generateSignKeyPair(); // Identity Key Pair
+  const identityPubKey: string = Buffer.from(identityKP.publicKey).toString('base64');
+  const identityKey: string = Buffer.from(identityKP.secretKey).toString('base64');
+
+  const spkKP: KeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
+  const spkPubKey: string = Buffer.from(spkKP.publicKey).toString('base64');
+  const spkKey: string = Buffer.from(spkKP.secretKey).toString('base64') ;
+
+
+  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`, identityKey)
+  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityPubKey`, identityPubKey)
+  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPrivateKey`, spkKey)
+  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPubKey`, spkPubKey)
+
+  const signature: string = Buffer.from(CryptoCore.sign(spkKP.publicKey, identityKP.secretKey)).toString('base64');
+
+  for (let i: number = 1; i <= 20; i++) {
     const oneTimeKeyID: string = Buffer.from(randomBytes(4)).toString('hex');
     const keyPair: KeyPair = CryptoCore.generateNewKeyPair();
+
     const pubKey: string = Buffer.from(keyPair.publicKey).toString('base64');
     const privateKey: string = Buffer.from(keyPair.secretKey).toString('base64');
-    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, oneTimeKeyID, privateKey);
+
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-otk-${oneTimeKeyID}`, privateKey);
+
     const oneTimeKey = {
       id: oneTimeKeyID,
       pubKey: pubKey
-    }
+    };
+
     oneTimeKeys.push(oneTimeKey);
   }
-
-
 
   const data = {
     identityPubKey: identityPubKey,
@@ -138,8 +157,8 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string) : Prom
     oneTimeKeys: oneTimeKeys
   }
 
-  return JSON.stringify(data);
-
+   const keys : string = JSON.stringify(data);
+   await NetworkService.registerDevice(accountName,deviceId,keys, tempToken);
 })
 
 ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => {
@@ -147,6 +166,10 @@ ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: s
     return data
   }
 )
+
+ipcMain.handle('getDevice', async () => {
+  return await StorageService.generateDeviceId();
+})
 
 
 ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string, accountID) => {
@@ -163,5 +186,9 @@ ipcMain.handle('getMessages', async (_, roomID: string, accountName: string) => 
 
 ipcMain.handle('getLastMessage', async (_, roomID: ChatInfo, accountName: string) => {
   return await StorageService.getLastMessage(roomID, accountName);
+})
+
+ipcMain.handle('removeLocalKeys', async (_, accountName: string) => {
+  return await StorageService.removeLocalKeys(accountName);
 })
 

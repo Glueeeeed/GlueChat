@@ -1,10 +1,10 @@
 import { randomBytes } from '@noble/post-quantum/utils.js'
 import type { Cipher } from '@noble/ciphers/utils.js'
-import { gcm } from '@noble/ciphers/aes.js'
 import { ml_kem768_x25519 as xwing } from '@noble/post-quantum/hybrid.js'
 import { ml_dsa87 } from '@noble/post-quantum/ml-dsa.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
+import { xchacha20poly1305 } from '@noble/ciphers/chacha.js'
 
 export interface mixedKeys {
   rootKey: Uint8Array
@@ -34,17 +34,23 @@ interface EncapsulatedData {
 
 export abstract class CryptoCore {
   static decryptData(cipherText: Uint8Array, nonce: Uint8Array, key: Uint8Array): string {
-    const aes: Cipher = gcm(key, nonce)
-    const decrypted: Uint8Array = aes.decrypt(cipherText)
+    const cipher: Cipher = xchacha20poly1305(key, nonce)
+    const decrypted: Uint8Array = cipher.decrypt(cipherText)
     return new TextDecoder().decode(decrypted)
   }
 
-  static encryptData(content: string, key: Uint8Array<ArrayBufferLike>): EncryptedData {
-    const nonce: Uint8Array<ArrayBufferLike> = randomBytes(12)
-    const data: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(content)
-    const aes: Cipher = gcm(key, nonce)
-    const cipherText: Uint8Array<ArrayBufferLike> = aes.encrypt(data)
-    return { nonce, cipherText }
+  static decrypt(cipherText: Uint8Array, nonce: Uint8Array, key: Uint8Array) : Uint8Array {
+    const cipher: Cipher = xchacha20poly1305(key, nonce);
+    return cipher.decrypt(cipherText);
+  }
+
+
+  static encryptData(content: string | Uint8Array<ArrayBufferLike>, key: Uint8Array<ArrayBufferLike>): EncryptedData {
+    const nonce: Uint8Array<ArrayBufferLike> = randomBytes(24);
+    const data: Uint8Array<ArrayBufferLike> = typeof content === 'string' ? new TextEncoder().encode(content) : content;
+    const cipher: Cipher = xchacha20poly1305(key, nonce);
+    const cipherText: Uint8Array<ArrayBufferLike> = cipher.encrypt(data);
+    return { nonce, cipherText };
   }
 
    static mixKeys(newKey: Uint8Array, oldKey: Uint8Array, message: Uint8Array): Uint8Array {

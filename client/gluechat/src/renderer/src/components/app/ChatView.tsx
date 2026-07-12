@@ -1,7 +1,7 @@
 import { ChatInput } from "./ChatInput";
 import { Info, MoreVertical } from "lucide-react";
 import {ChatMessage} from "@renderer/components/app/ChatMessage";
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {validateOrRefreshToken} from "@renderer/assets/main";
 import {syncMessages, makeAsRead} from '@renderer/assets/e2ee'
 import { checkIfAssetExists } from '@renderer/assets/profile'
@@ -22,9 +22,10 @@ interface ChatViewProps {
   authKey: string;
   senderID: string;
   receiverID: string | null;
+  deviceId: string;
 }
 
-export function ChatView({senderID, authKey, chatID, chatName, receiverID}: ChatViewProps) {
+export function ChatView({senderID, authKey, chatID, chatName, receiverID, deviceId}: ChatViewProps) : React.JSX.Element {
   const [messages, setMessages] = useState<Message[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -42,13 +43,13 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
   useEffect(() => {
 
-    const loadAvatar = async () => {
-      const avatarUrl = await checkIfAssetExists('avatar', receiverID)
+    const loadAvatar = async () : Promise<void> => {
+      const avatarUrl = await checkIfAssetExists('avatar', receiverID as string);
       setAvatarURL(avatarUrl)
     }
 
 
-      const loadLocalHistory = async () => {
+      const loadLocalHistory = async () : Promise<void> => {
         try {
           const currentNickname = localStorage.getItem('nickname') || 'User'
           const history = await window.e2ee.getMessages(chatID, currentNickname)
@@ -76,10 +77,13 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
     const syncOfflineMessages = async () : Promise<void> =>  {
         try {
         const authToken : string = await validateOrRefreshToken(authKey);
-        const newPackages = await syncMessages(authToken, chatID);
+        const newPackages = await syncMessages(authToken, chatID, deviceId);
 
           if (newPackages && newPackages.length > 0)  {
             for (const pkg of newPackages) {
+
+              if (pkg.deviceId !== deviceId) continue;
+
               const currentNickname = localStorage.getItem('nickname') || 'User'
               const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname,senderID)
               if (decryptedText) {
@@ -140,35 +144,39 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
       }
 
       if (data.type === 'receive-message') {
-        const currentNickname = localStorage.getItem('nickname') || 'User';
-        const decryptedText = await window.e2ee.decryptMessage(data.payload, currentNickname,senderID);
-        if (decryptedText) {
-          await makeAsRead(authKey, data.payload.nonce);
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === data.id)) return prev
-            return [
-              ...prev,
-              {
-                id: Date.now().toString(),
-                sender: chatName,
-                content: decryptedText,
-                timestamp: new Date().toLocaleTimeString(),
-                isAuthor: false,
-                isSeen: false
-              }
-            ]
-          })
 
-          const messageData = {
-            id: Date.now().toString(),
-            sender: localStorage.getItem('nickname') || 'Me',
-            content: decryptedText,
-            timestamp: new Date().toLocaleTimeString(),
-            isAuthor: false,
-            isSeen: false
+        for (const message of data.payload) {
+          if (data.deviceId !== deviceId) continue;
+          const currentNickname = localStorage.getItem('nickname') || 'User';
+          const decryptedText = await window.e2ee.decryptMessage(message,currentNickname, senderID);
+          if (decryptedText) {
+            await makeAsRead(authKey, message.nonce);
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === message.id)) return prev
+              return [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  sender: chatName,
+                  content: decryptedText,
+                  timestamp: new Date().toLocaleTimeString(),
+                  isAuthor: false,
+                  isSeen: false
+                }
+              ]
+            })
+
+            const messageData = {
+              id: Date.now().toString(),
+              sender: localStorage.getItem('nickname') || 'Me',
+              content: decryptedText,
+              timestamp: new Date().toLocaleTimeString(),
+              isAuthor: false,
+              isSeen: false
+            }
+
+            await window.e2ee.saveMessage(chatID, message.senderID, messageData, message.nonce, chatName, currentNickname);
           }
-
-          await window.e2ee.saveMessage(chatID, data.payload.senderID, messageData, data.payload.nonce,chatName, currentNickname);
         }
       }
     };
@@ -179,12 +187,12 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID}: Chat
 
 
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string) : Promise<void> => {
 
 
     const authToken : string = await validateOrRefreshToken(authKey);
     const currentNickname = localStorage.getItem('nickname') || 'User'
-    const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID, receiverID, currentNickname);
+    const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID, receiverID as string, currentNickname);
 
     if (result && socketRef.current?.readyState === WebSocket.OPEN) {
       const currentNickname = localStorage.getItem('nickname') || 'User'

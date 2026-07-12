@@ -1,6 +1,8 @@
 import { API_BASE_URL } from '../config'
+import keytar from 'keytar'
 
-interface preKeysPackage {
+export interface preKeysPackage {
+  deviceId: string
   pubKey: string
   spk: string
   signature: string
@@ -8,8 +10,12 @@ interface preKeysPackage {
   opk: string
 }
 
+export interface device {
+  deviceId: string
+}
+
 export abstract class NetworkService {
-   static async getPreKeys(authKey: string, userID: string): Promise<preKeysPackage> {
+  static async getPreKeys(authKey: string, userID: string): Promise<preKeysPackage[]> {
     const response = await fetch(`${API_BASE_URL}/api/e2ee/pre-keys/${userID}`, {
       method: 'GET',
       headers: {
@@ -19,11 +25,76 @@ export abstract class NetworkService {
     })
 
     if (!response.ok) {
-      console.error(response)
+      console.error(response);
       throw new Error(response.statusText)
     }
 
     const json = await response.json()
+    // console.log("REPONSE " + JSON.stringify(json))
     return JSON.parse(json.data)
+  }
+
+  static async getAllBobDevices(authKey: string , userId: string): Promise<device[]> {
+    const response = await fetch(`${API_BASE_URL}/api/e2ee/devices/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${authKey}`
+      }
+    })
+    if (!response.ok) {
+      throw new Error(response.statusText)
+    }
+    const json = await response.json()
+    return json.devices
+  }
+
+  static async registerDevice(account: string, deviceId: string, keys: string, tempToken : string): Promise<void> {
+    console.info("TEMP TOKEN: " + tempToken)
+    const token  = tempToken ? tempToken : await keytar.getPassword('gluechat', account);
+    if (!token) {
+      throw new Error(` token not found for account ${account}`)
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/account/register-device`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        deviceId: deviceId,
+        keys: keys
+      })
+    })
+
+
+    const json = await response.json()
+    console.log('RESPONSE FROM SERVER: ' + JSON.stringify(json))
+    if (!response.ok) {
+      throw new Error(`could not register device`)
+    }
+  }
+
+  static async getIdentityKey(authKey: string, deviceId: string, userId: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/api/e2ee/identity-key/${deviceId}?userId=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${authKey}`
+      }
+    })
+    if (!response.ok) {
+      const json = await response.json()
+      console.log('RESPONSE: ' + JSON.stringify(json))
+      console.error(response);
+      throw new Error(response.statusText);
+    }
+
+    const json = await response.json()
+    return json.data;
   }
 }

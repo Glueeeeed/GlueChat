@@ -2,7 +2,7 @@ import {Elysia,status} from "elysia";
 import {authModel} from "./model";
 import {AuthService} from "./service";
 import {AlreadyExistsError, InvalidDataFormatError, InvalidCredentialsError} from "../../utils/exceptions";
-import {generateAuthToken, generateRefreshToken, verifyRefreshToken} from "../../utils/jwt";
+import {generateAuthToken, generateRefreshToken, verifyRefreshToken, verifyResetPasswordToken} from "../../utils/jwt";
 import {join} from "path";
 require("dotenv").config({ path: join(__dirname, "../..env") });
 
@@ -11,22 +11,19 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/register', async ({body}) =>  {
     try {
-        const {nickname, password, accessCode, keys} = body;
-
-        if (!keys) {
-            return status(400, {
-                success: false,
-                message: "Keys are required"
-            })
-        }
+        const {nickname, password, accessCode} = body;
 
         AuthService.validate(nickname, password, false);
         await AuthService.checkIfNicknameExists(nickname, false);
-        await AuthService.registerUser(nickname, password, accessCode as string,keys as string );
+        const id = await AuthService.registerUser(nickname, password, accessCode as string);
+        const authToken : string = generateAuthToken(id as string);
+
+        console.log("authToken ", authToken);
 
         return status(201, {
             success: true,
             message: 'User registered successfully',
+            authToken: authToken,
         })
 
 
@@ -57,10 +54,28 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/login', async ({body}) =>  {
     try {
-        const {nickname,password} = body;
-        AuthService.validate(nickname, password,true);
+        const {nickname, password, code2fa} = body;
+        AuthService.validate(nickname, password, true);
         await AuthService.checkIfNicknameExists(nickname, true);
         const userID : string = await AuthService.loginUser(nickname, password);
+
+        const is2faEnabled = await AuthService.is2FAEnabled(userID);
+
+        if (is2faEnabled) {
+            if (!code2fa) {
+                return {
+                    success: true,
+                    message: 'MFA required',
+                    mfaRequired: true
+                }
+            }
+
+            const is2faValid = await AuthService.verify2FACode(userID, code2fa);
+            if (!is2faValid) {
+                throw new InvalidCredentialsError("Invalid 2FA code");
+            }
+        }
+
         const authToken : string = generateAuthToken(userID);
         const refreshToken : string = await generateRefreshToken(userID);
         return {
@@ -148,6 +163,79 @@ export const auth = new Elysia({ prefix: '/auth' })
             return status(200, code);
         } catch {
             return status(500, { success: false, message: 'Error' });
+        }
+    })
+
+    .post('/reset-password/request', async ({body}) => {
+        try {
+            const {email} = body;
+            await AuthService.resetPasswordRequest(email);
+            return status(200, {
+                success: true,
+                message: 'Ok'
+            })
+
+        } catch (e) {
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
+    }, {
+        body: authModel.resetPasswordRequest
+    })
+
+    .get('/reset-password/:token', async ({ params: {token}, cookie: {session}}) => {
+        try {
+            await verifyResetPasswordToken(token);
+            session.value = token;
+            session.httpOnly = true
+            session.maxAge = 3600
+            session.path = '/'
+            return Bun.file('./src/public/recovery.html');
+        } catch (e) {
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: 'Unauthorized: Missing or invalid Token'
+            })
+        }
+    })
+
+    .post('/reset-password/', async ({body, cookie: {session}}) => {
+        try {
+            const {password, repeatPassword} = body;
+            const token = session.value;
+            if (!token) {
+                return status(400, {
+                    success: false,
+                    message: 'Unauthorized: Missing or invalid Token'
+                })
+            }
+            const data = await verifyResetPasswordToken(token as string);
+            await AuthService.resetPassword(data.id, data.session, password, repeatPassword);
+            return status(200, {
+                success: true,
+                message: 'Password reset successfully'
+            })
+        } catch (e) {
+            if (e instanceof InvalidDataFormatError) {
+                return status(e.statusCode, {
+                    success: false,
+                    message: e.message,
+                })
+            }
+            console.error(e);
+            return status(500, {
+                success: false,
+                message: 'Error'
+            })
+        }
+    }, {
+        body: authModel.resetPassword,
+        response: {
+            201: authModel.authResponse,
         }
     })
 

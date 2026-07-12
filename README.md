@@ -1,292 +1,173 @@
-### GlueChat: Modern & Secure Communication
+***
 
-**GlueChat** is a cutting-edge desktop messaging application built with a "Privacy-First" philosophy. It is designed to protect your conversations not only from today's threats but also from future challenges posed by quantum computing.
+# GlueChat
+
+<p align="center">
+    <img src="./client/gluechat/resources/icon.jpg" alt="GlueChat Logo" width="250">
+</p>
+<h1 align="center"> Post-quantum end-to-end encrypted messenger </h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-0.2 Seleant-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/License-AGPLv3-red?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/badge/Post--Quantum-Ready-8A2BE2?style=for-the-badge" alt="Post-Quantum Ready">
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="Typescript">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/Electron-47848F?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
+  <img src="https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white" alt="Bun">
+</p>
+
+> **"Security is not a feature. It's the architecture."**
+
+GlueChat is a desktop messaging app built around a “Privacy-First” philosophy. It is designed to protect your conversations not only from today's threats, but also from the challenges posed by the development of quantum computers.
+
+___
+
+## 🏴‍☠️ Core Philosophy: Strong Anonymity
+
+1. **Minimal PII:** We do not store phone numbers, IP addresses, and plaintext emails.
+2. **Local-First:** Your chat history lives exclusively on your device's SQLite. We never sync plaintext history to the cloud. 
+3. **Strict Ephemeral Messages:** The server stores messages only temporarily for offline users. Once a message has been delivered and read by the recipient, it is immediately deleted from the server.
+
+**Note:** Email addresses are used exclusively for optional account recovery and password reset. They are stored in hashed form only and never in plaintext.
 
 ---
 
-### 🛡️ Security Architecture & Roadmap
+## 🛡️ Security Architecture
 
-GlueChat implements a multi-layered security model to ensure that your data remains yours alone.
+GlueChat implements a multi-layered security model, ensuring that your data remains yours alone.
 
-#### 1. Hybrid Post-Quantum Cryptography (X-Wing)
-We utilize the **X-Wing** hybrid Key Encapsulation Mechanism (KEM).
-- **Hybrid Approach:** It combines the classic **X25519** (Elliptic Curve) with **ML-KEM-768** (Kyber), a NIST-standardized post-quantum algorithm.
+### 1. Hybrid Post-Quantum Cryptography (X-Wing)
+*   **Hybrid approach:** We combine classical **X25519** (elliptic curves) with **ML-KEM-768** (Kyber), the NIST standard for quantum-resistant algorithms.
+* **Cipher:** XChaCha20-Poly1305
+* **KEM:** ML-KEM-768 (via X-Wing construct)
+* **Hashing:** SHA256 & Argon2id
+* **Signatures:** ML-DSA87
 
-#### 2. Secure Local Storage
-Your private keys never leave your machine. GlueChat leverages **Keytar** to store sensitive cryptographic material in your operating system's native secure vault:
-- **macOS:** Keychain Access
-- **Windows:** Credentials Manager
-- **Linux:** Secret Service / libsecret
-
----
-
-### 🚀 Technical Stack
-
-- **Frontend:** [React](https://reactjs.org/) + [Vite](https://vitejs.dev/) + [TailwindCSS](https://tailwindcss.com/)
-- **Desktop Shell:** [Electron](https://www.electronjs.org/)
-- **Backend:** [Bun](https://bun.sh/) + [Elysia](https://elysiajs.com/)
-- **Database:** [Prisma](https://www.prisma.io/) + MySQL/MariaDB
-- **Crypto:** [@noble/post-quantum](https://github.com/paulmillr/noble-post-quantum)
+### 2. Secure Local Storage
+Your private keys never leave your device. GlueChat uses **SQLite** to store sensitive cryptographic material, which is encrypted at the application level.
 
 ---
 
-### 🖥️ Client Setup (Electron + React) 
+## ⚡ Technical Stack
 
-#### 1. Install Dependencies
-Navigate to the client directory and install the necessary packages:
+We use a modern technology stack that ensures performance and security.
+
+### Client (Desktop)
+*   **Framework:** React + Vite
+*   **Desktop Shell:** Electron
+*   **Styling:** TailwindCSS
+
+### Backend
+*   **Runtime:** Bun
+*   **Framework:** Elysia
+*   **Database:** MySQL (via Prisma ORM)
+*   **Crypto:** [@noble/post-quantum](https://github.com/paulmillr/noble-post-quantum) , [@noble/ciphers](https://github.com/paulmillr/noble-ciphers)
+
+---
+
+## 🚀 Deployment & Infrastructure
+
+### Local Development Quick Start
+
+*Prerequisites: Node.js, Bun, MySQL/MariaDB.*
+
+#### 1. Setup Client
 ```bash
 cd client/gluechat
 npm install
-```
-
-#### 2. Run in Development Mode
-Start the Vite development server and launch the Electron window:
-```bash
 npm run dev
 ```
 
----
-
-
-### ⚙️ Backend Setup (Bun + Elysia)
-
-#### 1. Environment Variables
-Create a `.env` file in the `server` directory and configure your database connection string (required by Prisma) and any necessary secrets:
+#### 2. Setup Backend
+Create a `.env` file in the `server` directory based on `.env.example`:
 ```env
-DATABASE_URL="mysql://user:password@localhost:3306/gluechat"
-DATABASE_USER="username"
+DATABASE_URL="mysql://user:password@host:3306/database"
+DATABASE_USER="user"
 DATABASE_PASSWORD="password"
-DATABASE_NAME="gluechat"
+DATABASE_NAME="database"
 DATABASE_HOST="localhost"
 DATABASE_PORT=3306
 JWT_SECRET="your_super_secret_key"
-ADMIN_API_KEY="your_strong_api_key"
-VERSION="APP VERSION"
+RECOVER_SECRET="your_super_secret_key"
+ADMIN_API_KEY="secret"
+VERSION=" app version"
+ENCRYPT_KEY_2FA="secret"
+MAIL_HOST="YOURHOST" # ex. smtp.gmail.com
+MAIL_USER="USER"
+MAIL_PASSWORD="PASSWORD"
+HMAC_KEY="your_very_strong_key"
+BASE_URL="your doman"
 ```
 
-#### 2. Install Dependencies
-Use **Bun** to install the server-side packages:
+Run the server:
 ```bash
 cd server
 bun install
-```
-
-#### 3. Start the Server
-Run the server in watch mode for development:
-```bash
 bun run dev
 ```
 
-
----
-
-### 🛠️ Prisma Setup Guide
-
-To prepare the database for GlueChat's encryption features (storing public keys and long encrypted blobs), follow these steps:
-
-#### 1. Initialize Prisma
-If you haven't already, install the dependencies and initialize Prisma in the server directory:
+#### 3. Prisma Schema
+To prepare the database:
 ```bash
 cd server
-bun add prisma -d
-bun add @prisma/client
-bunx prisma init
-```
-
-#### 2. Database Migration
-Apply the changes to your database and regenerate the client:
-```bash
-# Generate migrations and update database
 bunx prisma migrate dev --name init_e2ee_schema
-
-# Generate Prisma Client
 bunx prisma generate
 ```
+
+*(Tip: the full Prisma schema is located in `server/prisma/schema.prisma`)*
+
 ---
 
-#### 3. Prisma Schema
+## 📝 Project Status
+
+GlueChat is currently in the **Beta** phase.
+
+**Completed milestones:**
+- [x] Security foundations: implementation of hybrid key generation (X-Wing).
+- [x] Secure local storage using SQLite.
+- [x] Real-time communication: WebSockets with E2EE.
+- [x] Relationship management: friend invitation system.
+- [x] Saving decrypted messages to local history.
+- [x] Support for synchronization between multiple devices.
+
+**Next steps:**
+- [ ] Full implementation of the Double Ratchet protocol.
+- [ ] Send files and images with E2EE.
+- [ ] Group chat functionality with end-to-end encryption.
+- [ ] Voice and video calls with end-to-end encryption.
+---
 
 
-```prisma
-model User {
-  id        String   @id @default(cuid())
-  nickname  String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  lastSeen  DateTime @default(now())
-  betaTester Boolean @default(false)
+## 👨‍💻 Author
 
-  oneTimePreKeys       OneTimePreKeys[] @relation("SignedToUser")
-  signedPreKeys        SignedPreKeys[]  @relation("SignedToUser")
-  identityKeys         IdentityKeys[]   @relation("SignedToUser")
-  sentMessages         Message[]
-  privateRoomsAsFirst  PrivateRoom[]    @relation("PrivateRoomUser1")
-  privateRoomsAsSecond PrivateRoom[]    @relation("PrivateRoomUser2")
-  sentRequests         Friendship[]     @relation("SentRequests")
-  receivedRequests     Friendship[]     @relation("ReceivedRequests")
-  sessions             Sessions[]
-  profiles             Profiles[]       @relation("SignedToUser")
-  badges               UserBadges[]
-}
+**Glueeed**
+*Creator & Lead Architect of GlueChat*
 
-model PrivateRoom {
-  id        String   @id @default(cuid())
-  userId    String
-  userId2   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+- 🐙 GitHub: [@Glueeed](https://github.com/glueeeeed)
+- 🌐 Website: [portfolio](https://glueeed.dev)
 
-  messages Message[]
+---
 
-  user1 User @relation("PrivateRoomUser1", fields: [userId], references: [id], onDelete: Cascade)
-  user2 User @relation("PrivateRoomUser2", fields: [userId2], references: [id], onDelete: Cascade)
+## ⚖️ License & Commercial Use
 
-  @@unique([userId, userId2])
-  @@index([userId])
-  @@index([userId2])
-}
+GlueChat is distributed under the **[AGPL-3.0 License](LICENSE)**.
 
-model Message {
-  id              String   @id @default(cuid())
-  roomID          String
-  senderId        String
-  messageNumber   Int
-  opkId           String?
-  capsule         String?  @db.LongText
-  ephemeralPubKey String?  @db.LongText
-  salt            String?
-  content         String   @db.LongText
-  nonce           String
-  createdAt       DateTime @default(now())
-  isDeleted       Boolean
-  isSeen          Boolean
+This guarantees that GlueChat remains free and open-source for the community. However, network use (SaaS) of this software requires you to open-source your entire project.
 
-  privateRoom PrivateRoom @relation(fields: [roomID], references: [id], onDelete: Cascade)
-  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+**What this means:** You are free to use, modify, and distribute this software. However, if you modify NYX and run it as a public service (SaaS), you **must** release your modified source code to your users under the same AGPLv3 license.
 
-  @@unique([nonce])
-  @@index([roomID])
-}
+---
 
-model Sessions {
-  sessionID String @id
-  userID    String
+<pre>
+ ██████╗ ██╗     ██╗   ██╗███████╗ ██████╗██╗  ██╗ █████╗ ████████╗
+██╔════╝ ██║     ██║   ██║██╔════╝██╔════╝██║  ██║██╔══██╗╚══██╔══╝
+██║  ███╗██║     ██║   ██║█████╗  ██║     ███████║███████║   ██║   
+██║   ██║██║     ██║   ██║██╔══╝  ██║     ██╔══██║██╔══██║   ██║   
+╚██████╔╝███████╗╚██████╔╝███████╗╚██████╗██║  ██║██║  ██║   ██║   
+ ╚═════╝ ╚══════╝ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   
+</pre>
 
-  loggedUser User @relation(fields: [userID], references: [id], onDelete: Cascade)
-}
-
-enum FriendshipStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-
-model Friendship {
-  id         String           @id @default(cuid())
-  senderId   String
-  receiverId String
-  status     FriendshipStatus @default(PENDING)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-
-  sender   User @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@unique([senderId, receiverId])
-  @@index([senderId])
-  @@index([receiverId])
-}
-
-model IdentityKeys {
-  id          Int    @id @default(autoincrement())
-  userID      String
-  identityKey String @db.LongText // base64(ML-DSA public key)
-
-  user User @relation("SignedToUser", fields: [userID], references: [id], onDelete: Cascade)
-
-  @@unique([userID])
-  @@index([userID])
-}
-
-model SignedPreKeys {
-  id           Int    @id @default(autoincrement())
-  userID       String
-  signedPubKey String @db.LongText
-  signature    String @db.LongText
-
-  user User @relation("SignedToUser", fields: [userID], references: [id], onDelete: Cascade)
-
-  @@unique([userID])
-  @@index([userID])
-}
-
-model OneTimePreKeys {
-  id     Int    @id @default(autoincrement())
-  userId String
-  keyId  String
-
-  publicKey String @db.LongText // base64(X-Wing public key)
-
-  isUsed    Boolean   @default(false)
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  user User @relation("SignedToUser", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, keyId])
-  @@index([userId, isUsed])
-  @@index([userId])
-}
-
-model Badge {
-  id       String       @id @default(cuid())
-  name     String       @unique
-  imageUrl String
-  users    UserBadges[]
-}
-
-model UserBadges {
-  userId  String
-  badgeId String
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-
-  @@id([userId, badgeId])
-}
-
-model Profiles {
-  id          Int     @id @default(autoincrement())
-  userId      String  @unique
-  avatarUrl   String?
-  bannerUrl   String?
-  bannerColor String? @default("#0d1935")
-  description String?
-  user        User    @relation("SignedToUser", fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model AccessCodes {
-  id Int @id @default(autoincrement())
-  code String
-  isUsed  Boolean @default(false)
-}
-
-```
-
-
-### 📝 Project Status
-GlueChat is currently in **Beta**. 
-
-**Completed Milestones:**
-- **Security Foundations:** Implemented hybrid key generation (X-Wing) and secure local storage using OS-native vaults.
-- **Real-Time Messaging:** Secure message delivery system built on WebSockets with integrated end-to-end encryption (E2EE).
-- **Relationship Management:** Fully functional friend request system (send/accept/reject) and chat list management.
-- Save decrypted messages to local history.
-- Enhanced user profiles
-
-**Next Steps:**
-- Full implementation of the **Double Ratchet** protocol
-- Multi-device synchronization support.
-- Group chat functionality with shared ratchet trees.
-- Notification history.
+<div align="center">
+  <p>GlueChat &copy; 2026</p>
+</div>

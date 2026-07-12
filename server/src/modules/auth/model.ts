@@ -9,7 +9,7 @@ export const authModel = {
         accessCode: t.Optional(
             t.String(),
         ),
-        keys: t.Optional(
+        code2fa: t.Optional(
             t.String(),
         ),
     }),
@@ -23,10 +23,22 @@ export const authModel = {
         refreshToken: t.Optional(
             t.String(),
         ),
+        mfaRequired: t.Optional(
+            t.Boolean(),
+        ),
     }),
 
     refreshBody: t.Object({
         refreshToken: t.String(),
+    }),
+
+    resetPasswordRequest: t.Object({
+        email: t.String({ format: 'email' })
+    }),
+
+    resetPassword: t.Object({
+        password: t.String(),
+        repeatPassword: t.String(),
     })
 
 }

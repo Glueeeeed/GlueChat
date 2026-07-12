@@ -1,10 +1,7 @@
-import keytar from 'keytar';
-import Database from 'better-sqlite3';
-import {CryptoCore} from './CryptoCore'
-import path from 'path'
+import keytar from 'keytar'
 import { randomBytes } from '@noble/post-quantum/utils.js'
-import { app } from 'electron'
-import { SecretManager } from './SecretManager'
+import { SecretManager } from '../Managers/SecretManager'
+import { HistoryManager } from '../Managers/HistoryManager'
 
 export interface SessionState {
   rootKey: Uint8Array
@@ -39,141 +36,80 @@ export interface ChatInfo {
 
 
 export abstract class StorageService {
-  private static dbs: Map<string, any> = new Map()
 
-  private static getDb(accountName: string) {
-    if (this.dbs.has(accountName)) {
-      return this.dbs.get(accountName)
-    }
-
-    const userDataPath = app.getPath('userData')
-    const dbPath = path.join(userDataPath, `${accountName}_history.db`)
-    console.log(`dbPath: ${dbPath}`)
-
-    const db = new Database(dbPath)
-
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS chat_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        roomID TEXT,
-        senderID TEXT,
-        senderName TEXT,
-        encryptedContent TEXT,
-        messageID TEXT UNIQUE,
-        isAuthor BOOLEAN DEFAULT NULL,
-        isSeen BOOLEAN DEFAULT NULL,
-        nonce TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
-
-    return db
-  }
-  private static async getStorageKey(): Promise<Uint8Array> {
-    let key = await keytar.getPassword('Gluechat', 'local_storage_key')
-
-    if (!key) {
-      const newKey = randomBytes(32)
-      key = Buffer.from(newKey).toString('base64')
-      await keytar.setPassword('Gluechat', 'local_storage_key', key)
-    }
-
-    return Buffer.from(key, 'base64')
-  }
 
   static async saveMessage(roomID: string, senderID: string, messageData: messageData, nonce: string, chatName: string, accountName: string): Promise<void> {
-    const key = await this.getStorageKey()
-    const db = this.getDb(accountName)
-
-    const encrypted = (CryptoCore as any).encryptData(messageData.content, key)
-
-    const stmt = db.prepare(`INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, nonce)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)  `)
-
-    stmt.run(
-      roomID,
-      senderID,
-      chatName,
-      Buffer.from(encrypted.cipherText).toString('base64'),
-      nonce,
-      +messageData.isAuthor,
-      +messageData.isSeen,
-      Buffer.from(encrypted.nonce).toString('base64')
-    )
+   return HistoryManager.saveMessage(roomID,senderID,messageData,nonce,chatName,accountName);
   }
 
-  static async getHistory(roomID: string, accountName: string) {
-    const db = this.getDb(accountName);
-    const rows = db
-      .prepare('SELECT * FROM chat_history WHERE roomID = ? ORDER BY timestamp ASC')
-      .all(roomID)
-    const key = await this.getStorageKey()
-
-    return rows.map((row: any) => {
-      const decrypted = (CryptoCore as any).decryptData(
-        Buffer.from(row.encryptedContent, 'base64'),
-        Buffer.from(row.nonce, 'base64'),
-        key
-      )
-
-      return {
-        id: row.messageID,
-        sender: row.senderName,
-        content: decrypted,
-        timestamp: new Date(row.timestamp + ' UTC').toLocaleTimeString(),
-        isAuthor: Boolean(row.isAuthor),
-        isSeen: Boolean(row.isSeen)
-      }
-    })
+  static async getHistory(roomID: string, accountName: string) : Promise<any> {
+    return HistoryManager.getHistory(roomID, accountName);
   }
 
-  static async getLastMessage(data: ChatInfo, accountName: string) {
-    const db = this.getDb(accountName);
-    const row: any = db
-      .prepare('SELECT * FROM chat_history WHERE roomID = ? ORDER BY timestamp DESC LIMIT 1')
-      .get(data.id)
-
-    if (!row) return null
-    const key = await this.getStorageKey()
-
-    const decrypted = (CryptoCore as any).decryptData(
-      Buffer.from(row.encryptedContent, 'base64'),
-      Buffer.from(row.nonce, 'base64'),
-      key
-    )
-
-    return {
-      senderName: row.senderName,
-      isAuthor: Boolean(row.isAuthor),
-      content: decrypted
-    }
+  static async getLastMessage(data: ChatInfo, accountName: string) : any  {
+    return HistoryManager.getLastMessage(data, accountName);
   }
 
-  static async saveSession(roomID: string, data: string, accountID: string, accountName: string): Promise<void> {
-    const combinedName: string = accountID + '-' + roomID
+  static async saveSession(roomID: string, data: string, accountID: string, accountName: string, deviceId: string): Promise<void> {
+    const combinedName: string = accountID + '-' + roomID + '-' + deviceId;
     await SecretManager.setSecret(accountName, 'gluechat', combinedName, data)
   }
-  static async deleteSession(roomID: string, accountID: string, accountName: string): Promise<void> {
-    const combinedName: string = accountID + '-' + roomID
-    await SecretManager.deleteSecret(accountName,'gluechat', combinedName);
-  }
-  static async getSession(roomID: string, accountID: string, accountName: string): Promise<string | null> {
-    const combinedName: string = accountID + '-' + roomID
-    return await SecretManager.getSecret(accountName, 'gluechat', combinedName)
+  static async getSession(roomID: string, accountID: string, accountName: string, deviceId: string): Promise<string | null> {
+    const combinedName: string = accountID + '-' + roomID + '-' + deviceId;
+    return await SecretManager.getSecret(accountName, 'gluechat', combinedName);
   }
 
   static async getSigningKey(account: string, accountName: string): Promise<string | null> {
-    return await SecretManager.getSecret(accountName, 'gluechat_' + account, 'signingPrivateKey')
+    const deviceId: string = await StorageService.generateDeviceId();
+    const prefix = `device-${deviceId}`;
+    return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-signingPrivateKey`);
   }
 
   static async getIdentityKey(account: string, accountName: string): Promise<string | null> {
-    return await SecretManager.getSecret(accountName, 'gluechat_' + account, 'identityKey')
+    const deviceId: string = await StorageService.generateDeviceId();
+    const prefix = `device-${deviceId}`;
+    return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-identityKey`);
   }
 
   static async getPubIdentityKey(account: string, accountName: string): Promise<string | null> {
-    return await SecretManager.getSecret(accountName, 'gluechat_' + account, 'identityPubKey')
+    const deviceId: string = await StorageService.generateDeviceId();
+    const prefix = `device-${deviceId}`;
+    return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-identityPubKey`);
   }
 
   static async getOneTimeKey(account: string, keyID: string, accountName: string): Promise<string | null> {
-    return await SecretManager.getSecret(accountName, 'gluechat_' + account, keyID)
+    const deviceId: string = await StorageService.generateDeviceId();
+    const prefix = `device-${deviceId}`;
+    return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-otk-${keyID}`);
   }
+
+  static async removeOneTimeKey(account: string, keyID: string, accountName: string): Promise<void> {
+    const deviceId: string = await StorageService.generateDeviceId();
+    const prefix = `device-${deviceId}`;
+    await SecretManager.deleteSecret(accountName, 'gluechat_' + account, `${prefix}-otk-${keyID}`)
+  }
+
+  static async generateDeviceId(): Promise<string> {
+    const deviceId : string | null = await this.checkIfDeviceExists();
+    if (!deviceId) {
+      const deviceId: string = Buffer.from(randomBytes(8)).toString('base64');
+      await keytar.setPassword('gluechat_device', 'id', deviceId);
+      return deviceId;
+    }
+    return deviceId;
+  }
+
+  private static async checkIfDeviceExists(): Promise<string | null> {
+    return await keytar.getPassword('gluechat_device', 'id');
+  }
+
+   static async removeLocalKeys(accountName : string) : Promise<void> {
+     await SecretManager.resetAllSecrets(accountName);
+    await HistoryManager.resetAllHistory(accountName);
+    await keytar.deletePassword('Gluechat', 'local_storage_key');
+    await keytar.deletePassword('Gluechat', 'local_secret_key');
+  }
+
+
+
 }

@@ -22,6 +22,10 @@ if (process.contextIsolated) {
   window.api = api
 }
 
+contextBridge.exposeInMainWorld('app', {
+  getDeviceID: () => ipcRenderer.invoke('getDevice'),
+  removeLocalKeys: (accountName: string) => ipcRenderer.invoke('removeLocalKeys', accountName),
+})
 
 contextBridge.exposeInMainWorld("auth", {
   getRefreshToken: (accountName: string) => ipcRenderer.invoke("get-refresh-token", accountName),
@@ -30,38 +34,15 @@ contextBridge.exposeInMainWorld("auth", {
 });
 
 contextBridge.exposeInMainWorld('e2ee', {
-  generatePairKeys: (accountName: string) =>
-    ipcRenderer.invoke('generate-xwing-pair-keys', accountName),
-  initializeEncryptMessage: (
-    publicKey: string,
-    content: string,
-    roomID: string,
-    senderID: string,
-    receiverID: string,
-    accountName: string
-  ) =>
-    ipcRenderer.invoke(
-      'initializeEncryptMessage',
-      publicKey,
-      content,
-      roomID,
-      senderID,
-      receiverID,
-      accountName
-    ),
+  generatePairKeys: (accountName: string, tempToken : string, forceReset: boolean) =>
+    ipcRenderer.invoke('generate-xwing-pair-keys', accountName, tempToken, forceReset),
+  initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) =>
+    ipcRenderer.invoke('initializeEncryptMessage', publicKey, content, roomID, senderID, receiverID, accountName),
   decryptMessage: (encryptedPackage: any, accountName: string, accountID: string) =>
     ipcRenderer.invoke('decryptMessage', encryptedPackage, accountName, accountID),
   getMessages: (roomID: string, accountName: string) => ipcRenderer.invoke('getMessages', roomID,accountName),
-  saveMessage: (
-    roomID: string,
-    senderID: string,
-    content: messageData,
-    nonce: string,
-    chatName: string,
-    accountName: string
-  ) => ipcRenderer.invoke('saveMessage', roomID, senderID, content, nonce, chatName,accountName),
-  getLastMessage: (roomID: ChatInfo, accountName: string) =>
-    ipcRenderer.invoke('getLastMessage', roomID, accountName),
+  saveMessage: (roomID: string, senderID: string, content: messageData, nonce: string, chatName: string, accountName: string) => ipcRenderer.invoke('saveMessage', roomID, senderID, content, nonce, chatName,accountName),
+  getLastMessage: (roomID: ChatInfo, accountName: string) => ipcRenderer.invoke('getLastMessage', roomID, accountName),
 })
 
 

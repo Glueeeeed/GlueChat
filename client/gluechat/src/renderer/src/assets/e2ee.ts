@@ -1,8 +1,8 @@
 import { API_BASE_URL } from './utils'
 
 
-export async function syncMessages(authKey: string, roomID: string): Promise<any[]> {
-  const response = await fetch(`${API_BASE_URL}/api/e2ee/messages/sync?roomID=${roomID}`,
+export async function syncMessages(authKey: string, roomID: string, deviceId: string): Promise<any[]> {
+  const response = await fetch(`${API_BASE_URL}/api/e2ee/messages/sync?roomID=${roomID}&deviceId=${deviceId}`,
     {
       method: 'GET',
       headers: {

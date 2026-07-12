@@ -15,6 +15,7 @@ import { ProfileSettings } from '@renderer/components/app/profile/ProfileSetting
 import {checkIfAssetExists} from "@renderer/assets/profile";
 import {UserProfile} from "@renderer/components/app/profile/UserProfile";
 import { API_BASE_URL, APP_VERSION} from '@renderer/assets/utils'
+import { AccountSecurity } from '@renderer/components/app/accountSecurity/AccountSecurity'
 
 
 export type Tab = 'chats' | 'friends' | 'settings';
@@ -29,34 +30,35 @@ interface Friend {
 
 
 export function App(): React.JSX.Element {
-  const [friends, setFriends] = useState<Friend[]>([])
-  const [activeTab, setActiveTab] = useState<Tab>('chats')
-  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null)
-  const [addFriendOption, setAddFriendOption] = useState<boolean>(false)
-  const [selectedChat, setSelectedChat] = useState<string | null>(null)
-  const [selectedChatName, setSelectedChatName] = useState<string | null>(null)
-  const [senderID, setSenderID] = useState<string | null>(null)
-  const [receiverID, setReceiverID] = useState<string | null>(null)
-  const [selectedSetting, setSelectedSetting] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>('chats');
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+  const [addFriendOption, setAddFriendOption] = useState<boolean>(false);
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [selectedChatName, setSelectedChatName] = useState<string | null>(null);
+  const [senderID, setSenderID] = useState<string | null>(null);
+  const [receiverID, setReceiverID] = useState<string | null>(null);
+  const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
+  const navigate = useNavigate();
 
 
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
 
 
   const { data: userData } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
       try {
-        const token = await initAuthToken()
-        const decodedToken: any = jwtDecode(token)
-        const avatarUrl = await checkIfAssetExists('avatar', decodedToken.id)
-        const finalAvatarUrl = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null
-        const currentNickname = localStorage.getItem('nickname')
+        const token = await initAuthToken();
+        const decodedToken: any = jwtDecode(token);
+        const avatarUrl : string | null = await checkIfAssetExists('avatar', decodedToken.id);
+        const deviceId : string = await window.app.getDeviceID();
+        const finalAvatarUrl : string | null = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null
+        const currentNickname : string | null = localStorage.getItem('nickname')
 
         return {
           token,
+          deviceId,
           id: decodedToken.id,
           avatarUrl: finalAvatarUrl,
           currentNickname,
@@ -73,6 +75,7 @@ export function App(): React.JSX.Element {
   const authToken : string | null = userData?.token || null
   const avatarURL : string | null = userData?.avatarUrl || null
   const currentNickname : string = userData?.currentNickname || "Unknown";
+  const deviceId : string | undefined = userData?.deviceId;
 
 
   const checkIfUpdate = async () : Promise<void> => {
@@ -101,14 +104,14 @@ export function App(): React.JSX.Element {
 
   useEffect(() => {
     if (authToken) {
-      const decodedToken : any = jwtDecode(authToken)
+      const decodedToken : any = jwtDecode(authToken);
       const ws = new WebSocket('ws://localhost:3000/api/ws')
 
       ws.onopen = () => {
         ws.send(
           JSON.stringify({
             type: 'authenticate',
-            payload: { userID: decodedToken.id }
+            payload: { userID: decodedToken.id, deviceId: deviceId }
           })
         )
       }
@@ -126,8 +129,6 @@ export function App(): React.JSX.Element {
         if (data.type === 'PROFILE_UPDATED') {
            queryClient.invalidateQueries({ queryKey: ['friends'] })
           queryClient.invalidateQueries({ queryKey: ['chats'] })
-
-
         }
       }
     }
@@ -186,13 +187,7 @@ export function App(): React.JSX.Element {
       <div className="flex-1 flex flex-col bg-gray-950/50">
         {activeTab === 'chats' ? (
           selectedChat ? (
-            <ChatView
-              receiverID={receiverID}
-              senderID={senderID as string}
-              authKey={authToken as string}
-              chatID={selectedChat}
-              chatName={selectedChatName as string}
-            />
+            <ChatView deviceId={deviceId as string} receiverID={receiverID} senderID={senderID as string} authKey={authToken as string} chatID={selectedChat} chatName={selectedChatName as string}/>
           ) : (
             <div className="flex-1 flex items-center justify-center text-center opacity-40">
               <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
@@ -231,7 +226,9 @@ export function App(): React.JSX.Element {
           <div className="flex-1 overflow-y-auto">
             {selectedSetting === 'EditProfile' ? (
               <ProfileSettings authToken={authToken} />
-            ) : (
+            ) : selectedSetting === 'Security' ? (
+              <AccountSecurity authToken={authToken as string} deviceId={deviceId as string}></AccountSecurity>
+            ) :  (
               <div className="flex-1 h-full flex items-center justify-center text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
                   Select a setting from the list

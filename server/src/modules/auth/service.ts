@@ -199,7 +199,8 @@ export abstract class AuthService {
                 resetEmail: hashedEmail
             },
             select: {
-                id: true
+                id: true,
+                nickname: true
             }
         })
         if (!record) {
@@ -225,7 +226,7 @@ export abstract class AuthService {
         const url = `${process.env.BASE_URL}/api/auth/reset-password/${token}`;
 
         const html : string = await render(
-            React.createElement(Recovery, { url: url })
+            React.createElement(Recovery, { url: url, nickname: record.nickname })
         );
 
         await transporter.sendMail({

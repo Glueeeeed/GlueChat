@@ -146,6 +146,7 @@ GlueChat is currently in the **Beta** phase.
 
 - 🐙 GitHub: [@Glueeed](https://github.com/glueeeeed)
 - 🌐 Website: [portfolio](https://glueeed.dev)
+- 👨‍💻 Contact: [official Gluechat Discord](https://discord.gg/5HZVxES5b)
 
 ---
 

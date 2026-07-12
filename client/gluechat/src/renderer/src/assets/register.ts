@@ -23,7 +23,7 @@ export async function register(nickname: string, password: string, accessCode: s
 
   if (response.status === 201) {
     console.log(json);
-    await window.e2ee.generatePairKeys(nickname, json.authToken);
+    await window.e2ee.generatePairKeys(nickname, json.authToken,false);
     return {success: true, message: json.message}
   }
 

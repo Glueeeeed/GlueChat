@@ -227,7 +227,7 @@ export function App(): React.JSX.Element {
             {selectedSetting === 'EditProfile' ? (
               <ProfileSettings authToken={authToken} />
             ) : selectedSetting === 'Security' ? (
-              <AccountSecurity authToken={authToken as string}></AccountSecurity>
+              <AccountSecurity authToken={authToken as string} deviceId={deviceId as string}></AccountSecurity>
             ) :  (
               <div className="flex-1 h-full flex items-center justify-center text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">

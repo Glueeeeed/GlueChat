@@ -3,23 +3,20 @@ import { FaShieldHalved } from 'react-icons/fa6'
 import { IoIosUnlock, IoMdAlert } from 'react-icons/io'
 import { FaCheckCircle } from 'react-icons/fa'
 import { Eye, EyeOff } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { JSX, useEffect, useState } from 'react'
 import { validateOrRefreshToken } from '@renderer/assets/main'
-import {
-  changePassword,
-  disable2fa,
-  get2faStatus,
-  getRecoveryStatus,
-  removeRecovery
-} from '@renderer/assets/account'
+import {changePassword, disable2fa, get2faStatus, getRecoveryStatus, removeRecovery, resetKeys} from '@renderer/assets/account'
 import { Setup2FA } from '@renderer/components/app/accountSecurity/secureFeatures/2faSetup'
 import { RecoveryAccount } from '@renderer/components/app/accountSecurity/secureFeatures/accountRecovery'
+import { GrPowerReset } from 'react-icons/gr'
 
 interface Props {
   authToken: string
+  deviceId: string
 }
 
-export function AccountSecurity({authToken} : Props) : JSX.Element {
+export function AccountSecurity({authToken , deviceId} : Props) : JSX.Element {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -31,6 +28,7 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('Successfully updated password!');
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetch2FAStatus = async () : Promise<void> => {
@@ -89,6 +87,17 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
       setTimeout(() => setError(''), 3000);
     }
   };
+
+  const handleResetKeys = async () : Promise<void> => {
+      const accountName = localStorage.getItem('nickname');
+      await resetKeys(authToken,deviceId,accountName as string);
+      alert('You must restart the application to apply the changes');
+      await window.auth.deleteRefreshToken(accountName as string);
+      if (localStorage.getItem('nickname') === accountName) {
+       localStorage.removeItem('nickname')
+      }
+      navigate('/login')
+  }
 
   const handleRemoveRecovery = async (): Promise<void> => {
     try {
@@ -339,39 +348,75 @@ export function AccountSecurity({authToken} : Props) : JSX.Element {
             </button>
           </div>
         </div>
+      </div>
+      <div>
+        <h2 className="text-2xl font-bold uppercase tracking-widest text-white">Danger Zone</h2>
+        <p className="text-gray-500 text-sm mt-1">Dangerous Security Options</p>
+      </div>
 
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/5 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-300/10 rounded-xl flex items-center justify-center border border-red-500/20">
-              <IoMdAlert className="text-red-400 text-xl" />
-            </div>
-            <div>
-              <h3 className="text-white font-bold uppercase text-sm tracking-wider">
-                Self-destruct
-              </h3>
-              <p className="text-[10px] text-gray-500 uppercase font-medium">
-                Delete account after inactivity.
-              </p>
+      <div className="bg-red-600/8 p-6 rounded-2xl border border-white/5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-red-300/10 rounded-xl flex items-center justify-center border border-red-500/20">
+            <IoMdAlert className="text-red-400 text-xl" />
+          </div>
+          <div>
+            <h3 className="text-white font-bold uppercase text-sm tracking-wider">Self-destruct</h3>
+            <p className="text-[10px] text-gray-500 uppercase font-medium">
+              Delete account after inactivity.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center p-1">
+          <div className="flex items-center justify-between p-1">
+            <p className="text-xs text-gray-400  max-w-[70%]">
+              If you don&#39;t log in for a selected period, your account and your data will be
+              erased permanently
+            </p>
+            <div className="flex items-center gap-3">
+              <select
+                disabled={true}
+                className="text-[10px] px-4 py-2 rounded-lg border  font-bold uppercase xl:ml-80 transition-all bg-red-200/5 text-gray-500 border-white/5 cursor-not-allowed"
+              >
+                <option>Soon</option>
+                {/*<option>1 month</option>*/}
+                {/*<option>3 months</option>*/}
+                {/*<option>6 months</option>*/}
+              </select>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="flex items-center p-1">
-            <div className="flex items-center justify-between p-1">
-              <p className="text-xs text-gray-400  max-w-[70%]">
-                If you don&#39;t log in for a selected period, your account and your data will be
-                erased permanently
-              </p>
-              <div className="flex items-center gap-3">
-                <select
-                  disabled={true}
-                  className="text-[10px] px-4 py-2 rounded-lg border  font-bold uppercase xl:ml-80 transition-all bg-gray-800/50 text-gray-500 border-white/5 cursor-not-allowed"
-                >
-                  <option>Soon</option>
-                  {/*<option>1 month</option>*/}
-                  {/*<option>3 months</option>*/}
-                  {/*<option>6 months</option>*/}
-                </select>
-              </div>
+      <div className="bg-red-600/8 p-6 rounded-2xl border border-white/5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-red-300/10 rounded-xl flex items-center justify-center border border-red-500/20">
+            <GrPowerReset className="text-red-400 text-xl" />
+          </div>
+          <div>
+            <h3 className="text-white font-bold uppercase text-sm tracking-wider">
+              Reset Device Keys
+            </h3>
+            <p className="text-[10px] text-gray-500 uppercase font-medium">
+              Regenerate account keys for this device.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center p-1">
+          <div className="flex items-center justify-between p-1">
+            <p className="text-xs text-gray-400 max-w-[70%]">
+              <strong>Warning:</strong> Regenerating your device keys will make all locally stored
+              encrypted data, including unread messages, permanently inaccessible. This action
+              cannot be undone.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleResetKeys()}
+                className={`text-[10px] px-4 py-2 rounded-lg border font-bold uppercase transition-all bg-red-600/10 hover:bg-red-600/15 text-white border-red-600/10 `}
+              >
+                Reset Keys
+              </button>
             </div>
           </div>
         </div>

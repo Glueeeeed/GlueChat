@@ -48,6 +48,7 @@ function createWindow(): void {
   }
 }
 
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -101,12 +102,12 @@ ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
   return await keytar.deletePassword("gluechat", accountName);
 });
 
-ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempToken: string) : Promise<void> => {
+ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempToken: string, forceReset: boolean) : Promise<void> => {
   const deviceId: string = await StorageService.generateDeviceId();
   const prefix = `device-${deviceId}`;
   const exists: string | null = await SecretManager.getSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`);
 
-  if (exists) {
+  if (exists && !forceReset) {
     return;
   } else {
     await SecretManager.resetAllSecrets(accountName);
@@ -185,5 +186,9 @@ ipcMain.handle('getMessages', async (_, roomID: string, accountName: string) => 
 
 ipcMain.handle('getLastMessage', async (_, roomID: ChatInfo, accountName: string) => {
   return await StorageService.getLastMessage(roomID, accountName);
+})
+
+ipcMain.handle('removeLocalKeys', async (_, accountName: string) => {
+  return await StorageService.removeLocalKeys(accountName);
 })
 

@@ -24,7 +24,7 @@ export async function changePassword(authToken: string, oldPassword: string, new
   }
 }
 
-export async function generate2faSecret (authToken: string): Promise<TwoFactorData> {
+export async function generate2faSecret(authToken: string): Promise<TwoFactorData> {
   const response = await fetch(`${API_BASE_URL}/api/account/2fa/setup/`, {
     method: 'GET',
     headers: {
@@ -178,4 +178,20 @@ export async function recoveryCode(authToken: string, email: string, code: strin
   if (!response.ok) {
     throw new Error(json.message);
   }
+}
+
+export async function resetKeys(authToken: string, deviceId : string, accountName: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/account/reset-keys?deviceId=${deviceId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`
+    }
+  })
+  const json = await response.json()
+  if (!response.ok) {
+    throw new Error(json.message);
+  }
+  await window.app.removeLocalKeys(accountName);
+  await window.e2ee.generatePairKeys(accountName, authToken, true);
 }

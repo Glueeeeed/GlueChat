@@ -127,4 +127,9 @@ export abstract class HistoryManager {
       content: decrypted
     };
   }
+
+  static async resetAllHistory(accountName: string): Promise<void> {
+    const db = this.getDb(accountName);
+    db.prepare('DELETE FROM chat_history').run();
+  }
 }

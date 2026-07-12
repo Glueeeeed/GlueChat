@@ -23,7 +23,8 @@ if (process.contextIsolated) {
 }
 
 contextBridge.exposeInMainWorld('app', {
-  getDeviceID: () => ipcRenderer.invoke('getDevice')
+  getDeviceID: () => ipcRenderer.invoke('getDevice'),
+  removeLocalKeys: (accountName: string) => ipcRenderer.invoke('removeLocalKeys', accountName),
 })
 
 contextBridge.exposeInMainWorld("auth", {
@@ -33,8 +34,8 @@ contextBridge.exposeInMainWorld("auth", {
 });
 
 contextBridge.exposeInMainWorld('e2ee', {
-  generatePairKeys: (accountName: string, tempToken : string) =>
-    ipcRenderer.invoke('generate-xwing-pair-keys', accountName, tempToken),
+  generatePairKeys: (accountName: string, tempToken : string, forceReset: boolean) =>
+    ipcRenderer.invoke('generate-xwing-pair-keys', accountName, tempToken, forceReset),
   initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) =>
     ipcRenderer.invoke('initializeEncryptMessage', publicKey, content, roomID, senderID, receiverID, accountName),
   decryptMessage: (encryptedPackage: any, accountName: string, accountID: string) =>

@@ -70,6 +70,7 @@ export abstract class SecretManager {
     }
   }
 
+
   static async deleteSecret(accountName: string, service: string, account: string): Promise<void> {
     const db = this.getDb(accountName)
     const stmt = db.prepare('DELETE FROM secrets WHERE service = ? AND account = ?')

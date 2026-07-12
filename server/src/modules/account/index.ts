@@ -4,7 +4,12 @@ import {jwt} from "@elysiajs/jwt";
 import {accountData} from "./model";
 import AccountService, {TwoFactorData} from "./service";
 import {AuthService} from "../auth/service";
-import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
+import {
+    AlreadyExistsError,
+    InvalidCredentialsError,
+    InvalidDataFormatError,
+    NotFoundError
+} from "../../utils/exceptions";
 
 export const account = new Elysia({ prefix: '/account' })
     .use(bearer())
@@ -275,5 +280,25 @@ export const account = new Elysia({ prefix: '/account' })
         body: accountData.registerDevice,
         response: {
             201: accountData.response
+        }
+    })
+
+    .get('/reset-keys', async ({query: {deviceId}, user}) => {
+        try {
+            await AccountService.resetDeviceKeys(deviceId, user.id);
+            return(200);
+        } catch (e) {
+            console.error(e);
+            if (e instanceof NotFoundError) {
+                return status(e.statusCode, {
+                    success: false,
+                    message: e.message
+                })
+            }
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+
         }
     })

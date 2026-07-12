@@ -5,7 +5,7 @@ import * as crypto from "crypto";
 import OTPEmail from '../../emails/otp';
 import * as React from 'react'
 import { render } from '@react-email/render';
-import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
+import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError, NotFoundError} from "../../utils/exceptions";
 import {join} from "path";
 import {transporter} from "../../utils/nodemailer";
 require("dotenv").config({ path: join(__dirname, "../../../.env") });
@@ -363,6 +363,35 @@ abstract class AccountService {
 
 
         })
+    }
+
+    static async resetDeviceKeys(deviceId: string, userId : string) {
+
+        await prisma.$transaction(async (t) => {
+
+            const record = await t.registeredDevices.findFirst({
+                where: {
+                    userId: userId,
+                    deviceId: deviceId
+                },
+                select: {
+                    id: true
+                }
+            })
+
+            if (!record) {
+                throw new NotFoundError("Device not found");
+            }
+
+            await t.registeredDevices.delete({
+                where: {
+                    id: record.id
+                }
+            })
+
+        })
+
+
     }
 
 

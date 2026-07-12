@@ -39,7 +39,7 @@ export async function login(nickname: string, password: string, code2fa?: string
     localStorage.setItem("accounts", JSON.stringify(savedAccounts));
   }
 
-  await window.e2ee.generatePairKeys(nickname, json.refreshToken);
+  await window.e2ee.generatePairKeys(nickname, json.refreshToken,false);
   return {success: true, message: "ok"};
 }
 

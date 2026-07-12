@@ -4,8 +4,9 @@ import {Body, Container, Head, Heading, Html, Preview, Section, Tailwind, Text, 
 
 export type OTPEmailProps = {
     url: string;
+    nickname: string;
 };
-export  default function Recovery({ url }:  OTPEmailProps) {
+export  default function Recovery({ url , nickname}:  OTPEmailProps) {
     return (
         <Html>
             <Head />
@@ -33,6 +34,7 @@ export  default function Recovery({ url }:  OTPEmailProps) {
 
 
                         <Section>
+                            <Text>Hello, {nickname}</Text>
                             <Text>Use the link below to reset your password:</Text>
 
                             <a target={"_blank"} href={url} className={"italic underline text-xs text-center font-mono font-bold tracking-widest text-violet-500"} >{url}</a>

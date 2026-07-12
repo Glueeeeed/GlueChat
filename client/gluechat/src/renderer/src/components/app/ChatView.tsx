@@ -124,7 +124,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
 
      syncOfflineMessages();
 
-    const ws = new WebSocket("ws://localhost:3000/api/ws");
+    const ws = new WebSocket("ws://glueeed.dev:2115/api/ws");
     socketRef.current = ws;
 
     ws.onopen = () => {

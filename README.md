@@ -78,9 +78,25 @@ cd client/gluechat
 npm install
 npm run dev
 ```
+create the .env and config.ts file with your server URL:
+```env
+
+// client/gluechat/.env
+
+VITE_API_URL="https://glueeed.dev:2115" # change this to your server URL
+VITE_APP_VERSION="0.2"
+VITE_APP_VERSION_NAME="beta v0.2"
+
+// client/gluechat/src/main/config.ts
+
+export const API_BASE_URL = 'https://glueeed.dev:2115'; #  change this to your server URL
+
+
+```
+
 
 #### 2. Setup Backend
-Create a `.env` file in the `server` directory based on `.env.example`:
+Update a `.env` file in the `server` directory based on `.env.example`:
 ```env
 DATABASE_URL="mysql://user:password@host:3306/database"
 DATABASE_USER="user"

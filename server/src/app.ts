@@ -155,7 +155,17 @@ app.use(staticPlugin({
 
 
 
-app.listen(3000)
+app.listen({
+    port: 3000,
+    tls: {
+
+        // Uncomment if you use ssl
+
+        // key: Bun.file('./certs/key.pem'),
+        // cert: Bun.file('./certs/cert.pem'),
+        // ca: Bun.file('./certs/ca.pem'),
+    }
+})
 
 setInterval(async () => {
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

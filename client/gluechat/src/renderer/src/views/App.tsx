@@ -105,7 +105,7 @@ export function App(): React.JSX.Element {
   useEffect(() => {
     if (authToken) {
       const decodedToken : any = jwtDecode(authToken);
-      const ws = new WebSocket('ws://localhost:3000/api/ws')
+      const ws = new WebSocket('ws://glueeed.dev:2115/api/ws')
 
       ws.onopen = () => {
         ws.send(

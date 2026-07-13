@@ -172,7 +172,7 @@ GlueChat is distributed under the **[AGPL-3.0 License](LICENSE)**.
 
 This guarantees that GlueChat remains free and open-source for the community. However, network use (SaaS) of this software requires you to open-source your entire project.
 
-**What this means:** You are free to use, modify, and distribute this software. However, if you modify NYX and run it as a public service (SaaS), you **must** release your modified source code to your users under the same AGPLv3 license.
+**What this means:** You are free to use, modify, and distribute this software. However, if you modify GlueChat and run it as a public service (SaaS), you **must** release your modified source code to your users under the same AGPLv3 license.
 
 ---
 

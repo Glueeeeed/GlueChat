@@ -94,7 +94,7 @@ export abstract class StorageService {
   static async generateDeviceId(): Promise<string> {
     const deviceId : string | null = await this.checkIfDeviceExists();
     if (!deviceId) {
-      const deviceId: string = Buffer.from(randomBytes(8)).toString('base64');
+      const deviceId: string = Buffer.from(randomBytes(8)).toString('base64url');
       await keytar.setPassword('gluechat_device', 'id', deviceId);
       return deviceId;
     }

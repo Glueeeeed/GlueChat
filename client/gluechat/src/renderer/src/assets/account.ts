@@ -181,12 +181,15 @@ export async function recoveryCode(authToken: string, email: string, code: strin
 }
 
 export async function resetKeys(authToken: string, deviceId : string, accountName: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/account/reset-keys?deviceId=${deviceId}`, {
-    method: 'GET',
+  const response = await fetch(`${API_BASE_URL}/api/account/reset-keys`, {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${authToken}`
-    }
+    },
+    body: JSON.stringify({
+      deviceId: deviceId
+    })
   })
   const json = await response.json()
   if (!response.ok) {

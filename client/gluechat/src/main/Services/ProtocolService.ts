@@ -59,19 +59,8 @@ abstract class ProtocolService {
     }
   }
 
-  private static async preparePreKeyCapsule(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string): Promise<void> {
+  private static async preparePreKeyCapsule(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string, deviceId: string, preKeys: preKeysPackage): Promise<void> {
     try {
-
-      // Get all Bob devices (pre-keys per device)
-
-      const preKeysPackages : preKeysPackage[] = await NetworkService.getPreKeys(authKey, receiverID);
-
-      console.log(`PREKEYS for id: ${receiverID}: `, JSON.stringify(preKeysPackages));
-
-      for (const preKeys of preKeysPackages) {
-        const deviceId : string = preKeys.deviceId;
-
-
         const identityKey = await NetworkService.getIdentityKey(authKey,deviceId, receiverID);
 
         if (!preKeys.signature || !preKeys.spk || !preKeys.opk || !identityKey) {
@@ -81,14 +70,13 @@ abstract class ProtocolService {
             opk: !!preKeys.opk,
             identityKey: !!identityKey
           })
-          continue
+          return;
         }
         const isValid = CryptoCore.verifySignature(Buffer.from(preKeys.signature,'base64'), Buffer.from(preKeys.spk,'base64'), Buffer.from(identityKey,'base64'));
         if (!isValid) {
           throw new Error('Failed to verify signature of pre-key')
         }
 
-        this.bobDevices.push(deviceId);
         const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKeys.spk, 'base64'));
         const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKeys.opk, 'base64'));
         const info: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
@@ -124,8 +112,6 @@ abstract class ProtocolService {
 
         console.log("Saved sesson for key: "  + combinedMapKey);
         await StorageService.saveSession(JSON.stringify(dataToSave), accountName, combinedMapKey)
-      }
-
     } catch (error) {
       console.error('Failed prepare session with pre keys', error)
     }
@@ -137,20 +123,14 @@ abstract class ProtocolService {
   */
 
 
-  private static async prepareSymmetricStep(authKey: string, receiverID: string, roomID: string, accountName: string): Promise<void> {
+  private static async prepareSymmetricStep(receiverID: string, roomID: string, accountName: string, deviceId: string): Promise<void> {
     try {
-
-      const devices = await NetworkService.getAllBobDevices(authKey,receiverID);
-
-      for (const device of devices) {
-        const deviceId : string = device.deviceId;
         const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
 
         const session = await this.getOrLoadSession(roomID,receiverID,deviceId);
         if (!session) {
-          continue
+          return;
         }
-
 
         const info: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID)
         const salt: Uint8Array<ArrayBufferLike> = randomBytes(32)
@@ -158,7 +138,6 @@ abstract class ProtocolService {
 
         this.temporarySessions.set(combinedMapKey, {
           ...session,
-          // messageKey: messageKey,
           rootKey: rootKey,
           salt: salt,
           capsule: undefined
@@ -170,12 +149,8 @@ abstract class ProtocolService {
           lastSenderID: session.lastSenderID
         }
 
-        this.bobDevices.push(deviceId);
-
         await StorageService.saveSession(JSON.stringify(dataToSave), accountName, combinedMapKey);
         this.activeSessions.delete(combinedMapKey);
-      }
-
     } catch (error) {
       console.error('Failed prepare symmetric ratchet', error)
     }
@@ -187,15 +162,26 @@ abstract class ProtocolService {
     const pkgs: pkgStructure[] = [];
 
     const devices = await NetworkService.getAllBobDevices(authKey, receiverID);
+    const myDeviceId = await StorageService.generateDeviceId();
 
-    for (const device of devices) {
-      const session = await this.getOrLoadSession(roomID, receiverID, device.deviceId);
+    const filteredDevices = devices.filter(d => d.deviceId !== myDeviceId);
+    const preKeysPackages = await NetworkService.getPreKeys(authKey, receiverID);
+
+    for (const device of filteredDevices) {
+      const deviceId = device.deviceId;
+      this.bobDevices.push(deviceId);
+      const session = await this.getOrLoadSession(roomID, receiverID, deviceId);
       console.log("SESJA" + JSON.stringify(session));
       if (session === null) {
+        const preKeys = preKeysPackages.find(pk => pk.deviceId === deviceId);
+        if (!preKeys) {
+            console.error("No prekeys for device", deviceId);
+            continue;
+        }
         console.log("starting pre key session");
-        await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName);
+        await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName, deviceId, preKeys);
       } else {
-        await this.prepareSymmetricStep(authKey, receiverID, roomID, accountName);
+        await this.prepareSymmetricStep(receiverID, roomID, accountName, deviceId);
       }
     }
 
@@ -241,14 +227,14 @@ abstract class ProtocolService {
   }
 
 
-  private static decapsulateOpkCapsule(capsuleSPK: string, capsuleOPK: string, roomID: string, spkPrivateKey: string | null, opkPrivateKey: string | null,senderID : string, deviceId: string): void {
+  private static decapsulateOpkCapsule(capsuleSPK: string, capsuleOPK: string, roomID: string, spkPrivateKey: string | null, opkPrivateKey: string | null,senderID : string, deviceId: string, accountID: string): void {
     const ss1: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey as string, 'base64'));
     const ss2: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey as string, 'base64'));
 
     const info : Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
     const rootKey: Uint8Array = hkdf(sha256, ss1, ss2, info, 32);
 
-    const combinedMapKey = StorageService.generateCombinedName(roomID, senderID, deviceId);
+    const combinedMapKey = StorageService.generateCombinedName(roomID, accountID, deviceId);
     this.temporarySessions.set(combinedMapKey, {
       rootKey: rootKey,
       lastSenderID: senderID
@@ -278,7 +264,7 @@ abstract class ProtocolService {
 
         if (spkPrivateKey !== null && opkPrivateKey !== null) {
           const [capsuleSPK, capsuleOPK] = pkg.capsule.split('|');
-          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, pkg.senderID, deviceId);
+          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, pkg.senderID, deviceId, accountID);
           await StorageService.removeOneTimeKey(accountID, pkg.opkId as string, account);
         } else {
           throw new Error('Failed to initialize decrypt session: OPK , SPK, OR IDENTITY NOT FOUND');

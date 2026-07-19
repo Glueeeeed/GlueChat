@@ -1,12 +1,13 @@
 import { BsFillPersonFill } from 'react-icons/bs'
 import { IoShield } from 'react-icons/io5'
+import { JSX } from 'react'
 
 interface SettingsProps {
   selectedSetting: string | null
   setSelectedSetting: (setting: string) => void
 }
 
-export function Settings({selectedSetting, setSelectedSetting}: SettingsProps) {
+export function Settings({selectedSetting, setSelectedSetting}: SettingsProps) : JSX.Element {
 
 
 

@@ -1,6 +1,7 @@
 import {SelectAccountBox} from "@renderer/components/auth/SelectAccountBox";
+import { JSX } from 'react'
 
-export function SelectAccount() {
+export function SelectAccount() : JSX.Element {
   return (
     <>
       <div className="w-full h-full flex items-center justify-center flex-col">

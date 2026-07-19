@@ -1,7 +1,7 @@
 import {Box} from "@renderer/components/auth/Box";
-import {useState} from "react";
+import { JSX, useState } from 'react'
 
-export function Register() {
+export function Register(): JSX.Element {
   const [password, setPassword] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const [nickname, setNickname] = useState("");

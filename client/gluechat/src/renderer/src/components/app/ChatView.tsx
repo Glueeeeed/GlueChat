@@ -85,7 +85,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
               if (pkg.deviceId !== deviceId) continue;
 
               const currentNickname = localStorage.getItem('nickname') || 'User'
-              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname,senderID)
+              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname,receiverID)
               if (decryptedText) {
                 await makeAsRead(authKey, pkg.nonce);
                 setMessages((prev) => {
@@ -124,7 +124,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
 
      syncOfflineMessages();
 
-    const ws = new WebSocket("ws://glueeed.dev:2115/api/ws");
+    const ws = new WebSocket("wss://glueeed.dev:2115/api/ws");
     socketRef.current = ws;
 
     ws.onopen = () => {
@@ -146,7 +146,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
       if (data.type === 'receive-message') {
 
         for (const message of data.payload) {
-          if (data.deviceId !== deviceId) continue;
+          if (message.deviceId !== deviceId) continue;
           const currentNickname = localStorage.getItem('nickname') || 'User';
           const decryptedText = await window.e2ee.decryptMessage(message,currentNickname, senderID);
           if (decryptedText) {
@@ -182,7 +182,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
     };
 
     return () => ws.close();
-  }, [chatID, chatName]);
+  }, [chatID, chatName, authKey, senderID, receiverID, deviceId]);
 
 
 

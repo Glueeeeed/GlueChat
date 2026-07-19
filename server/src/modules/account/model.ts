@@ -32,5 +32,9 @@ export const accountData = {
     registerDevice: t.Object({
         deviceId: t.String(),
         keys: t.String(),
+    }),
+
+    resetDevice: t.Object({
+        deviceId: t.String(),
     })
 }

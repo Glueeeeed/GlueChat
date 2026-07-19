@@ -1,6 +1,6 @@
 import {Box} from "@renderer/components/auth/Box";
-import {useState} from "react";
-export function Login() {
+import { JSX, useState } from 'react'
+export function Login() : JSX.Element {
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
 

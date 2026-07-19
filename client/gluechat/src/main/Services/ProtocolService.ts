@@ -34,13 +34,13 @@ abstract class ProtocolService {
   private static temporarySessions = new Map<string, SessionState>()
   private static temporaryDecryptData = new Map<string, decryptData>()
 
-  private static async getOrLoadSession(roomID: string, accountID: string, deviceId : string): Promise<SessionState | null> {
+  private static async getOrLoadSession(roomID: string, accountID: string, deviceId : string, accountName : string): Promise<SessionState | null> {
     try {
       const combinedName = StorageService.generateCombinedName(roomID, accountID, deviceId);
       if (this.activeSessions.has(combinedName)) {
         return this.activeSessions.get(combinedName)!
       }
-      const stored = await StorageService.getSession(roomID, combinedName);
+      const stored = await StorageService.getSession(accountName, combinedName);
       if (stored) {
         const data = JSON.parse(stored)
         const session: SessionState = {
@@ -127,7 +127,7 @@ abstract class ProtocolService {
     try {
         const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
 
-        const session = await this.getOrLoadSession(roomID,receiverID,deviceId);
+        const session = await this.getOrLoadSession(roomID,receiverID,deviceId, accountName);
         if (!session) {
           return;
         }
@@ -169,7 +169,7 @@ abstract class ProtocolService {
     for (const device of filteredDevices) {
       const deviceId = device.deviceId;
       this.bobDevices.push(deviceId);
-      const session = await this.getOrLoadSession(roomID, receiverID, deviceId);
+      const session = await this.getOrLoadSession(roomID, receiverID, deviceId, accountName);
       console.log("SESJA" + JSON.stringify(session));
       if (session === null) {
         const preKeys = preKeysPackages.find(pk => pk.deviceId === deviceId);
@@ -255,7 +255,7 @@ abstract class ProtocolService {
 
   static async initializeDecrypt(pkg: pkgStructure, roomID: string, account: string, accountID: string): Promise<string> {
     const deviceId : string = pkg.deviceId;
-    const session: SessionState | null = await this.getOrLoadSession(roomID, accountID, deviceId);
+    const session: SessionState | null = await this.getOrLoadSession(roomID, accountID, deviceId, account);
     if (pkg.capsule !== null) {
       if (pkg.capsule.includes('|')) {
         const spkPrivateKey = await StorageService.getSigningKey(account, account);

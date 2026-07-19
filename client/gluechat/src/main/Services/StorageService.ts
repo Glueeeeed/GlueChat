@@ -50,12 +50,14 @@ export abstract class StorageService {
     return HistoryManager.getLastMessage(data, accountName);
   }
 
-  static async saveSession(roomID: string, data: string, accountID: string, accountName: string, deviceId: string): Promise<void> {
-    const combinedName: string = accountID + '-' + roomID + '-' + deviceId;
+  static generateCombinedName(roomID: string, accountID: string, deviceId: string): string {
+    return accountID + '-' + roomID + '-' + deviceId;
+  }
+
+  static async saveSession(data: string, accountName: string, combinedName : string): Promise<void> {
     await SecretManager.setSecret(accountName, 'gluechat', combinedName, data)
   }
-  static async getSession(roomID: string, accountID: string, accountName: string, deviceId: string): Promise<string | null> {
-    const combinedName: string = accountID + '-' + roomID + '-' + deviceId;
+  static async getSession(accountName: string, combinedName : string): Promise<string | null> {
     return await SecretManager.getSecret(accountName, 'gluechat', combinedName);
   }
 

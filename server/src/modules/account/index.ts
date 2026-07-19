@@ -278,8 +278,9 @@ export const account = new Elysia({ prefix: '/account' })
         }
     })
 
-    .post('/reset-keys', async ({query: {deviceId}, user}) => {
+    .post('/reset-keys', async ({body, user}) => {
         try {
+            const {deviceId} = body;
             await AccountService.resetDeviceKeys(deviceId, user.id);
             return(200);
         } catch (e) {

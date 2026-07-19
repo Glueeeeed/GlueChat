@@ -163,7 +163,6 @@ abstract class ProtocolService {
 
     const devices = await NetworkService.getAllBobDevices(authKey, receiverID);
     const myDeviceId = await StorageService.generateDeviceId();
-
     const filteredDevices = devices.filter(d => d.deviceId !== myDeviceId);
     const preKeysPackages = await NetworkService.getPreKeys(authKey, receiverID);
 

@@ -69,7 +69,7 @@ export abstract class E2EEService {
 
         return prisma.registeredDevices.findMany({
             where: {
-                userId: userId,
+                userId: id,
             },
             select: {
                 deviceId: true,

@@ -1,5 +1,5 @@
 import { ChatInput } from "./ChatInput";
-import { Info, MoreVertical } from "lucide-react";
+import { Info } from "lucide-react";
 import {ChatMessage} from "@renderer/components/app/ChatMessage";
 import React, {useEffect, useRef, useState} from "react";
 import {validateOrRefreshToken} from "@renderer/assets/main";
@@ -99,7 +99,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
                       id: pkg.id,
                       sender: chatName,
                       content: decryptedText,
-                      timestamp: new Date().toLocaleTimeString(),
+                      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                       isAuthor: false,
                       isSeen: true
                     }
@@ -110,7 +110,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
                   id: Date.now().toString(),
                   sender: chatName,
                   content: decryptedText,
-                  timestamp: new Date().toLocaleTimeString(),
+                  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   isAuthor: false,
                   isSeen: false
                 }
@@ -161,7 +161,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
                   id: Date.now().toString(),
                   sender: chatName,
                   content: decryptedText,
-                  timestamp: new Date().toLocaleTimeString(),
+                  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   isAuthor: false,
                   isSeen: false
                 }
@@ -172,7 +172,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
               id: Date.now().toString(),
               sender: localStorage.getItem('nickname') || 'Me',
               content: decryptedText,
-              timestamp: new Date().toLocaleTimeString(),
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               isAuthor: false,
               isSeen: false
             }
@@ -242,12 +242,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="w-px h-4 bg-white/10 mx-1" />
-          <button className="p-2 text-gray-400 hover:text-gray-100 hover:bg-white/5 rounded-lg transition-all">
-            <MoreVertical size={18} />
-          </button>
-        </div>
+
       </header>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">

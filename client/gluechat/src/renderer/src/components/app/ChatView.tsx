@@ -51,9 +51,9 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
 
       const loadLocalHistory = async () : Promise<void> => {
         try {
+          setMessages([]);
           const currentNickname = localStorage.getItem('nickname') || 'User'
           const history = await window.e2ee.getMessages(chatID, currentNickname)
-
           if (history && history.length > 0) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore

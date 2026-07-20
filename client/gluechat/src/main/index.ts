@@ -30,6 +30,10 @@ function createWindow(): void {
     }
   })
 
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    event.preventDefault()
+  })
+
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })

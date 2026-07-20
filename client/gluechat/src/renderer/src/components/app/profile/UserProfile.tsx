@@ -10,6 +10,7 @@ interface UserProfileProps {
   nickname: string
 }
 
+
 export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -17,6 +18,11 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
 
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    setProfile(null);
+    setBadges([]);
+
     const fetchUserProfile = async () => {
       if (!authToken || !userId) return
       try {

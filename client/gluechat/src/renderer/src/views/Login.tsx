@@ -6,7 +6,7 @@ export function Login() : JSX.Element {
 
   return (
     <>
-      <div className="w-full h-full flex items-center justify-center flex-col [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-violet-950/50 [&::-webkit-scrollbar-thumb]:rounded-full">
+      <div className="w-full h-full flex items-center justify-center flex-col ">
         <div className={'mt-10'}>
           <h1 className=' text-center text-6xl mt-5 mb-5 font-["Pacifico"] text-[#eff1ed]'>
             GlueChat

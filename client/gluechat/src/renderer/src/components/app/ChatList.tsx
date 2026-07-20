@@ -107,7 +107,7 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 pb-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-900/50 [&::-webkit-scrollbar-thumb]:bg-violet-950 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-violet-900">
+      <div className="flex-1 overflow-y-auto px-2 pb-4 ">
         {filteredChats.length > 0 ? (
           filteredChats.map((chat) => (
             <button

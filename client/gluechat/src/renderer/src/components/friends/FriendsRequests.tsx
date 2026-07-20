@@ -61,7 +61,7 @@ export function FriendsRequests({authToken} : friendsRequestsProps) {
           <p className="text-gray-500 text-sm">You can view and manage friend requests</p>
         </div>
 
-        <div className="flex-1 flex-col mt-10 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900/50 [&::-webkit-scrollbar-thumb]:bg-violet-950 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-violet-900">
+        <div className="flex-1 flex-col mt-10 overflow-y-auto ">
           {requests.length > 0 ? (
             requests.map((friend) => (
               <div

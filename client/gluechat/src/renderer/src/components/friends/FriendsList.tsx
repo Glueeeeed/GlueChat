@@ -133,7 +133,7 @@ export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAd
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 pb-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-900/50 [&::-webkit-scrollbar-thumb]:bg-violet-950 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-violet-900">
+      <div className="flex-1 overflow-y-auto px-2 pb-4 ">
         {filteredFriends?.length && filteredFriends.length > 0
           ? filteredFriends.map((friend) => (
               <button

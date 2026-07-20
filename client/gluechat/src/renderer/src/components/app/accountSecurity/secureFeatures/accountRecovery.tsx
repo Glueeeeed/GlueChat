@@ -75,7 +75,7 @@ export function RecoveryAccount({ onBack, authToken }: Props): JSX.Element {
 
 
   return (
-    <div className="p-8 w-full mx-auto space-y-8 overflow-y-auto h-full [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-violet-950/50 [&::-webkit-scrollbar-thumb]:rounded-full">
+    <div className="p-8 w-full mx-auto space-y-8 overflow-y-auto h-full ">
       <div>
         <h2 className="text-2xl font-bold uppercase tracking-widest text-white">
           Recovery Account

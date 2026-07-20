@@ -24,11 +24,9 @@ export function AboutApp({ deviceId }: Props): JSX.Element {
           <span className="text-gray-400">Author</span>
           <span className="text-white">{author}</span>
         </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-gray-400 text-sm">Device ID</span>
-          <div className="text-violet-400 font-mono text-xs break-all bg-gray-900 p-3 rounded-2xl border border-gray-700">
-            {deviceId}
-          </div>
+        <div className="flex justify-between items-center border-b border-gray-700 pb-2">
+          <span className="text-gray-400 ">Device ID</span>
+          <span className="text-white">{deviceId}</span>
         </div>
       </div>
     </div>

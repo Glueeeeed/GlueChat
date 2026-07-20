@@ -188,35 +188,39 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
 
 
   const handleSendMessage = async (message: string) : Promise<void> => {
+    try {
+        const authToken : string = await validateOrRefreshToken(authKey);
+        const currentNickname = localStorage.getItem('nickname') || 'User'
+        const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID, receiverID as string, currentNickname);
 
+        if (result && socketRef.current?.readyState === WebSocket.OPEN) {
+          const currentNickname = localStorage.getItem('nickname') || 'User'
 
-    const authToken : string = await validateOrRefreshToken(authKey);
-    const currentNickname = localStorage.getItem('nickname') || 'User'
-    const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID, receiverID as string, currentNickname);
+          socketRef.current.send(JSON.stringify({
+            type: 'send-message',
+            chatID: chatID,
+            payload: result
+          }));
 
-    if (result && socketRef.current?.readyState === WebSocket.OPEN) {
-      const currentNickname = localStorage.getItem('nickname') || 'User'
+          const messageData = {
+            id: Date.now().toString(),
+            sender: localStorage.getItem('nickname') || 'Me',
+            content: message,
+            timestamp: new Date().toLocaleTimeString(),
+            isAuthor: true,
+            isSeen: false
+          }
 
-      socketRef.current.send(JSON.stringify({
-        type: 'send-message',
-        chatID: chatID,
-        payload: result
-      }));
+          setMessages(prev => [...prev, messageData]);
 
-      const messageData = {
-        id: Date.now().toString(),
-        sender: localStorage.getItem('nickname') || 'Me',
-        content: message,
-        timestamp: new Date().toLocaleTimeString(),
-        isAuthor: true,
-        isSeen: false
-      }
-
-      setMessages(prev => [...prev, messageData]);
-
-      const resultObj = JSON.parse(JSON.stringify(result));
-      console.log(resultObj);
-      await window.e2ee.saveMessage(chatID, senderID, messageData, resultObj.nonce,currentNickname, currentNickname)
+          const resultObj = JSON.parse(JSON.stringify(result));
+          await window.e2ee.saveMessage(chatID, senderID, messageData, resultObj.nonce,currentNickname, currentNickname)
+        } else {
+            throw new Error('Failed to encrypt or send message');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Failed to send message. Please try again later.');
     }
   };
 

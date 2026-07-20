@@ -5,6 +5,7 @@ import {friendsModel} from "./model";
 import {NotFoundError} from "../../utils/exceptions";
 import {FriendsService} from "./service"
 import {join} from "path";
+import {Logger} from "../../utils/logger";
 require("dotenv").config({ path: join(__dirname, "../..env") });
 export const friends = new Elysia({ prefix: '/friends' })
     .use(bearer())
@@ -69,7 +70,7 @@ export const friends = new Elysia({ prefix: '/friends' })
                     message: e.message
                 })
             }
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -95,7 +96,7 @@ export const friends = new Elysia({ prefix: '/friends' })
                data: friend
            })
        } catch (e) {
-           console.error(e);
+           Logger.error(e);
            return status(500, {
                success: false,
                message: "Something went wrong"
@@ -120,7 +121,7 @@ export const friends = new Elysia({ prefix: '/friends' })
                 data: friend
             })
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"

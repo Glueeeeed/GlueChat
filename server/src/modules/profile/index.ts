@@ -4,6 +4,7 @@ import { jwt } from '@elysiajs/jwt'
 import {profileModel} from "./model";
 import {ProfileService} from "./service";
 import path from "path";
+import {Logger} from "../../utils/logger";
 
 export const profile = new Elysia({ prefix: '/profile' })
     .get('/assets/:type/:userId', async ({ params, set }) => {
@@ -39,8 +40,11 @@ export const profile = new Elysia({ prefix: '/profile' })
             }
             return profileData;
         } catch (e) {
-            set.status = 500;
-            return { success: false, message: "Internal server error" };
+            Logger.error(e);
+            return status(500, {
+                    success: false,
+                    message: "Failed to get user profile"
+                });
         }
     })
     .use(bearer())
@@ -68,6 +72,7 @@ export const profile = new Elysia({ prefix: '/profile' })
             const profileData = await ProfileService.getProfile(user.id);
             return profileData;
         } catch (e) {
+            Logger.error(e);
             return status(500, { message: "Failed to get user profile" });
         }
     })
@@ -77,6 +82,7 @@ export const profile = new Elysia({ prefix: '/profile' })
             await ProfileService.updateProfile(user.id, avatar, banner, description, bannerColor);
             return { success: true, message: "Successfully updated profile" };
         } catch (e: any) {
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -101,6 +107,7 @@ export const profile = new Elysia({ prefix: '/profile' })
             await file.delete();
             return status(200, { success:true, message: "Successfully deleted profile",  });
         } catch (e) {
+            Logger.log(e);
             return status(404)
         }
     })

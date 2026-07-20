@@ -4,6 +4,7 @@ import { CryptoCore, EncryptedData } from './CryptoCore'
 import {randomBytes} from "@noble/post-quantum/utils.js";
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
+import { DebugUtil } from './DebugUtil'
 
 
 interface pkgStructure {
@@ -37,7 +38,6 @@ abstract class ProtocolService {
   private static async getOrLoadSession(roomID: string, accountID: string, deviceId : string, accountName : string): Promise<SessionState | null> {
     try {
       const combinedName = StorageService.generateCombinedName(roomID, accountID, deviceId);
-      console.log("GETTING SESSION FOR KEY: " + combinedName);
       if (this.activeSessions.has(combinedName)) {
         return this.activeSessions.get(combinedName)!
       }
@@ -50,6 +50,7 @@ abstract class ProtocolService {
         }
 
         this.activeSessions.set(combinedName, session)
+        DebugUtil.log(`Session loaded for key: ${combinedName}`);
         return session
       }
 
@@ -111,8 +112,8 @@ abstract class ProtocolService {
           lastSenderID: senderID
         }
 
-        console.log("Saved sesson for key: "  + combinedMapKey);
         await StorageService.saveSession(JSON.stringify(dataToSave), accountName, combinedMapKey)
+        DebugUtil.log(`Successfully prepared pre-key session for device: ${deviceId}`);
     } catch (error) {
       console.error('Failed prepare session with pre keys', error)
     }
@@ -129,7 +130,6 @@ abstract class ProtocolService {
         const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
 
         const session = await this.getOrLoadSession(roomID,receiverID,deviceId, accountName);
-        console.log("SESSION: " + JSON.stringify(session));
         if (!session) {
           return;
         }
@@ -172,14 +172,12 @@ abstract class ProtocolService {
       const deviceId = device.deviceId;
       this.bobDevices.push(deviceId);
       const session = await this.getOrLoadSession(roomID, receiverID, deviceId, accountName);
-      console.log("SESJA" + JSON.stringify(session));
       if (session === null) {
         const preKeys = preKeysPackages.find(pk => pk.deviceId === deviceId);
         if (!preKeys) {
-            console.error("No prekeys for device", deviceId);
+            DebugUtil.error('No prekeys for device', deviceId)
             continue;
         }
-        console.log("starting pre key session");
         await this.preparePreKeyCapsule(roomID, authKey, receiverID, senderID, accountName, deviceId, preKeys);
       } else {
         await this.prepareSymmetricStep(receiverID, roomID, accountName, deviceId);
@@ -200,6 +198,7 @@ abstract class ProtocolService {
 
       // Message encrypted using a master key
       const encryptedMessage : EncryptedData = CryptoCore.encryptData(content, masterKey);
+      DebugUtil.log(`Message encrypted successfully for device: ${device}`);
 
       // Encrypted master key for specific device
       const encryptedMessageKey : EncryptedData = CryptoCore.encryptData(masterKey,readySession.rootKey as Uint8Array);
@@ -236,21 +235,21 @@ abstract class ProtocolService {
     const rootKey: Uint8Array = hkdf(sha256, ss1, ss2, info, 32);
 
     const combinedMapKey = StorageService.generateCombinedName(roomID, senderID, deviceId);
-    console.log("DECRYPT COMBINED MAP KEY: ", combinedMapKey);
     this.temporarySessions.set(combinedMapKey, {
       rootKey: rootKey,
       lastSenderID: senderID
     });
+    DebugUtil.log(`Successfully decapsulated OPK capsule for room: ${roomID}, device: ${deviceId}`);
   }
 
   private static deriveSymmetricStep(salt : Uint8Array , roomID: string, session: SessionState | null, deviceId: string , accountID : string) : void {
+    DebugUtil.log(`Deriving symmetric step for room: ${roomID}, device: ${deviceId}`);
     if (!session) {
       throw new Error('Failed to derive symmetric step');
     }
     const info: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
     const newRootKey : Uint8Array<ArrayBufferLike> = CryptoCore.mixKeys(salt, session.rootKey, info);
     const combinedMapKey = StorageService.generateCombinedName(roomID,accountID, deviceId);
-    console.log('DECRYPT COMBINED MAP KEY: ', combinedMapKey)
     this.temporarySessions.set(combinedMapKey, {
       rootKey: newRootKey,
     })
@@ -258,9 +257,9 @@ abstract class ProtocolService {
 
 
   static async initializeDecrypt(pkg: pkgStructure, roomID: string, account: string, accountID: string): Promise<string> {
+    DebugUtil.log(`Starting initializeDecrypt for room: ${roomID}, sender: ${pkg.senderId}`);
     const deviceId : string = pkg.deviceId;
     const session: SessionState | null = await this.getOrLoadSession(roomID, pkg.senderId, deviceId, account);
-    console.log('DECRYPT : ', session)
     if (pkg.capsule !== null) {
       if (pkg.capsule.includes('|')) {
         const spkPrivateKey = await StorageService.getSigningKey(account, account);
@@ -271,11 +270,13 @@ abstract class ProtocolService {
           this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, pkg.senderId, deviceId, accountID);
           await StorageService.removeOneTimeKey(accountID, pkg.opkId as string, account);
         } else {
+          DebugUtil.error('Failed to initialize decrypt session: OPK , SPK, OR IDENTITY NOT FOUND');
           throw new Error('Failed to initialize decrypt session: OPK , SPK, OR IDENTITY NOT FOUND');
         }
       }
     } else {
       if (!pkg.salt) {
+        DebugUtil.error('Failed to initialize decrypt session: salt not found');
         throw new Error('Failed to initialize decrypt session: salt not found');
       }
       this.deriveSymmetricStep(Buffer.from(pkg.salt, 'base64'), roomID, session, deviceId, pkg.senderId);
@@ -284,6 +285,7 @@ abstract class ProtocolService {
 
     const tempData: SessionState | undefined = this.temporarySessions.get(combinedMapKey)
       if (!tempData) {
+        DebugUtil.error('Failed to initialize decrypt session: SESSION not found');
         throw new Error('Failed to initialize decrypt session: SESSION not found')
       }
       let masterKey : Uint8Array = CryptoCore.decrypt(Buffer.from(pkg.encryptedMessageKey, 'base64'), Buffer.from(pkg.messageKeyNonce, 'base64'), tempData?.rootKey as Uint8Array);
@@ -301,6 +303,7 @@ abstract class ProtocolService {
       await StorageService.saveSession(JSON.stringify(dataToSave), account,combinedMapKey);
       this.temporaryDecryptData.delete(combinedMapKey);
       this.activeSessions.delete(combinedMapKey);
+      DebugUtil.log(`Successfully finished initializeDecrypt for room: ${roomID}`);
 
       return decrypted
   }

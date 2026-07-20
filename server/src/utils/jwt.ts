@@ -1,6 +1,7 @@
 import * as jwtLib from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import { prisma } from "../lib/prisma";
+import {Logger} from "./logger";
 
 
 
@@ -39,7 +40,7 @@ export async function verifyRefreshToken(token: string): Promise<string | undefi
                 where: { sessionID: sessionID }
             });
         } catch (e) {
-            console.warn("Session already deleted or concurrent request handled it.");
+            Logger.warn("Failed to delete session", e);
         }
 
         return session.userID;
@@ -47,7 +48,6 @@ export async function verifyRefreshToken(token: string): Promise<string | undefi
 
     } catch (e) {
         throw new Error("Refresh token is invalid or expired.");
-
     }
 }
 

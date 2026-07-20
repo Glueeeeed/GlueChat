@@ -14,6 +14,7 @@ import {FriendsService} from "./modules/friends/service";
 import {profile} from "./modules/profile";
 import {gluechat} from "./modules/app";
 import {account} from "./modules/account";
+import {Logger} from "./utils/logger";
 
 export const activeConnections = new Map<string, Map<string, Set<any>>>();
 
@@ -43,9 +44,7 @@ app.use(staticPlugin({
             ),
             payload: t.Any()
         }),
-        open() {
-            console.log('User connected');
-        },
+        open() {},
         async message(ws : any, data) {
 
 
@@ -64,8 +63,7 @@ app.use(staticPlugin({
                 }
 
                 userConnections.get(ws.data.deviceId)?.add(ws);
-                console.log(`User ${ws.data.userID} connected on device ${ws.data.deviceId}`);
-
+                Logger.log(`User ${ws.data.userID} connected on device ${ws.data.deviceId}`);
 
                 const friends = await FriendsService.getAllFriend(ws.data.userID);
                 friends.forEach(friend => {
@@ -82,7 +80,6 @@ app.use(staticPlugin({
 
             if (data.type === 'join-chat') {
                 ws.subscribe(data.chatID);
-                console.log(`User joined to room: ${data.chatID}`);
             }
 
 
@@ -175,7 +172,6 @@ setInterval(async () => {
             updatedAt: { lt: dayAgo }
         }
     });
-    console.log("Cleaned up expired friend rejections.");
 }, 1000 * 60 * 60);
 
 console.log(`🦊 Elysia is running at ${app.server?.url}`)

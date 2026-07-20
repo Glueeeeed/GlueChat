@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import {Logger} from "../../utils/logger";
 
 async function main() {
     const badge = await prisma.badge.create({
@@ -8,7 +9,7 @@ async function main() {
         }
     });
 
-    console.log('Created Badge:', badge);
+    Logger.debug('Created Badge:', badge);
 
 
     await prisma.userBadges.create({
@@ -17,7 +18,7 @@ async function main() {
         badgeId: badge.id
       }
     });
-    console.log('Signed Badge:', badge);
+    Logger.debug('Signed Badge:', badge);
 
 }
 

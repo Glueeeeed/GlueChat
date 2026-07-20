@@ -5,6 +5,7 @@ import {accountData} from "./model";
 import AccountService, {TwoFactorData} from "./service";
 import {AuthService} from "../auth/service";
 import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError, NotFoundError} from "../../utils/exceptions";
+import {Logger} from "../../utils/logger";
 
 export const account = new Elysia({ prefix: '/account' })
     .use(bearer())
@@ -17,9 +18,9 @@ export const account = new Elysia({ prefix: '/account' })
             throw new Error('Unauthorized: No token provided')
         }
 
-        console.log(bearer)
+        Logger.log(bearer);
 
-        const payload = await jwt.verify(bearer)
+        const payload = await jwt.verify(bearer);
         if (!payload) {
             set.status = 401
             throw new Error('Unauthorized: Invalid token')
@@ -34,6 +35,7 @@ export const account = new Elysia({ prefix: '/account' })
             const {oldPassword, newPassword} = body;
             AuthService.validate("validatePass", newPassword, true);
             const isValid : boolean = await AccountService.checkCurrentPass(user.id, oldPassword, newPassword);
+
             if (!isValid) {
                 throw new InvalidCredentialsError("Current password is invalid");
             } else {
@@ -51,7 +53,8 @@ export const account = new Elysia({ prefix: '/account' })
                     message: e.message
                 })
             }
-            console.error(e);
+
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -74,8 +77,9 @@ export const account = new Elysia({ prefix: '/account' })
                twoFactorUrl: data.url,
                twoFactorSecret: data.secret,
            })
+
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -103,7 +107,7 @@ export const account = new Elysia({ prefix: '/account' })
                    message: e.message
                })
            }
-           console.error(e);
+           Logger.error(e);
            return status(500, {
                success: false,
                message: "Something went wrong"
@@ -125,7 +129,7 @@ export const account = new Elysia({ prefix: '/account' })
                 enabled
             }
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -146,7 +150,7 @@ export const account = new Elysia({ prefix: '/account' })
                 enabled
             }
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -162,7 +166,7 @@ export const account = new Elysia({ prefix: '/account' })
                 message: "Disabled 2fa successfully",
             })
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -182,7 +186,7 @@ export const account = new Elysia({ prefix: '/account' })
                 message: "Removed recovery successfully",
             })
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -204,7 +208,7 @@ export const account = new Elysia({ prefix: '/account' })
             })
 
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -230,13 +234,13 @@ export const account = new Elysia({ prefix: '/account' })
                 message: "Successfully enabled account recovery",
             })
         } catch (e) {
-            console.error(e);
             if (e instanceof InvalidDataFormatError  || e instanceof InvalidCredentialsError || e instanceof AlreadyExistsError) {
                 return status(e.statusCode, {
                     success: false,
                     message: e.message
                 })
             }
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -259,13 +263,13 @@ export const account = new Elysia({ prefix: '/account' })
                 message: "Successfully registered device",
             })
         } catch (e) {
-            console.error(e);
             if (e instanceof AlreadyExistsError) {
                 return status(e.statusCode, {
                     success: false,
                     message: e.message
                 })
             }
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -284,13 +288,13 @@ export const account = new Elysia({ prefix: '/account' })
             await AccountService.resetDeviceKeys(deviceId, user.id);
             return(200);
         } catch (e) {
-            console.error(e);
             if (e instanceof NotFoundError) {
                 return status(e.statusCode, {
                     success: false,
                     message: e.message
                 })
             }
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"

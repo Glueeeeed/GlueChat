@@ -4,6 +4,7 @@ import {jwt} from "@elysiajs/jwt";
 import {chatsModel} from "./model";
 import {friendsModel} from "../friends/model";
 import {ChatService} from "./service";
+import {Logger} from "../../utils/logger";
 
 export const chats = new Elysia({ prefix: '/chats' })
     .use(bearer())
@@ -15,8 +16,6 @@ export const chats = new Elysia({ prefix: '/chats' })
             set.status = 401
             throw new Error('Unauthorized: No token provided')
         }
-
-        console.log(bearer)
 
         const payload = await jwt.verify(bearer)
         if (!payload) {
@@ -38,6 +37,7 @@ export const chats = new Elysia({ prefix: '/chats' })
             })
 
         } catch (e) {
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"

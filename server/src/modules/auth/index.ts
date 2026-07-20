@@ -4,6 +4,7 @@ import {AuthService} from "./service";
 import {AlreadyExistsError, InvalidDataFormatError, InvalidCredentialsError} from "../../utils/exceptions";
 import {generateAuthToken, generateRefreshToken, verifyRefreshToken, verifyResetPasswordToken} from "../../utils/jwt";
 import {join} from "path";
+import {Logger} from "../../utils/logger";
 require("dotenv").config({ path: join(__dirname, "../..env") });
 
 
@@ -18,7 +19,9 @@ export const auth = new Elysia({ prefix: '/auth' })
         const id = await AuthService.registerUser(nickname, password, accessCode as string);
         const authToken : string = generateAuthToken(id as string);
 
-        console.log("authToken ", authToken);
+
+        Logger.debug("AUTH TOKEN: " + authToken);
+
 
         return status(201, {
             success: true,
@@ -28,15 +31,13 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 
     } catch (e) {
-        console.error(e);
         if (e instanceof InvalidDataFormatError || e instanceof AlreadyExistsError || e instanceof InvalidCredentialsError) {
             return status(e.statusCode, {
                 success: false,
                 message: e.message
             })
         }
-
-
+        Logger.error(e);
         return status(500, {
             success: false,
             message: "Something went wrong",
@@ -92,7 +93,7 @@ export const auth = new Elysia({ prefix: '/auth' })
                 message: e.message
             })
         }
-        console.error(e);
+        Logger.error(e);
         return status(500, {
             success: false,
             message: "Something went wrong",
@@ -128,7 +129,7 @@ export const auth = new Elysia({ prefix: '/auth' })
                     message: e.message,
                 })
             }
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong",
@@ -161,7 +162,8 @@ export const auth = new Elysia({ prefix: '/auth' })
         try {
             const code = await AuthService.generateAccessCode();
             return status(200, code);
-        } catch {
+        } catch (e) {
+            Logger.error(e);
             return status(500, { success: false, message: 'Error' });
         }
     })
@@ -176,7 +178,7 @@ export const auth = new Elysia({ prefix: '/auth' })
             })
 
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -195,7 +197,7 @@ export const auth = new Elysia({ prefix: '/auth' })
             session.path = '/'
             return Bun.file('./src/public/recovery.html');
         } catch (e) {
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: 'Unauthorized: Missing or invalid Token'
@@ -226,7 +228,7 @@ export const auth = new Elysia({ prefix: '/auth' })
                     message: e.message,
                 })
             }
-            console.error(e);
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: 'Error'

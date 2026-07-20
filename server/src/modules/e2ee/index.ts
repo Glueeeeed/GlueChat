@@ -5,6 +5,7 @@ import {jwt} from "@elysiajs/jwt";
 import {E2EEService} from "./service";
 import {authModel} from "../auth/model";
 import {FriendsService} from "../friends/service";
+import {Logger} from "../../utils/logger";
 
 
 export const e2ee = new Elysia({ prefix: '/e2ee' })
@@ -17,9 +18,6 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
             set.status = 401
             throw new Error('Unauthorized: No token provided')
         }
-
-        console.log(bearer)
-
         const payload = await jwt.verify(bearer)
         if (!payload) {
             set.status = 401
@@ -42,13 +40,13 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
             })
 
         } catch (e) {
-            console.log(e)
             if (e instanceof NotFoundError) {
                 return status(404, {
                     success: false,
                     message: e.message
                 })
             }
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: 'Something went wrong',
@@ -78,6 +76,7 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
                     message: e.message
                 })
             }
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: 'Something went wrong',
@@ -103,6 +102,7 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
                     message: e.message
                 })
             }
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: 'Something went wrong',
@@ -118,6 +118,7 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
            })
 
         } catch (e) {
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong",
@@ -150,6 +151,7 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
                     message: e.message
                 })
             }
+            Logger.error(e);
             return status(500, {
                 success: false,
                 message: "Something went wrong"
@@ -166,8 +168,8 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
                 message: 'ok',
             })
         } catch (e) {
-            console.error(e)
-            return status (500, {
+            Logger.error(e);
+            return status(500, {
                 success: false,
                 message: `something went wrong`,
             })

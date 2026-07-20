@@ -17,10 +17,13 @@ export function RecoveryAccount({ onBack, authToken }: Props): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false)
   const [successMessage] = useState<string>('Successfully enabled recovery account!')
+  const [isLoading, setIsLoading] = useState(false)
 
 
 
   const handleSendCode = async () => {
+
+    setIsLoading(true);
 
     if (!inputValue) {
       setError("Email is required");
@@ -43,10 +46,12 @@ export function RecoveryAccount({ onBack, authToken }: Props): JSX.Element {
       setTimeout(() => setError(""), 2000);
     }
     setInputValue('')
+    setIsLoading(false);
     setStep(2)
   }
 
   const handleVerifyCode = async () => {
+    setIsLoading(true);
     if (!inputValue) {
       setError("Code is required");
       setTimeout(() => setError(""), 2000);
@@ -59,9 +64,11 @@ export function RecoveryAccount({ onBack, authToken }: Props): JSX.Element {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
       setTimeout(() => onBack(), 3000);
+      setIsLoading(false);
     }
     catch (error: any) {
       setError(error.message);
+      setIsLoading(false);
     }
 
   }
@@ -114,9 +121,10 @@ export function RecoveryAccount({ onBack, authToken }: Props): JSX.Element {
               />
               <button
                 onClick={handleSendCode}
+                disabled={isLoading}
                 className="w-[40%] bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg font-bold text-xs uppercase border border-white/5 transition-all active:scale-[0.98]"
               >
-                Send code
+                {isLoading ? 'Sending...' : 'Send Code'}
               </button>{' '}
             </div>
           </div>
@@ -139,9 +147,10 @@ export function RecoveryAccount({ onBack, authToken }: Props): JSX.Element {
               />
               <button
                 onClick={handleVerifyCode}
+                disabled={isLoading}
                 className="w-[40%] bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg font-bold text-xs uppercase border border-white/5 transition-all active:scale-[0.98]"
               >
-                Activate
+                {isLoading ? 'Activating...' : 'Activate'}
               </button>{' '}
             </div>
           </div>

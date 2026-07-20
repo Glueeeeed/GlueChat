@@ -104,6 +104,8 @@ export abstract class HistoryManager {
     })
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   static async getLastMessage(data: ChatInfo, accountName: string): any {
     const db = this.getDb(accountName);
     const row: any = db

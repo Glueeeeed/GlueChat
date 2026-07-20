@@ -34,17 +34,19 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
   const navigate = useNavigate();
 
   const handleRegister = async () : Promise<void> => {
-    const registrationResult : result = await register(nickname, password, accessCode);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const registrationResult: result = await register(nickname, password, accessCode)
     if (registrationResult.success) {
       setTimeout(() => {
-        setRegistered(false);
-      },5000)
-      setRegistered(true);
+        setRegistered(false)
+      }, 5000)
+      setRegistered(true)
     } else {
       setTimeout(() => {
-        setErrorMsg("");
-      },5000)
-      setErrorMsg(registrationResult.message);
+        setErrorMsg('')
+      }, 5000)
+      setErrorMsg(registrationResult.message)
     }
   }
 

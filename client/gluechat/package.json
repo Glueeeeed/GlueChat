@@ -1,10 +1,15 @@
 {
   "name": "gluechat",
   "productName": "GlueChat",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Secure end-to-end encrypted chat",
   "main": "./out/main/index.js",
-  "author": "Glueeed",
+  "desktopName": "gluechat",
+  "author": {
+    "name": "Glueeed",
+    "email": "gluechat.app@gmail.com"
+  },
+  "homepage": "https://github.com/glueeeeed/GlueChat",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",

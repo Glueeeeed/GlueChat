@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import path, { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.jpg?asset'
+import icon from '../../build/icon.png?asset'
 import keytar from 'keytar'
 import { randomBytes } from '@noble/post-quantum/utils.js'
 import ProtocolService from './Services/ProtocolService'
@@ -55,7 +55,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.gluechat.app');
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+  // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
   app.name = 'GlueChat';
 
 

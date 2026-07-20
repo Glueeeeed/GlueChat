@@ -36,83 +36,110 @@ export interface ChatInfo {
 
 
 export abstract class StorageService {
-
-
-  static async saveMessage(roomID: string, senderID: string, messageData: messageData, nonce: string, chatName: string, accountName: string): Promise<void> {
-   return HistoryManager.saveMessage(roomID,senderID,messageData,nonce,chatName,accountName);
+  static async saveMessage(
+    roomID: string,
+    senderID: string,
+    messageData: messageData,
+    nonce: string,
+    chatName: string,
+    accountName: string
+  ): Promise<void> {
+    return HistoryManager.saveMessage(roomID, senderID, messageData, nonce, chatName, accountName)
   }
 
-  static async getHistory(roomID: string, accountName: string) : Promise<any> {
-    return HistoryManager.getHistory(roomID, accountName);
+  static async getHistory(roomID: string, accountName: string): Promise<any> {
+    return HistoryManager.getHistory(roomID, accountName)
   }
-
-  static async getLastMessage(data: ChatInfo, accountName: string) : any  {
-    return HistoryManager.getLastMessage(data, accountName);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  static async getLastMessage(data: ChatInfo, accountName: string): any {
+    return HistoryManager.getLastMessage(data, accountName)
   }
 
   static generateCombinedName(roomID: string, accountID: string, deviceId: string): string {
-    return accountID + '-' + roomID + '-' + deviceId;
+    return accountID + '-' + roomID + '-' + deviceId
   }
 
-  static async saveSession(data: string, accountName: string, combinedName : string): Promise<void> {
+  static async saveSession(data: string, accountName: string, combinedName: string): Promise<void> {
     await SecretManager.setSecret(accountName, 'gluechat', combinedName, data)
   }
-  static async getSession(accountName: string, combinedName : string): Promise<string | null> {
-    return await SecretManager.getSecret(accountName, 'gluechat', combinedName);
+  static async getSession(accountName: string, combinedName: string): Promise<string | null> {
+    return await SecretManager.getSecret(accountName, 'gluechat', combinedName)
   }
 
   static async getSigningKey(account: string, accountName: string): Promise<string | null> {
-    const deviceId: string = await StorageService.generateDeviceId();
-    const prefix = `device-${deviceId}`;
-    return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-signingPrivateKey`);
+    const deviceId: string = await StorageService.generateDeviceId()
+    const prefix = `device-${deviceId}`
+    return await SecretManager.getSecret(
+      accountName,
+      'gluechat_' + account,
+      `${prefix}-signingPrivateKey`
+    )
   }
 
   static async getIdentityKey(account: string, accountName: string): Promise<string | null> {
-    const deviceId: string = await StorageService.generateDeviceId();
-    const prefix = `device-${deviceId}`;
-    return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-identityKey`);
+    const deviceId: string = await StorageService.generateDeviceId()
+    const prefix = `device-${deviceId}`
+    return await SecretManager.getSecret(
+      accountName,
+      'gluechat_' + account,
+      `${prefix}-identityKey`
+    )
   }
 
   static async getPubIdentityKey(account: string, accountName: string): Promise<string | null> {
-    const deviceId: string = await StorageService.generateDeviceId();
-    const prefix = `device-${deviceId}`;
-    return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-identityPubKey`);
+    const deviceId: string = await StorageService.generateDeviceId()
+    const prefix = `device-${deviceId}`
+    return await SecretManager.getSecret(
+      accountName,
+      'gluechat_' + account,
+      `${prefix}-identityPubKey`
+    )
   }
 
-  static async getOneTimeKey(account: string, keyID: string, accountName: string): Promise<string | null> {
-    const deviceId: string = await StorageService.generateDeviceId();
-    const prefix = `device-${deviceId}`;
-    return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-otk-${keyID}`);
+  static async getOneTimeKey(
+    account: string,
+    keyID: string,
+    accountName: string
+  ): Promise<string | null> {
+    const deviceId: string = await StorageService.generateDeviceId()
+    const prefix = `device-${deviceId}`
+    return await SecretManager.getSecret(
+      accountName,
+      'gluechat_' + account,
+      `${prefix}-otk-${keyID}`
+    )
   }
 
-  static async removeOneTimeKey(account: string, keyID: string, accountName: string): Promise<void> {
-    const deviceId: string = await StorageService.generateDeviceId();
-    const prefix = `device-${deviceId}`;
+  static async removeOneTimeKey(
+    account: string,
+    keyID: string,
+    accountName: string
+  ): Promise<void> {
+    const deviceId: string = await StorageService.generateDeviceId()
+    const prefix = `device-${deviceId}`
     await SecretManager.deleteSecret(accountName, 'gluechat_' + account, `${prefix}-otk-${keyID}`)
   }
 
   static async generateDeviceId(): Promise<string> {
-    const deviceId : string | null = await this.checkIfDeviceExists();
+    const deviceId: string | null = await this.checkIfDeviceExists()
     if (!deviceId) {
-      const deviceId: string = Buffer.from(randomBytes(8)).toString('base64url');
-      await keytar.setPassword('gluechat_device', 'id', deviceId);
-      return deviceId;
+      const deviceId: string = Buffer.from(randomBytes(8)).toString('base64url')
+      await keytar.setPassword('gluechat_device', 'id', deviceId)
+      return deviceId
     }
-    return deviceId;
+    return deviceId
   }
 
   private static async checkIfDeviceExists(): Promise<string | null> {
-    return await keytar.getPassword('gluechat_device', 'id');
+    return await keytar.getPassword('gluechat_device', 'id')
   }
 
-   static async removeLocalKeys(accountName : string) : Promise<void> {
-    await SecretManager.resetAllSecrets(accountName);
-    await HistoryManager.resetAllHistory(accountName);
-    await keytar.deletePassword('gluechat', accountName);
-    await keytar.deletePassword('Gluechat', 'local_storage_key');
-    await keytar.deletePassword('Gluechat', 'local_secret_key');
+  static async removeLocalKeys(accountName: string): Promise<void> {
+    await SecretManager.resetAllSecrets(accountName)
+    await HistoryManager.resetAllHistory(accountName)
+    await keytar.deletePassword('gluechat', accountName)
+    await keytar.deletePassword('Gluechat', 'local_storage_key')
+    await keytar.deletePassword('Gluechat', 'local_secret_key')
   }
-
-
-
 }

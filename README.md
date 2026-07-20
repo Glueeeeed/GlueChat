@@ -3,7 +3,7 @@
 # GlueChat
 
 <p align="center">
-    <img src="./client/gluechat/resources/icon.jpg" alt="GlueChat Logo" width="250">
+    <img src="client/gluechat/build/icon.png" alt="GlueChat Logo" width="250">
 </p>
 <h1 align="center"> Post-quantum end-to-end encrypted messenger </h1>
 

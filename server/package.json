@@ -36,7 +36,7 @@
   "scripts": {
     "email": "email dev --dir src/emails",
     "dev": "bun --watch src/app.ts",
-    "tailwind": "bunx @tailwindcss/cli -i ./src/public/main.css -o ./src/public/output.css --watch",
+    "tailwind": "bunx @tailwindcss/cli -i ./src/public/main.css -o ./src/public/output.css --watch --minify",
     "build": "bun build src/app.ts --target bun --outdir ./dist",
     "start": "NODE_ENV=production bun dist/index.js",
     "seed:badges": "bun run src/modules/profile/badge.ts",

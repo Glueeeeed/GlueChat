@@ -70,7 +70,6 @@ export abstract class NetworkService {
     })
 
 
-    const json = await response.json()
     if (!response.ok) {
       throw new Error(`could not register device`)
     }
@@ -86,7 +85,6 @@ export abstract class NetworkService {
       }
     })
     if (!response.ok) {
-      const json = await response.json()
       console.error(response);
       throw new Error(response.statusText);
     }

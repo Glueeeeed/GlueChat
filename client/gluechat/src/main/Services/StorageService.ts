@@ -106,8 +106,9 @@ export abstract class StorageService {
   }
 
    static async removeLocalKeys(accountName : string) : Promise<void> {
-     await SecretManager.resetAllSecrets(accountName);
+    await SecretManager.resetAllSecrets(accountName);
     await HistoryManager.resetAllHistory(accountName);
+    await keytar.deletePassword('gluechat', accountName);
     await keytar.deletePassword('Gluechat', 'local_storage_key');
     await keytar.deletePassword('Gluechat', 'local_secret_key');
   }

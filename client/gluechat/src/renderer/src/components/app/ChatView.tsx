@@ -31,7 +31,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [avatarURL, setAvatarURL] = useState<string | null>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = () : void => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
@@ -85,7 +85,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
               if (pkg.deviceId !== deviceId) continue;
 
               const currentNickname = localStorage.getItem('nickname') || 'User'
-              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname,receiverID)
+              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname,receiverID as string);
               if (decryptedText) {
                 await makeAsRead(authKey, pkg.nonce);
                 setMessages((prev) => {

@@ -8,10 +8,10 @@ export abstract class MessageHandler {
         console.log(messageData);
 
             const id = await prisma.message.createMany({
-                data: messageData.map((data: { deviceId: any; roomID: any; senderID: any; messageNumber: any; opkId: any; capsule: any; ephemeralPubKey: any; salt: any; content: any; nonce: any; encryptedMessageKey: any; messageKeyNonce: any; isDeleted: any; })  => ({
+                data: messageData.map((data: { deviceId: any; roomID: any; senderId: any; messageNumber: any; opkId: any; capsule: any; ephemeralPubKey: any; salt: any; content: any; nonce: any; encryptedMessageKey: any; messageKeyNonce: any; isDeleted: any; })  => ({
                     deviceId: data.deviceId,
                     roomID: data.roomID,
-                    senderId: data.senderID,
+                    senderId: data.senderId,
                     messageNumber: data.messageNumber,
                     opkId: data.opkId || null,
                     capsule: data.capsule || null,

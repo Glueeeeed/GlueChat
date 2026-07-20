@@ -1,4 +1,4 @@
-import { Check, CheckCheck } from 'lucide-react'
+import {JSX} from "react";
 
 
 interface ChatMessage {
@@ -6,11 +6,10 @@ interface ChatMessage {
   isAuthor: boolean
   timestamp: string
   nickname: string
-  isSeen?: boolean
   avatar: string | null
 }
 
-export function ChatMessage({ avatar, isSeen, text, isAuthor, timestamp, nickname }: ChatMessage) {
+export function ChatMessage({ avatar, text, isAuthor, timestamp, nickname }: ChatMessage) : JSX.Element {
 
   return (
     <div className={`flex gap-3 ${isAuthor ? 'flex-row-reverse' : 'flex-row'} mb-4 items-end`}>
@@ -43,16 +42,6 @@ export function ChatMessage({ avatar, isSeen, text, isAuthor, timestamp, nicknam
           }`}
         >
           <span>{timestamp}</span>
-
-          {isAuthor && (
-            <span className="flex items-center">
-              {isSeen ? (
-                <CheckCheck size={14} className="text-indigo-400" />
-              ) : (
-                <Check size={14} className="text-gray-500" />
-              )}
-            </span>
-          )}
         </div>
       </div>
     </div>

@@ -208,7 +208,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
             id: Date.now().toString(),
             sender: localStorage.getItem('nickname') || 'Me',
             content: message,
-            timestamp: new Date().toLocaleTimeString(),
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             isAuthor: true,
             isSeen: false
           }
@@ -266,7 +266,6 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
             {messages.map((m) => (
               <ChatMessage
                 avatar={avatarURL}
-                isSeen={m.isSeen}
                 key={m.id}
                 text={m.content}
                 isAuthor={m.isAuthor}

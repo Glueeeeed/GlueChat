@@ -9,7 +9,7 @@ import { sha256 } from '@noble/hashes/sha2.js'
 interface pkgStructure {
   deviceId: string
   roomID: string,
-  senderID: string,
+  senderId: string,
   messageNumber: number,
   opkId: string | null,
   salt: string | null,
@@ -37,6 +37,7 @@ abstract class ProtocolService {
   private static async getOrLoadSession(roomID: string, accountID: string, deviceId : string, accountName : string): Promise<SessionState | null> {
     try {
       const combinedName = StorageService.generateCombinedName(roomID, accountID, deviceId);
+      console.log("GETTING SESSION FOR KEY: " + combinedName);
       if (this.activeSessions.has(combinedName)) {
         return this.activeSessions.get(combinedName)!
       }
@@ -128,6 +129,7 @@ abstract class ProtocolService {
         const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
 
         const session = await this.getOrLoadSession(roomID,receiverID,deviceId, accountName);
+        console.log("SESSION: " + JSON.stringify(session));
         if (!session) {
           return;
         }
@@ -205,7 +207,7 @@ abstract class ProtocolService {
       const pkg = {
         deviceId: device,
         roomID: roomID,
-        senderID: senderID,
+        senderId: senderID,
         messageNumber: readySession.sendCounter as number,
         opkId: readySession.opkId ? readySession.opkId : null,
         salt: readySession.salt ? Buffer.from(readySession.salt).toString('base64') : null,
@@ -233,7 +235,8 @@ abstract class ProtocolService {
     const info : Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
     const rootKey: Uint8Array = hkdf(sha256, ss1, ss2, info, 32);
 
-    const combinedMapKey = StorageService.generateCombinedName(roomID, accountID, deviceId);
+    const combinedMapKey = StorageService.generateCombinedName(roomID, senderID, deviceId);
+    console.log("DECRYPT COMBINED MAP KEY: ", combinedMapKey);
     this.temporarySessions.set(combinedMapKey, {
       rootKey: rootKey,
       lastSenderID: senderID
@@ -247,6 +250,7 @@ abstract class ProtocolService {
     const info: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(roomID);
     const newRootKey : Uint8Array<ArrayBufferLike> = CryptoCore.mixKeys(salt, session.rootKey, info);
     const combinedMapKey = StorageService.generateCombinedName(roomID,accountID, deviceId);
+    console.log('DECRYPT COMBINED MAP KEY: ', combinedMapKey)
     this.temporarySessions.set(combinedMapKey, {
       rootKey: newRootKey,
     })
@@ -255,7 +259,8 @@ abstract class ProtocolService {
 
   static async initializeDecrypt(pkg: pkgStructure, roomID: string, account: string, accountID: string): Promise<string> {
     const deviceId : string = pkg.deviceId;
-    const session: SessionState | null = await this.getOrLoadSession(roomID, accountID, deviceId, account);
+    const session: SessionState | null = await this.getOrLoadSession(roomID, pkg.senderId, deviceId, account);
+    console.log('DECRYPT : ', session)
     if (pkg.capsule !== null) {
       if (pkg.capsule.includes('|')) {
         const spkPrivateKey = await StorageService.getSigningKey(account, account);
@@ -263,7 +268,7 @@ abstract class ProtocolService {
 
         if (spkPrivateKey !== null && opkPrivateKey !== null) {
           const [capsuleSPK, capsuleOPK] = pkg.capsule.split('|');
-          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, pkg.senderID, deviceId, accountID);
+          this.decapsulateOpkCapsule(capsuleSPK, capsuleOPK, roomID, spkPrivateKey, opkPrivateKey, pkg.senderId, deviceId, accountID);
           await StorageService.removeOneTimeKey(accountID, pkg.opkId as string, account);
         } else {
           throw new Error('Failed to initialize decrypt session: OPK , SPK, OR IDENTITY NOT FOUND');
@@ -273,9 +278,9 @@ abstract class ProtocolService {
       if (!pkg.salt) {
         throw new Error('Failed to initialize decrypt session: salt not found');
       }
-      this.deriveSymmetricStep(Buffer.from(pkg.salt, 'base64'), roomID, session, deviceId, accountID);
+      this.deriveSymmetricStep(Buffer.from(pkg.salt, 'base64'), roomID, session, deviceId, pkg.senderId);
     }
-    const combinedMapKey =  StorageService.generateCombinedName(roomID,accountID, deviceId);
+    const combinedMapKey = StorageService.generateCombinedName(roomID, pkg.senderId, deviceId)
 
     const tempData: SessionState | undefined = this.temporarySessions.get(combinedMapKey)
       if (!tempData) {

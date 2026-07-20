@@ -111,13 +111,10 @@ export abstract class E2EEService {
         if (!message) {
             throw new NotFoundError("Not found");
         }
-        await prisma.message.update({
+        await prisma.message.delete({
             where: {
                 nonce: messageID,
             },
-            data: {
-                isSeen: true
-            }
         })
     }
 }

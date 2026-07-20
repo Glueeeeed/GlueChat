@@ -16,6 +16,7 @@ import {checkIfAssetExists} from "@renderer/assets/profile";
 import {UserProfile} from "@renderer/components/app/profile/UserProfile";
 import { API_BASE_URL, APP_VERSION} from '@renderer/assets/utils'
 import { AccountSecurity } from '@renderer/components/app/accountSecurity/AccountSecurity'
+import { AboutApp } from '@renderer/components/app/aboutApp/AboutApp'
 
 
 export type Tab = 'chats' | 'friends' | 'settings';
@@ -228,7 +229,9 @@ export function App(): React.JSX.Element {
               <ProfileSettings authToken={authToken} />
             ) : selectedSetting === 'Security' ? (
               <AccountSecurity authToken={authToken as string} deviceId={deviceId as string}></AccountSecurity>
-            ) :  (
+            ) : selectedSetting === 'About' ? (
+              <AboutApp deviceId={deviceId as string}></AboutApp>
+            ) : (
               <div className="flex-1 h-full flex items-center justify-center text-center opacity-40">
                 <p className="text-gray-500 uppercase tracking-[0.3em] text-sm font-medium">
                   Select a setting from the list

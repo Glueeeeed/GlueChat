@@ -39,7 +39,13 @@ export async function login(nickname: string, password: string, code2fa?: string
     localStorage.setItem("accounts", JSON.stringify(savedAccounts));
   }
 
-  await window.e2ee.generatePairKeys(nickname, json.refreshToken,false);
+
+  try {
+    await window.e2ee.generatePairKeys(nickname, json.refreshToken, false);
+  } catch {
+    return { success: false, message: 'Failed to register device keys. Try again or contact support.' }
+  }
+
   return {success: true, message: "ok"};
 }
 

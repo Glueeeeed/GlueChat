@@ -21,6 +21,7 @@ declare global {
     app: {
       getDeviceID: () => Promise<string>;
       removeLocalKeys: (accountName: string) => Promise<void>;
+      closeApp: () => Promise<void>;
     }
   }
 }

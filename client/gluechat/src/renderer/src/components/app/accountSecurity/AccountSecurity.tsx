@@ -91,12 +91,13 @@ export function AccountSecurity({authToken , deviceId} : Props) : JSX.Element {
   const handleResetKeys = async () : Promise<void> => {
       const accountName = localStorage.getItem('nickname');
       await resetKeys(authToken,deviceId,accountName as string);
-      alert('You must restart the application to apply the changes');
       await window.auth.deleteRefreshToken(accountName as string);
+      localStorage.removeItem('accounts');
       if (localStorage.getItem('nickname') === accountName) {
-       localStorage.removeItem('nickname')
+       localStorage.removeItem('nickname');
       }
-      navigate('/login')
+      alert('You must restart the application to apply the changes');
+      await window.app.closeApp();
   }
 
   const handleRemoveRecovery = async (): Promise<void> => {

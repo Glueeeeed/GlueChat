@@ -23,7 +23,16 @@ export async function register(nickname: string, password: string, accessCode: s
 
   if (response.status === 201) {
     console.log(json);
-    await window.e2ee.generatePairKeys(nickname, json.authToken,false);
+
+    try {
+      await window.e2ee.generatePairKeys(nickname, json.refreshToken, false)
+    } catch {
+      return {
+        success: false,
+        message: 'Failed to register device keys. Try again or contact support.'
+      }
+    }
+
     return {success: true, message: json.message}
   }
 

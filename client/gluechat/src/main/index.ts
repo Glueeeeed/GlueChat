@@ -108,62 +108,68 @@ ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
 });
 
 ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempToken: string, forceReset: boolean) : Promise<void> => {
-  const deviceId: string = await StorageService.generateDeviceId();
-  const prefix = `device-${deviceId}`;
-  const exists: string | null = await SecretManager.getSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`);
+ try {
+   const deviceId: string = await StorageService.generateDeviceId();
+   const prefix = `device-${deviceId}`;
+   const exists: string | null = await SecretManager.getSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`);
 
-  if (exists && !forceReset) {
-    return;
-  } else {
-    await SecretManager.resetAllSecrets(accountName);
-  }
+   if (exists && !forceReset) {
+     return;
+   } else {
+     await SecretManager.resetAllSecrets(accountName);
+   }
 
-  const oneTimeKeys: oneTimeKey[] = [];
+   const oneTimeKeys: oneTimeKey[] = [];
 
-  // Generates Keys
+   // Generates Keys
 
-  const identityKP: KeyPair = CryptoCore.generateSignKeyPair(); // Identity Key Pair
-  const identityPubKey: string = Buffer.from(identityKP.publicKey).toString('base64');
-  const identityKey: string = Buffer.from(identityKP.secretKey).toString('base64');
+   const identityKP: KeyPair = CryptoCore.generateSignKeyPair(); // Identity Key Pair
+   const identityPubKey: string = Buffer.from(identityKP.publicKey).toString('base64');
+   const identityKey: string = Buffer.from(identityKP.secretKey).toString('base64');
 
-  const spkKP: KeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
-  const spkPubKey: string = Buffer.from(spkKP.publicKey).toString('base64');
-  const spkKey: string = Buffer.from(spkKP.secretKey).toString('base64') ;
+   const spkKP: KeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
+   const spkPubKey: string = Buffer.from(spkKP.publicKey).toString('base64');
+   const spkKey: string = Buffer.from(spkKP.secretKey).toString('base64') ;
 
 
-  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`, identityKey)
-  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityPubKey`, identityPubKey)
-  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPrivateKey`, spkKey)
-  await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPubKey`, spkPubKey)
+   await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`, identityKey)
+   await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityPubKey`, identityPubKey)
+   await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPrivateKey`, spkKey)
+   await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPubKey`, spkPubKey)
 
-  const signature: string = Buffer.from(CryptoCore.sign(spkKP.publicKey, identityKP.secretKey)).toString('base64');
+   const signature: string = Buffer.from(CryptoCore.sign(spkKP.publicKey, identityKP.secretKey)).toString('base64');
 
-  for (let i: number = 1; i <= 20; i++) {
-    const oneTimeKeyID: string = Buffer.from(randomBytes(4)).toString('hex');
-    const keyPair: KeyPair = CryptoCore.generateNewKeyPair();
+   for (let i: number = 1; i <= 20; i++) {
+     const oneTimeKeyID: string = Buffer.from(randomBytes(4)).toString('hex');
+     const keyPair: KeyPair = CryptoCore.generateNewKeyPair();
 
-    const pubKey: string = Buffer.from(keyPair.publicKey).toString('base64');
-    const privateKey: string = Buffer.from(keyPair.secretKey).toString('base64');
+     const pubKey: string = Buffer.from(keyPair.publicKey).toString('base64');
+     const privateKey: string = Buffer.from(keyPair.secretKey).toString('base64');
 
-    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-otk-${oneTimeKeyID}`, privateKey);
+     await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-otk-${oneTimeKeyID}`, privateKey);
 
-    const oneTimeKey = {
-      id: oneTimeKeyID,
-      pubKey: pubKey
-    };
+     const oneTimeKey = {
+       id: oneTimeKeyID,
+       pubKey: pubKey
+     };
 
-    oneTimeKeys.push(oneTimeKey);
-  }
+     oneTimeKeys.push(oneTimeKey);
+   }
 
-  const data = {
-    identityPubKey: identityPubKey,
-    spkPubKey: spkPubKey,
-    signature: signature,
-    oneTimeKeys: oneTimeKeys
-  }
+   const data = {
+     identityPubKey: identityPubKey,
+     spkPubKey: spkPubKey,
+     signature: signature,
+     oneTimeKeys: oneTimeKeys
+   }
 
    const keys : string = JSON.stringify(data);
    await NetworkService.registerDevice(accountName,deviceId,keys, tempToken);
+ } catch (e) {
+   console.log("Failed to register this deviceID. Clearing keys...", e);
+   await SecretManager.resetAllSecrets(accountName);
+   throw e;
+ }
 })
 
 ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => {
@@ -174,6 +180,10 @@ ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: s
 
 ipcMain.handle('getDevice', async () => {
   return await StorageService.generateDeviceId();
+})
+
+ipcMain.handle('closeApp', async () => {
+  app.quit();
 })
 
 

@@ -25,6 +25,7 @@ if (process.contextIsolated) {
 contextBridge.exposeInMainWorld('app', {
   getDeviceID: () => ipcRenderer.invoke('getDevice'),
   removeLocalKeys: (accountName: string) => ipcRenderer.invoke('removeLocalKeys', accountName),
+  closeApp: () => ipcRenderer.invoke('closeApp'),
 })
 
 contextBridge.exposeInMainWorld("auth", {

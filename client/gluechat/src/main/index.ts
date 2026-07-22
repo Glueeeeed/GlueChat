@@ -14,7 +14,7 @@ import { NetworkService } from './Services/NetworkService'
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    title: "GlueChat",
+    title: 'GlueChat',
     icon: path.join(__dirname, '../../resources/icon.ico'),
     width: 1000,
     height: 670,
@@ -32,6 +32,23 @@ function createWindow(): void {
 
   mainWindow.webContents.on('will-navigate', (event) => {
     event.preventDefault()
+  })
+
+  mainWindow.webContents.on('dom-ready', () => {
+    mainWindow.webContents.executeJavaScript(`
+    document.addEventListener('mouseup', (e) => {
+      if (e.button === 3 || e.button === 4) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }, true);
+  `)
+  })
+
+  mainWindow.on('app-command', (e, cmd) => {
+    if (cmd === 'browser-backward' || cmd === 'browser-forward') {
+      e.preventDefault()
+    }
   })
 
   mainWindow.on('ready-to-show', () => {

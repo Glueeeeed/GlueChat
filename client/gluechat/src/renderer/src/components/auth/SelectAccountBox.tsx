@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { FaUserCircle, FaPlus } from "react-icons/fa";
+import { initAuthToken } from '@renderer/assets/utils'
 
 export function SelectAccountBox() {
   const [accounts, setAccounts] = useState<string[]>([]);
@@ -11,9 +12,16 @@ export function SelectAccountBox() {
     setAccounts(savedAccounts);
   }, []);
 
-  const handleSelect = (nickname: string) => {
-    localStorage.setItem("nickname", nickname);
-    navigate("/");
+  const  handleSelect =  async (nickname: string) => {
+   try {
+     await initAuthToken();
+     localStorage.setItem("nickname", nickname);
+     navigate("/");
+   } catch (error) {
+     console.error("Failed to initialize auth token:", error);
+     localStorage.removeItem("account");
+     navigate("/login");
+   }
   };
 
   const handleAddAccount = () => {

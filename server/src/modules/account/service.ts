@@ -380,7 +380,7 @@ abstract class AccountService {
             })
 
             if (!record) {
-                throw new NotFoundError("Device not found");
+                return;
             }
 
             await t.registeredDevices.delete({
@@ -393,6 +393,24 @@ abstract class AccountService {
 
 
     }
+
+    static async checkDeviceIsRegistered(deviceId: string , userId : string) : Promise<boolean> {
+       const record =  await prisma.registeredDevices.findFirst({
+            where: {
+                deviceId: deviceId,
+                userId: userId
+            }
+        })
+
+        if (!record) {
+            return false;
+        }
+
+        return true;
+
+    }
+
+
 
 
 }

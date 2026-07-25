@@ -41,7 +41,7 @@ export async function login(nickname: string, password: string, code2fa?: string
 
 
   try {
-    await window.e2ee.generatePairKeys(nickname, json.refreshToken, false);
+    await window.e2ee.generatePairKeys(nickname, json.authToken, false);
   } catch {
     return { success: false, message: 'Failed to register device keys. Try again or contact support.' }
   }

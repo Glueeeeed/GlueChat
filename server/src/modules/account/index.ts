@@ -288,12 +288,6 @@ export const account = new Elysia({ prefix: '/account' })
             await AccountService.resetDeviceKeys(deviceId, user.id);
             return(200);
         } catch (e) {
-            if (e instanceof NotFoundError) {
-                return status(e.statusCode, {
-                    success: false,
-                    message: e.message
-                })
-            }
             Logger.error(e);
             return status(500, {
                 success: false,
@@ -302,5 +296,25 @@ export const account = new Elysia({ prefix: '/account' })
 
         }
     } , {
+        body: accountData.resetDevice
+    })
+
+    .post('/check-device', async ({body, user}) => {
+        try {
+            const {deviceId} = body;
+            const isRegistered : boolean = await AccountService.checkDeviceIsRegistered(deviceId, user.id);
+            return status(200, {
+                success: true,
+                isRegistered,
+            })
+
+        } catch (e) {
+            Logger.error(e);
+            return status(500, {
+                success: false,
+                message: "Something went wrong"
+            })
+        }
+    }, {
         body: accountData.resetDevice
     })

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@renderer/assets/utils'
+import log from 'electron-log'
 
 export interface TwoFactorData {
   twoFactorUrl: string,
@@ -197,4 +198,34 @@ export async function resetKeys(authToken: string, deviceId : string, accountNam
   }
   await window.app.removeLocalKeys(accountName);
   await window.e2ee.generatePairKeys(accountName, authToken, true);
+}
+
+
+export async function checkIfDeviceIsRegistered(authToken: string, deviceId: string, accountName: string): Promise<void> {
+
+  const response : Response = await fetch(`${API_BASE_URL}/api/account/check-device`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`
+    },
+    body: JSON.stringify({
+      deviceId: deviceId,
+    })
+  });
+
+  const json = await response.json();
+  if (!response.ok) {
+    log.error(json.message);
+    throw new Error(json.message);
+  }
+
+  if (!json.isRegistered)  {
+    try {
+      window.e2ee.generatePairKeys(accountName, authToken, true)
+    } catch (e) {
+      log.error(e)
+    }
+  }
+
 }

@@ -1,5 +1,5 @@
 import {FaUserCircle, FaCheck, FaTimes } from "react-icons/fa";
-import { JSX, ReactElement, useEffect, useState } from 'react'
+import { JSX, useEffect, useState } from 'react'
 import {loadRequests, request} from "@renderer/assets/friends";
 import {useQueryClient} from '@tanstack/react-query'
 

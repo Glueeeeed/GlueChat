@@ -24,7 +24,7 @@ export async function register(nickname: string, password: string, accessCode: s
 
   if (response.status === 201) {
     try {
-      await window.e2ee.generatePairKeys(nickname, json.refreshToken, false)
+      await window.e2ee.generatePairKeys(nickname, json.authToken, false)
     } catch (error) {
       log.error(error);
       return {

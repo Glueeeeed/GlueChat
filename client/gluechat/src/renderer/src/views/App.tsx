@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from '@tanstack/react-query'
-import { useQueryClient } from '@tanstack/react-query'
-import { initAuthToken } from '@renderer/assets/utils'
+import {useNavigate} from "react-router-dom";
+import {useQuery} from '@tanstack/react-query'
+import {useQueryClient} from '@tanstack/react-query'
+import {initAuthToken} from '@renderer/assets/utils'
 import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
 import {AddFriend} from "@renderer/components/friends/AddFriend";
@@ -11,12 +11,13 @@ import {ChatList} from "@renderer/components/app/ChatList";
 import {ChatView} from "@renderer/components/app/ChatView";
 import {jwtDecode} from 'jwt-decode'
 import {Settings} from "@renderer/components/app/Settings";
-import { ProfileSettings } from '@renderer/components/app/profile/ProfileSettings'
+import {ProfileSettings} from '@renderer/components/app/profile/ProfileSettings'
 import {checkIfAssetExists} from "@renderer/assets/profile";
 import {UserProfile} from "@renderer/components/app/profile/UserProfile";
 import { API_BASE_URL, APP_VERSION} from '@renderer/assets/utils'
-import { AccountSecurity } from '@renderer/components/app/accountSecurity/AccountSecurity'
-import { AboutApp } from '@renderer/components/app/aboutApp/AboutApp'
+import {AccountSecurity} from '@renderer/components/app/accountSecurity/AccountSecurity'
+import {AboutApp} from '@renderer/components/app/aboutApp/AboutApp'
+import {checkIfDeviceIsRegistered} from '@renderer/assets/account'
 
 
 export type Tab = 'chats' | 'friends' | 'settings';
@@ -50,7 +51,7 @@ export function App(): React.JSX.Element {
     queryKey: ['currentUser'],
     queryFn: async () => {
       try {
-        const token = await initAuthToken();
+        const token : string = await initAuthToken();
         const decodedToken: any = jwtDecode(token);
         const avatarUrl : string | null = await checkIfAssetExists('avatar', decodedToken.id);
         const deviceId : string = await window.app.getDeviceID();
@@ -105,6 +106,7 @@ export function App(): React.JSX.Element {
 
   useEffect(() => {
     if (authToken) {
+      checkIfDeviceIsRegistered(authToken, deviceId as string, currentNickname as string);
       const decodedToken : any = jwtDecode(authToken);
       const ws = new WebSocket('wss://glueeed.dev:2115/api/ws')
 

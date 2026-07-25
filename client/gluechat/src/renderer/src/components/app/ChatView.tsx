@@ -5,6 +5,7 @@ import React, {useEffect, useRef, useState} from "react";
 import {validateOrRefreshToken} from "@renderer/assets/main";
 import {syncMessages, makeAsRead} from '@renderer/assets/e2ee'
 import { checkIfAssetExists } from '@renderer/assets/profile'
+import log from 'electron-log'
 
 
 interface Message {
@@ -149,12 +150,12 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
 
         for (const message of data.payload) {
           if (message.deviceId !== deviceId) continue;
-          const currentNickname = localStorage.getItem('nickname') || 'User';
-          const decryptedText = await window.e2ee.decryptMessage(message,currentNickname, senderID);
+          const currentNickname : string = localStorage.getItem('nickname') || 'User';
+          const decryptedText : string | null = await window.e2ee.decryptMessage(message,currentNickname, senderID);
           if (decryptedText) {
             await makeAsRead(authKey, message.nonce);
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === message.id)) return prev
+            setMessages((prev : Message[]) : Message[] => {
+              if (prev.some((m : Message) : boolean => m.id === message.id)) return prev
               return [
                 ...prev,
                 {
@@ -192,11 +193,11 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
   const handleSendMessage = async (message: string) : Promise<void> => {
     try {
         const authToken : string = await validateOrRefreshToken(authKey);
-        const currentNickname = localStorage.getItem('nickname') || 'User'
-        const result = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID, receiverID as string, currentNickname);
+        const currentNickname : string = localStorage.getItem('nickname') || 'User';
+        const result : string | null = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID, receiverID as string, currentNickname);
 
         if (result && socketRef.current?.readyState === WebSocket.OPEN) {
-          const currentNickname = localStorage.getItem('nickname') || 'User'
+          const currentNickname : string  = localStorage.getItem('nickname') || 'User'
 
           socketRef.current.send(JSON.stringify({
             type: 'send-message',
@@ -221,7 +222,7 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
             throw new Error('Failed to encrypt or send message');
         }
     } catch (error) {
-        console.error(error);
+        log.error(error);
         alert('Failed to send message. Please try again later.');
     }
   };

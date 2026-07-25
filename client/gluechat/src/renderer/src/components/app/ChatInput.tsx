@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, JSX } from 'react'
 import { Send } from "lucide-react";
 
 interface ChatInputProps {
@@ -6,18 +6,18 @@ interface ChatInputProps {
 
 }
 
-export function ChatInput({onSendMessage }: ChatInputProps) {
+export function ChatInput({onSendMessage }: ChatInputProps) : JSX.Element {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) : void => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
-  const handleSend = () => {
+  const handleSend = () : void => {
     if (message.trim()) {
       onSendMessage(message.trim());
       setMessage("");

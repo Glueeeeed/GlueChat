@@ -10,6 +10,8 @@ import { ChatInfo, StorageService } from './Services/StorageService'
 import {messageData} from './Services/StorageService'
 import { SecretManager } from './Managers/SecretManager'
 import { NetworkService } from './Services/NetworkService'
+import log from 'electron-log/main'
+import { DEBUG_MODE } from './config'
 
 function createWindow(): void {
   // Create the browser window.
@@ -70,10 +72,25 @@ function createWindow(): void {
 }
 
 
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+
+  log.initialize();
+
+  if (DEBUG_MODE) {
+    log.transports.file.level = 'debug'
+    log.transports.console.level = 'debug'
+  } else {
+    log.transports.console.level = 'info'
+    log.transports.console.level = 'info'
+  }
+
+  log.errorHandler.startCatching();
+  log.eventLogger.startLogging();
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.gluechat.app');
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
@@ -97,6 +114,8 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+
+  log.info("GlueChat started")
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

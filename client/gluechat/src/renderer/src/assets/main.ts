@@ -1,4 +1,5 @@
 import { API_BASE_URL, initAuthToken } from '@renderer/assets/utils'
+import log from 'electron-log/renderer'
 
 export async function loadChats(authToken: string, tryAgain = false): Promise<object> {
   const response = await fetch(`${API_BASE_URL}/api/chats/`, {
@@ -10,7 +11,7 @@ export async function loadChats(authToken: string, tryAgain = false): Promise<ob
   })
 
   if (response.status === 401 && !tryAgain) {
-    console.log("Token not found. Loading again..")
+    log.info("Token not found. Loading again..")
     const newToken: string = await initAuthToken();
     return await loadChats(newToken, true);
   }
@@ -40,15 +41,12 @@ export async function validateOrRefreshToken(authToken: string): Promise<string>
     }
 
     if (response.status === 401) {
-      console.log('Token expired/invalid. Refreshing...')
-      const newToken = await initAuthToken()
-      return newToken
+      log.info('Token expired/invalid. Refreshing...')
+      return await initAuthToken()
     }
-
     throw new Error(`Token validation failed: ${response.status}`)
   } catch (error) {
-    console.error('Token check failed:', error)
-    const newToken = await initAuthToken()
-    return newToken
+    log.error('Token check failed:', error)
+    return await initAuthToken()
   }
 }

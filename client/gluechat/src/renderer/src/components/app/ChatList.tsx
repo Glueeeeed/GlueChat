@@ -46,25 +46,22 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
   const fetchChats = async () : Promise<FetchChatsResponse | null> => {
     if (!authToken) return null;
 
-    const rawData = await loadChats(authToken)
-    const chatsData = rawData as ChatInfo[]
+    const rawData = await loadChats(authToken);
+    const chatsData = rawData as ChatInfo[];
 
-    const messagesMap: Record<string, string> = {}
-    const userAvatarMap: Record<string, string | null> = {}
+    const messagesMap: Record<string, string> = {};
+    const userAvatarMap: Record<string, string | null> = {};
 
     await Promise.all(
       chatsData.map(async (chat) => {
-        userAvatarMap[chat.receiverID] = await checkIfAssetExists('avatar', chat.receiverID)
-        const currentNickname = localStorage.getItem('nickname') || 'User'
+        userAvatarMap[chat.receiverID] = await checkIfAssetExists('avatar', chat.receiverID);
+        const currentNickname : string = localStorage.getItem('nickname') || 'User';
 
-        const lastMsg = await window.e2ee.getLastMessage(chat, currentNickname)
+        const lastMsg = await window.e2ee.getLastMessage(chat, currentNickname);
         if (lastMsg) {
-          const formattedLastMessage =
-            lastMsg.content.length > 20 ? lastMsg.content.slice(0, 20) + '...' : lastMsg.content
+          const formattedLastMessage = lastMsg.content.length > 20 ? lastMsg.content.slice(0, 20) + '...' : lastMsg.content;
 
-          messagesMap[chat.id] = lastMsg.isAuthor
-            ? `You: ${formattedLastMessage}`
-            : `${lastMsg.senderName}: ${formattedLastMessage}`
+          messagesMap[chat.id] = lastMsg.isAuthor ? `You: ${formattedLastMessage}` : `${lastMsg.senderName}: ${formattedLastMessage}`;
         }
       })
     )
@@ -82,8 +79,8 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
     setSenderID(senderID);
     setReceiverID(receiverID);
   }
-  const filteredChats = (data?.chats || []).filter((chat) => {
-    return chat.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredChats : ChatInfo[] = (data?.chats || []).filter((chat) : boolean => {
+    return chat.name.toLowerCase().includes(searchTerm.toLowerCase());
   })
 
 

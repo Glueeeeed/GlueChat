@@ -5,6 +5,7 @@ import keytar from 'keytar'
 import { randomBytes } from '@noble/post-quantum/utils.js'
 import { CryptoCore, EncryptedData } from '../Services/CryptoCore'
 import { ChatInfo, messageData } from '../Services/StorageService'
+import log from 'electron-log'
 
 export abstract class HistoryManager {
   private static dbs: Map<string, any> = new Map()
@@ -28,7 +29,7 @@ export abstract class HistoryManager {
 
     const userDataPath: string = app.getPath('userData')
     const dbPath: string = path.join(userDataPath, `${accountName}_history.db`)
-    console.log(`dbPath: ${dbPath}`)
+    log.debug(`dbPath: ${dbPath}`)
 
     const db = new Database(dbPath)
 

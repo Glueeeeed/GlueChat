@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@renderer/assets/utils'
+import log from 'electron-log/renderer'
 
 interface result {
   success: boolean;
@@ -22,11 +23,10 @@ export async function register(nickname: string, password: string, accessCode: s
   const json = await response.json();
 
   if (response.status === 201) {
-    console.log(json);
-
     try {
       await window.e2ee.generatePairKeys(nickname, json.refreshToken, false)
-    } catch {
+    } catch (error) {
+      log.error(error);
       return {
         success: false,
         message: 'Failed to register device keys. Try again or contact support.'
@@ -37,7 +37,5 @@ export async function register(nickname: string, password: string, accessCode: s
   }
 
   return {success: false, message: json.message}
-
-
 
 }

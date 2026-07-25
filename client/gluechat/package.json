@@ -34,6 +34,7 @@
     "@noble/post-quantum": "^0.6.0",
     "@tanstack/react-query": "^5.101.0",
     "better-sqlite3": "^12.9.0",
+    "electron-log": "^5.4.4",
     "electron-updater": "^6.3.9",
     "jwt-decode": "^4.0.0",
     "keytar": "^7.9.0",

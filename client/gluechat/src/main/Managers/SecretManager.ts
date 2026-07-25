@@ -4,6 +4,7 @@ import Database from 'better-sqlite3'
 import keytar from 'keytar'
 import { randomBytes } from '@noble/post-quantum/utils.js'
 import { CryptoCore, EncryptedData } from '../Services/CryptoCore'
+import log from 'electron-log'
 
 export abstract class SecretManager {
   private static dbs: Map<string, any> = new Map()
@@ -27,7 +28,7 @@ export abstract class SecretManager {
 
     const userDataPath = app.getPath('userData')
     const dbPath = path.join(userDataPath, `${accountName}_secrets.db`)
-    console.log(`dbPath: ${dbPath}`)
+    log.debug(`dbPath: ${dbPath}`)
 
     const db = new Database(dbPath)
 

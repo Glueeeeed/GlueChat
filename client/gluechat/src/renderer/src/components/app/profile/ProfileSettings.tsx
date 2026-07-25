@@ -25,26 +25,26 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>("Successfully updated profile!");
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfile = async () : Promise<void> => {
       if (!authToken)  {
         return
       }
       try {
-        const authKey = await validateOrRefreshToken(authToken)
-        const response = await fetch(`${API_BASE_URL}/api/profile/me`, {
+        const authKey : string = await validateOrRefreshToken(authToken);
+        const response : Response = await fetch(`${API_BASE_URL}/api/profile/me`, {
           headers: {
             Authorization: `Bearer ${authKey}`
           }
         })
 
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
           if (data) {
-            setBio(data.description || '')
-            setBadges(data.badges || [])
+            setBio(data.description || '');
+            setBadges(data.badges || []);
 
 
-            const decoded: any = jwtDecode(authKey)
+            const decoded: any = jwtDecode(authKey);
             if (data.avatarUrl)
               setAvatar(`${API_BASE_URL}/api/profile/assets/avatar/${decoded.id}`)
             if (data.bannerColor) {
@@ -126,9 +126,9 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
     if (response.ok) {
       setAvatar("");
       setAvatarFile(null);
-      setSuccess(true)
+      setSuccess(true);
       setSuccessMessage("Successfully removed profile!");
-      setTimeout(() => setSuccess(false), 2000)
+      setTimeout(() => setSuccess(false), 2000);
     } else {
       setAvatarFile(null);
       setAvatar("");
@@ -140,15 +140,15 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
     setSuccess(false)
 
     try {
-      const authKey: string = await validateOrRefreshToken(authToken as string)
-      const formData = new FormData()
+      const authKey: string = await validateOrRefreshToken(authToken as string);
+      const formData = new FormData();
 
-      if (avatarFile) formData.append('avatar', avatarFile)
-      formData.append('bannerColor', bannerColor)
+      if (avatarFile) formData.append('avatar', avatarFile);
+      formData.append('bannerColor', bannerColor);
       if (bannerFile) {
-        formData.append('banner', bannerFile)
+        formData.append('banner', bannerFile);
       }
-      formData.append('description', bio)
+      formData.append('description', bio);
 
       const response = await fetch(`${API_BASE_URL}/api/profile/update`, {
         headers: { Authorization: `Bearer ${authKey}` },
@@ -156,16 +156,16 @@ export function ProfileSettings({authToken}: ProfileSettingsProps) {
         body: formData
       })
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "Something went wrong")
+        throw new Error(result.message || "Something went wrong");
       }
 
       setSuccess(true);
       setSuccessMessage('Successfully updated profile!');
-      setAvatarFile(null)
-      setBannerFile(null)
+      setAvatarFile(null);
+      setBannerFile(null);
       await queryClient.invalidateQueries({ queryKey: ['currentUser'] })
 
     } catch (err: any) {

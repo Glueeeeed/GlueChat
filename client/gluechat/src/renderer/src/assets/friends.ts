@@ -1,4 +1,5 @@
 import { API_BASE_URL, initAuthToken } from '@renderer/assets/utils'
+import log from 'electron-log/renderer'
 
 
 interface Friend {
@@ -70,7 +71,7 @@ export async function loadRequests(authToken: string, tryAgain = false): Promise
   })
 
   if (response.status === 401 && !tryAgain) {
-    console.log("Token not found. Loading again..")
+    log.info("Token not found. Loading again..");
     const newToken: string = await initAuthToken();
     return await loadRequests(newToken, true);
   }

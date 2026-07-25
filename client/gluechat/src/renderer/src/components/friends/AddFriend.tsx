@@ -1,16 +1,16 @@
-import { useState} from "react";
+import { JSX, useState } from 'react'
 import {addToFriend} from "@renderer/assets/friends";
 
 interface AddFriendProps {
   authToken: string | null;
 }
 
-export function AddFriend({authToken}: AddFriendProps) {
+export function AddFriend({authToken}: AddFriendProps) : JSX.Element {
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState("");
   const [sentRequest, setSentRequest] = useState(false);
 
-  async function addFriend() {
+  async function addFriend() : Promise<void> {
     setError("");
     try {
       const success = await addToFriend(nickname, authToken as string);

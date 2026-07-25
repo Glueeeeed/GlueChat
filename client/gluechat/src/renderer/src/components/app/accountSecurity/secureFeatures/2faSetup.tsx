@@ -19,7 +19,7 @@ export function Setup2FA({ onBack, authToken }: Props ) : JSX.Element {
 
 
   useEffect(() => {
-    const handle2fa = async ()   => {
+    const handle2fa = async () : Promise<void> => {
         const token : string =  await validateOrRefreshToken(authToken);
         const data : TwoFactorData = await generate2faSecret(token);
         setUrl(data.twoFactorUrl);

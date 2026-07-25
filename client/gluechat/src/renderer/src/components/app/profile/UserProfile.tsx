@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Badge } from '@renderer/components/app/profile/Badge'
 import { validateOrRefreshToken } from '@renderer/assets/main'
 import { API_BASE_URL } from '@renderer/assets/utils'
+import log from 'electron-log/renderer'
 
 
 interface UserProfileProps {
@@ -37,7 +38,7 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
           setBadges(data.badges || [])
         }
       } catch (err) {
-        console.error('Failed to fetch user profile', err)
+        log.error('Failed to fetch user profile', err)
       } finally {
         setLoading(false)
       }

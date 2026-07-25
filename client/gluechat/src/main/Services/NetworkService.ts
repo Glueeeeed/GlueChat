@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../config'
 import keytar from 'keytar'
+import log from 'electron-log/main'
 
 export interface preKeysPackage {
   deviceId: string
@@ -85,7 +86,7 @@ export abstract class NetworkService {
       }
     })
     if (!response.ok) {
-      console.error(response);
+      log.debug(response.statusText);
       throw new Error(response.statusText);
     }
 

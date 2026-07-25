@@ -1,5 +1,5 @@
 import {FaUserCircle, FaCheck, FaTimes } from "react-icons/fa";
-import {useEffect, useState} from "react";
+import { JSX, ReactElement, useEffect, useState } from 'react'
 import {loadRequests, request} from "@renderer/assets/friends";
 import {useQueryClient} from '@tanstack/react-query'
 
@@ -17,7 +17,7 @@ interface friendsRequestsProps {
 
 
 
-export function FriendsRequests({authToken} : friendsRequestsProps) {
+export function FriendsRequests({authToken} : friendsRequestsProps) : JSX.Element {
   const [requests, setRequets] = useState<Friend[]>([])
   const [error, setError] = useState("");
   const queryClient = useQueryClient()
@@ -26,7 +26,7 @@ export function FriendsRequests({authToken} : friendsRequestsProps) {
 
 
   useEffect(() => {
-    const fetchFriendsRequests = async () => {
+    const fetchFriendsRequests = async () : Promise<void> => {
       if (authToken) {
         try {
           const data = await loadRequests(authToken);
@@ -39,13 +39,13 @@ export function FriendsRequests({authToken} : friendsRequestsProps) {
     fetchFriendsRequests();
   }, [authToken]);
 
-  async function manageRequest(requestID: string, accepted: boolean, authToken: string | null) {
+  async function manageRequest(requestID: string, accepted: boolean, authToken: string | null) : Promise<void> {
     if (!authToken) return;
     setError("");
     try {
       await request(requestID, accepted, authToken);
-       queryClient.invalidateQueries({ queryKey: ['friends'] })
-       queryClient.invalidateQueries({ queryKey: ['chats'] })
+      await queryClient.invalidateQueries({ queryKey: ['friends'] });
+      await queryClient.invalidateQueries({ queryKey: ['chats'] });
       setRequets((prev) => prev.filter((r) => r.id !== requestID));
     } catch (e: any) {
       setError(e?.message || "Failed to manage request");

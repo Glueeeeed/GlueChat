@@ -77,11 +77,7 @@ export abstract class CryptoCore {
     return xwing.encapsulate(key)
   }
 
-  static verifySignature(
-    signature: Uint8Array,
-    message: Uint8Array,
-    publicKey: Uint8Array
-  ): boolean {
+  static verifySignature(signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array): boolean {
     return ml_dsa87.verify(signature, message, publicKey)
   }
 }

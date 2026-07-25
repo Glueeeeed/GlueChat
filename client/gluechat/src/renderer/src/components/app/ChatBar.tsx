@@ -1,8 +1,9 @@
 import { FaUsers, FaSignOutAlt } from 'react-icons/fa';
 import { BiSolidMessageSquareDetail } from "react-icons/bi";
 import { Tab } from "../../views/App";
-import { useNavigate } from 'react-router-dom';
+import { NavigateFunction, useNavigate } from 'react-router-dom'
 import { FaCog } from 'react-icons/fa'
+import { JSX } from 'react'
 
 
 interface ChatBarProps {
@@ -10,10 +11,10 @@ interface ChatBarProps {
   setActiveTab: (tab: Tab) => void;
 }
 
-export function ChatBar({ activeTab, setActiveTab }: ChatBarProps) {
-  const navigate = useNavigate();
+export function ChatBar({ activeTab, setActiveTab }: ChatBarProps ) : JSX.Element {
+  const navigate : NavigateFunction = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     localStorage.removeItem("nickname");
     navigate("/select-account");
   };

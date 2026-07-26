@@ -58,6 +58,45 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
         }
     })
 
+    .get('/opk/count', async ({query: {deviceId} , user}) => {
+        try {
+            const quantity : number = await E2EEService.checkOpkQty(user.id, deviceId);
+            return status(200, {
+                success: true,
+                qty: quantity
+            })
+
+        } catch (e) {
+            Logger.error(e);
+            return status(500, {
+                success: false,
+                message: 'Something went wrong',
+            })
+        }
+    })
+
+
+    .post('/opk/update', async ({body, user}) => {
+        try {
+            const {deviceId , opk} = body;
+            await E2EEService.updateOnetimePreKeys(user.id , deviceId, opk);
+            return status(200, {
+                success: true,
+                message: 'Update ok',
+            })
+
+
+        } catch (e) {
+            Logger.error(e);
+            return status(500, {
+                success: false,
+                message: 'Something went wrong',
+            })
+        }
+    }, {
+        body: e2eeModel.update
+    })
+
     .get('/identity-key/:deviceId', async ({params: {deviceId}, query, user}) => {
         try {
             if (!query) return status(400, { success: false, message: "Missing parameters" });

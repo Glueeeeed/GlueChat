@@ -18,6 +18,8 @@ import { API_BASE_URL, APP_VERSION} from '@renderer/assets/utils'
 import {AccountSecurity} from '@renderer/components/app/accountSecurity/AccountSecurity'
 import {AboutApp} from '@renderer/components/app/aboutApp/AboutApp'
 import {checkIfDeviceIsRegistered} from '@renderer/assets/account'
+import log from 'electron-log'
+import { generateOpkKeys } from '@renderer/assets/e2ee'
 
 
 export type Tab = 'chats' | 'friends' | 'settings';
@@ -94,7 +96,7 @@ export function App(): React.JSX.Element {
         }
       }
     } catch (error) {
-      console.error('Failed to check new version', error)
+      log.error('Failed to check new version', error);
     }
   }
 
@@ -108,7 +110,8 @@ export function App(): React.JSX.Element {
     if (authToken) {
       checkIfDeviceIsRegistered(authToken, deviceId as string, currentNickname as string);
       const decodedToken : any = jwtDecode(authToken);
-      const ws = new WebSocket('wss://glueeed.dev:2115/api/ws')
+      const ws = new WebSocket('ws://localhost:3000/api/ws');
+      generateOpkKeys(authToken,deviceId as string, currentNickname as string);
 
       ws.onopen = () => {
         ws.send(

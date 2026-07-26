@@ -1,5 +1,6 @@
 import {prisma} from "../../lib/prisma";
 import {FriendsService} from "../friends/service";
+import {OneTimeKey} from "../account/service"
 import {NotFoundError} from "elysia";
 
 
@@ -117,4 +118,33 @@ export abstract class E2EEService {
             },
         })
     }
+
+    static async checkOpkQty(userId : string, deviceId : string) : Promise<number> {
+        return prisma.oneTimePreKeys.count({
+            where: {
+                userId: userId,
+                deviceId: deviceId,
+            }
+        });
+    }
+
+    static async updateOnetimePreKeys(userId : string, deviceId : string, opk : string) : Promise<void> {
+        const parsedKey : OneTimeKey[] = JSON.parse(opk);
+
+        if (parsedKey && parsedKey.length > 0) {
+            await prisma.oneTimePreKeys.createMany({
+                data: parsedKey.map(key => ({
+                    userId: userId,
+                    keyId: key.id,
+                    publicKey: key.pubKey,
+                    deviceId: deviceId,
+                }))
+            });
+        } else {
+            throw new NotFoundError("Failed to update onetime pre key");
+        }
+
+    }
+
+
 }

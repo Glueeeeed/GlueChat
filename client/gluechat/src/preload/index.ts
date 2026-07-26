@@ -35,7 +35,10 @@ contextBridge.exposeInMainWorld("auth", {
 });
 
 contextBridge.exposeInMainWorld('e2ee', {
-  generatePairKeys: (accountName: string, tempToken : string, forceReset: boolean) =>
+  generateOpk: (qty: number, accountName: string, deviceId: string) => {
+    return ipcRenderer.invoke('generate-opk', qty, accountName, deviceId);
+  },
+  generatePairKeys: (accountName: string, tempToken: string, forceReset: boolean) =>
     ipcRenderer.invoke('generate-xwing-pair-keys', accountName, tempToken, forceReset),
   initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) =>
     ipcRenderer.invoke('initializeEncryptMessage', publicKey, content, roomID, senderID, receiverID, accountName),

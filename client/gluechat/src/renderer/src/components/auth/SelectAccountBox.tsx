@@ -15,7 +15,7 @@ export function SelectAccountBox() {
   const  handleSelect =  async (nickname: string) => {
    try {
      await initAuthToken();
-     localStorage.setItem("nickname", nickname);
+     localStorage.setItem("account", nickname);
      navigate("/");
    } catch (error) {
      console.error("Failed to initialize auth token:", error);

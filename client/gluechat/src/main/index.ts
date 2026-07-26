@@ -143,6 +143,12 @@ ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
   return await keytar.deletePassword("gluechat", accountName);
 });
 
+ipcMain.handle("generate-opk", async (_, qty: number, accountName: string , deviceId : string) => {
+  const prefix = `device-${deviceId}`
+  const opk: oneTimeKey[] = await CryptoCore.generateOneTimeKeys(qty,accountName,prefix);
+  return JSON.stringify(opk);
+})
+
 ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempToken: string, forceReset: boolean) : Promise<void> => {
  try {
    const deviceId: string = await StorageService.generateDeviceId();
@@ -154,8 +160,6 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempTo
    } else {
      await SecretManager.resetAllSecrets(accountName);
    }
-
-   const oneTimeKeys: oneTimeKey[] = [];
 
    // Generates Keys
 
@@ -175,22 +179,8 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempTo
 
    const signature: string = Buffer.from(CryptoCore.sign(spkKP.publicKey, identityKP.secretKey)).toString('base64');
 
-   for (let i: number = 1; i <= 20; i++) {
-     const oneTimeKeyID: string = Buffer.from(randomBytes(4)).toString('hex');
-     const keyPair: KeyPair = CryptoCore.generateNewKeyPair();
 
-     const pubKey: string = Buffer.from(keyPair.publicKey).toString('base64');
-     const privateKey: string = Buffer.from(keyPair.secretKey).toString('base64');
-
-     await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-otk-${oneTimeKeyID}`, privateKey);
-
-     const oneTimeKey = {
-       id: oneTimeKeyID,
-       pubKey: pubKey
-     };
-
-     oneTimeKeys.push(oneTimeKey);
-   }
+   const oneTimeKeys : oneTimeKey[] = await CryptoCore.generateOneTimeKeys(25,accountName,prefix);
 
    const data = {
      identityPubKey: identityPubKey,

@@ -5,6 +5,7 @@ import { ml_dsa87 } from '@noble/post-quantum/ml-dsa.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js'
+import { SecretManager } from '../Managers/SecretManager'
 
 export interface mixedKeys {
   rootKey: Uint8Array
@@ -59,6 +60,32 @@ export abstract class CryptoCore {
 
   static generateNewKeyPair(): KeyPair {
     return xwing.keygen()
+  }
+
+  static async generateOneTimeKeys(qty : number, accountName : string , prefix : string) : Promise<oneTimeKey[]> {
+    const oneTimeKeys: oneTimeKey[] = [];
+    for (let i = 0; i <= qty; i++) {
+      const oneTimeKeyID: string = Buffer.from(randomBytes(4)).toString('hex');
+      const keyPair: KeyPair = this.generateNewKeyPair();
+
+      const pubKey : string = Buffer.from(keyPair.publicKey).toString('base64');
+      const privateKey: string = Buffer.from(keyPair.secretKey).toString('base64');
+
+      await SecretManager.setSecret(
+        accountName,
+        'gluechat_' + accountName,
+        `${prefix}-otk-${oneTimeKeyID}`,
+        privateKey
+      )
+
+      const oneTimeKey = {
+        id: oneTimeKeyID,
+        pubKey: pubKey
+      }
+
+      oneTimeKeys.push(oneTimeKey);
+    }
+    return oneTimeKeys;
   }
 
   static generateSignKeyPair() : KeyPair {

@@ -17,7 +17,7 @@ export interface TwoFactorData {
 }
 
 
-interface OneTimeKey {
+export interface OneTimeKey {
     id: string;
     pubKey: string;
 }

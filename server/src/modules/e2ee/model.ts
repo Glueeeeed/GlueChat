@@ -20,6 +20,11 @@ export const e2eeModel = {
     query: t.Object({
         userId: t.String(),
         deviceId: t.Optional(t.String()),
+    }),
+
+    update: t.Object({
+        deviceId: t.String(),
+        opk: t.String(),
     })
 
 }

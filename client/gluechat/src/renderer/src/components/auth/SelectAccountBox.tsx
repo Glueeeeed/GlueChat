@@ -12,17 +12,27 @@ export function SelectAccountBox() {
     setAccounts(savedAccounts);
   }, []);
 
-  const  handleSelect =  async (nickname: string) => {
-   try {
-     await initAuthToken();
-     localStorage.setItem("account", nickname);
-     navigate("/");
-   } catch (error) {
-     console.error("Failed to initialize auth token:", error);
-     localStorage.removeItem("account");
-     navigate("/login");
-   }
-  };
+  const handleSelect = async (nickname: string) => {
+    try {
+      localStorage.setItem('nickname', nickname)
+      await initAuthToken()
+      navigate('/')
+    } catch (error) {
+      console.error('Failed to initialize auth token:', error)
+      const savedAccounts = JSON.parse(localStorage.getItem('accounts') || '[]')
+      const updatedAccounts = savedAccounts.filter((acc: string) => acc !== nickname)
+      localStorage.setItem('accounts', JSON.stringify(updatedAccounts))
+      setAccounts(updatedAccounts)
+      localStorage.removeItem('nickname')
+      await window.auth.deleteRefreshToken(nickname)
+
+      if (updatedAccounts.length === 0) {
+        navigate('/login')
+      } else {
+        alert(`Session for ${nickname} not found.`)
+      }
+    }
+  }
 
   const handleAddAccount = () => {
     navigate("/login");

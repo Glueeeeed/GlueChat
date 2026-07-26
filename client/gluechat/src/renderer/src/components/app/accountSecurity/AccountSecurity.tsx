@@ -10,6 +10,7 @@ import {changePassword, disable2fa, get2faStatus, getRecoveryStatus, removeRecov
 import { Setup2FA } from '@renderer/components/app/accountSecurity/secureFeatures/2faSetup'
 import { RecoveryAccount } from '@renderer/components/app/accountSecurity/secureFeatures/accountRecovery'
 import { GrPowerReset } from 'react-icons/gr'
+import log from 'electron-log'
 
 interface Props {
   authToken: string
@@ -27,17 +28,20 @@ export function AccountSecurity({authToken , deviceId} : Props) : JSX.Element {
   const [isRecoveryEnabled, setIsRecoveryEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>('Successfully updated password!');
   const navigate = useNavigate()
 
   useEffect(() => {
     const fetch2FAStatus = async () : Promise<void> => {
+      setLoading(true);
       try {
         const token = await validateOrRefreshToken(authToken);
         const enabled = await get2faStatus(token);
         setIs2faEnabled(enabled);
+        setLoading(false);
       } catch (err) {
-        console.error("Failed to fetch 2FA status", err);
+        log.error("Failed to fetch 2FA status", err);
       }
     };
     if (activeSubView === 'main') {
@@ -47,11 +51,13 @@ export function AccountSecurity({authToken , deviceId} : Props) : JSX.Element {
 
     const fetchRecoveryStatus = async (): Promise<void> => {
       try {
+        setLoading(true);
         const token = await validateOrRefreshToken(authToken);
         const enabled = await getRecoveryStatus(token);
         setIsRecoveryEnabled(enabled);
+        setLoading(false);
       } catch (err) {
-        console.error('Failed to fetch 2FA status', err)
+        log.error('Failed to fetch 2FA status', err)
       }
     }
     if (activeSubView === 'main') {
@@ -122,6 +128,13 @@ export function AccountSecurity({authToken , deviceId} : Props) : JSX.Element {
     return <RecoveryAccount onBack={() => setActiveSubView('main')} authToken={authToken} />
   }
 
+  if (loading) {
+    return (
+      <div className="p-8 text-center animate-pulse uppercase text-xs font-bold text-gray-500">
+        Loading...
+      </div>
+    )
+  }
 
   return (
     <div className="p-8 w-full mx-auto space-y-8 overflow-y-auto h-full ">
@@ -223,6 +236,7 @@ export function AccountSecurity({authToken , deviceId} : Props) : JSX.Element {
               Add an extra layer of protection to your account
             </p>
             <div className="flex gap-2">
+
               {is2faEnabled && (
                 <button
                   onClick={handleDisable2FA}

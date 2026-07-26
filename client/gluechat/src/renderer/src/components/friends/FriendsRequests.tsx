@@ -1,7 +1,8 @@
 import {FaUserCircle, FaCheck, FaTimes } from "react-icons/fa";
-import { JSX, useEffect, useState } from 'react'
+import  { JSX, useEffect, useState } from 'react'
 import {loadRequests, request} from "@renderer/assets/friends";
 import {useQueryClient} from '@tanstack/react-query'
+import log from 'electron-log'
 
 
 interface Friend {
@@ -19,6 +20,7 @@ interface friendsRequestsProps {
 
 export function FriendsRequests({authToken} : friendsRequestsProps) : JSX.Element {
   const [requests, setRequets] = useState<Friend[]>([])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState("");
   const queryClient = useQueryClient()
 
@@ -28,11 +30,13 @@ export function FriendsRequests({authToken} : friendsRequestsProps) : JSX.Elemen
   useEffect(() => {
     const fetchFriendsRequests = async () : Promise<void> => {
       if (authToken) {
+        setLoading(true);
         try {
           const data = await loadRequests(authToken);
           setRequets(data as Friend[]);
+          setLoading(false);
         } catch (error) {
-          console.error("Failed to load friends");
+          log.error("Failed to load friends");
         }
       }
     };
@@ -51,6 +55,14 @@ export function FriendsRequests({authToken} : friendsRequestsProps) : JSX.Elemen
       setError(e?.message || "Failed to manage request");
       setTimeout(() => setError(""), 5000);
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center animate-pulse uppercase text-xs font-bold text-gray-500">
+        Loading...
+      </div>
+    )
   }
 
   return (

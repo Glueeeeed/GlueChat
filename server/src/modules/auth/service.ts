@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma";
 import {AlreadyExistsError, InvalidCredentialsError, InvalidDataFormatError} from "../../utils/exceptions";
 import validator from 'validator';
 import * as OTPAuth from "otpauth";
-import {isForbiddenNick} from "../../utils/validation";
+import {isForbiddenNick, isPasswordBreached} from "../../utils/validation";
 import {randomBytes} from "node:crypto";
 import AccountService from "../account/service";
 import {join} from "path";
@@ -163,7 +163,7 @@ export abstract class AuthService {
         return accessCode;
     }
 
-    static validate(nickname: string , password: string, isLogin : boolean) : void {
+    static async validate(nickname: string , password: string) : Promise<void> {
 
         if (validator.isEmail(nickname as string)) {
             throw new InvalidDataFormatError("Nickname cannot be an email address");
@@ -175,17 +175,18 @@ export abstract class AuthService {
             throw new InvalidDataFormatError("Nickname can only contain letters and numbers");
         }
 
-        if (!isLogin) {
-            if (isForbiddenNick(nickname)) {
-                throw new InvalidDataFormatError("This nickname is not allowed");
-            }
+        if (isForbiddenNick(nickname)) {
+            throw new InvalidDataFormatError("This nickname is not allowed");
         }
 
-        if (!validator.isLength(password, { min: 8, max: 32 })) {
-            throw new InvalidDataFormatError("Password must be between 8 and 32 characters long.");
+
+        if (!validator.isLength(password, { min: 14, max: 64 })) {
+            throw new InvalidDataFormatError("Password must be between 14 and 64 characters long.");
         }
-        if (!validator.isStrongPassword(password)) {
-            throw new InvalidDataFormatError("Password is too weak (must include uppercase, lowercase, number and symbol)");
+
+        const passwordBreached: boolean = await isPasswordBreached(password);
+        if (passwordBreached) {
+            throw new InvalidDataFormatError("For security reasons, your password cannot be used");
         }
 
     }
@@ -243,11 +244,13 @@ export abstract class AuthService {
         if (password !== repeatPassword) {
             throw new InvalidDataFormatError("Passwords don't match");
         }
-        if (!validator.isLength(password, { min: 8, max: 32 })) {
-            throw new InvalidDataFormatError("Password must be between 8 and 32 characters long.");
+        if (!validator.isLength(password, { min: 14, max: 64 })) {
+            throw new InvalidDataFormatError("Password must be between 14 and 64 characters long.");
         }
-        if (!validator.isStrongPassword(password)) {
-            throw new InvalidDataFormatError("Password is too weak (must include uppercase, lowercase, number and symbol)");
+
+        const passwordBreached: boolean = await isPasswordBreached(password);
+        if (passwordBreached) {
+            throw new InvalidDataFormatError("For security reasons, your password cannot be used");
         }
 
         const hashedPassword = await bun.password.hash(password);

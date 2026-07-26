@@ -31,7 +31,8 @@ export const friends = new Elysia({ prefix: '/friends' })
     .post('/add-friend', async ({user,body}) => {
         try {
             const {nickname}  = body;
-            const friendID : string = await  FriendsService.findFriend(nickname);
+            const nicknameFormatted : string = nickname.toLowerCase();
+            const friendID : string = await FriendsService.findFriend(nicknameFormatted);
             if (friendID === user.id) {
                 return  status(400, {
                     success: false,

@@ -13,10 +13,10 @@ export const auth = new Elysia({ prefix: '/auth' })
 .post('/register', async ({body}) =>  {
     try {
         const {nickname, password, accessCode} = body;
-
-        AuthService.validate(nickname, password, false);
-        await AuthService.checkIfNicknameExists(nickname, false);
-        const id = await AuthService.registerUser(nickname, password, accessCode as string);
+        const nicknameFormatted : string =  nickname.toLowerCase();
+        await AuthService.validate(nicknameFormatted, password);
+        await AuthService.checkIfNicknameExists(nicknameFormatted, false);
+        const id = await AuthService.registerUser(nicknameFormatted, password, accessCode as string);
         const authToken : string = generateAuthToken(id as string);
 
 
@@ -56,9 +56,9 @@ export const auth = new Elysia({ prefix: '/auth' })
 .post('/login', async ({body}) =>  {
     try {
         const {nickname, password, code2fa} = body;
-        AuthService.validate(nickname, password, true);
-        await AuthService.checkIfNicknameExists(nickname, true);
-        const userID : string = await AuthService.loginUser(nickname, password);
+        const nicknameFormatted : string =  nickname.toLowerCase();
+        await AuthService.checkIfNicknameExists(nicknameFormatted, true);
+        const userID : string = await AuthService.loginUser(nicknameFormatted, password);
 
         const is2faEnabled = await AuthService.is2FAEnabled(userID);
 

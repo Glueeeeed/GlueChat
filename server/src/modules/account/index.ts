@@ -33,7 +33,7 @@ export const account = new Elysia({ prefix: '/account' })
     .post('/change-password', async ({body, user}) => {
         try {
             const {oldPassword, newPassword} = body;
-            AuthService.validate("validatePass", newPassword, true);
+            await AuthService.validate("validatePass", newPassword);
             const isValid : boolean = await AccountService.checkCurrentPass(user.id, oldPassword, newPassword);
 
             if (!isValid) {

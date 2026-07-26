@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import  { useState, useEffect } from 'react'
 import { Badge } from '@renderer/components/app/profile/Badge'
 import { validateOrRefreshToken } from '@renderer/assets/main'
 import { API_BASE_URL } from '@renderer/assets/utils'
@@ -40,18 +40,20 @@ export function UserProfile({ authToken, userId, nickname }: UserProfileProps) {
       } catch (err) {
         log.error('Failed to fetch user profile', err)
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
     fetchUserProfile()
   }, [authToken, userId])
 
-  if (loading)
+  if (loading) {
     return (
       <div className="p-8 text-center animate-pulse uppercase text-xs font-bold text-gray-500">
-        Loading Profile...
+        Loading...
       </div>
     )
+  }
+
 
   const avatarUrl = profile?.avatarUrl
     ? `${API_BASE_URL}/api/profile/assets/avatar/${userId}?t=${Date.now()}`

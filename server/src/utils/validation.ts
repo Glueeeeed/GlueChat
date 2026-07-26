@@ -1,3 +1,6 @@
+import bun from "bun";
+import {Logger} from "./logger";
+
 const leetMap: Record<string, string[]> = {
     'a': ['a', '4'],
     'b': ['b', '8'],
@@ -54,4 +57,34 @@ export function isForbiddenNick(nick: string): boolean {
         }
         return false;
     });
+}
+
+export async function isPasswordBreached(password : string) : Promise<boolean> {
+  try {
+      const hasher = new bun.CryptoHasher('sha1');
+      hasher.update(password);
+      const hash : string = hasher.digest("hex").toUpperCase();
+
+      const prefix : string = hash.substring(0,5);
+      const suffix : string = hash.substring(5);
+
+      const response = await fetch('https://api.pwnedpasswords.com/range/' + prefix, {
+          method: 'GET',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+          }
+      })
+      const data : string  = await response.text();
+      const hashes = data.split("\n");
+
+      return hashes.some(line => {
+          const [hashSuffix] = line.split(":");
+          return hashSuffix.trim() === suffix;
+      })
+  } catch (e) {
+      Logger.error(e);
+      return false;
+  }
+
 }

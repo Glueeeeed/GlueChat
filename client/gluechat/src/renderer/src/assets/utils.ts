@@ -24,8 +24,8 @@ export function validatePassword (password : string) : void {
   if (validator.isEmpty(password)) {
     throw new Error('Password is required');
   }
-  if (!validator.isStrongPassword(password)) {
-    throw new Error('Password is too weak. It must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character.');
+  if (!validator.isLength(password, {min: 14})) {
+    throw new Error('Password is too weak. It must contain at least 14 characters.');
   }
 }
 

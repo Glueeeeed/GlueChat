@@ -34,13 +34,21 @@ interface ChatProps {
 
 export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, setSelectedChat, setSelectedChatName}: ChatProps) : React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const { data } = useQuery<FetchChatsResponse | null>({
     queryKey: ['chats', authToken],
-    queryFn: () : Promise<FetchChatsResponse | null>   => fetchChats(),
+    queryFn: () : Promise<FetchChatsResponse | null>   => loadingChats(),
     enabled: !!authToken,
     staleTime: 1000 * 60 * 5
   })
+
+  const loadingChats = async ()  => {
+    setLoading(true);
+    const fetchedChats =  await fetchChats();
+    setLoading(false);
+    return fetchedChats;
+  }
 
 
   const fetchChats = async () : Promise<FetchChatsResponse | null> => {
@@ -82,6 +90,14 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
   const filteredChats : ChatInfo[] = (data?.chats || []).filter((chat) : boolean => {
     return chat.name.toLowerCase().includes(searchTerm.toLowerCase());
   })
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center animate-pulse uppercase text-xs font-bold text-gray-500">
+        Loading...
+      </div>
+    )
+  }
 
 
   return (

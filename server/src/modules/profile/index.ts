@@ -29,6 +29,8 @@ export const profile = new Elysia({ prefix: '/profile' })
        } catch (e) {
            return status(404)
        }
+    }, {
+        params: profileModel.avatarQuery
     })
 
     .get('/:userId', async ({ params, set }) => {

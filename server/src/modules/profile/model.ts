@@ -28,5 +28,10 @@ export const profileModel = {
         description: z.string()
             .max(180, "Description cannot be least than 180 characters")
 
+    }),
+
+    avatarQuery: z.object({
+        type: z.enum({avatar: 'avatar', banner: 'banner'}),
+        userId: z.string()
     })
 }

@@ -248,12 +248,12 @@ export abstract class AuthService {
             throw new InvalidDataFormatError("Password must be between 14 and 64 characters long.");
         }
 
-        const passwordBreached: boolean = await isPasswordBreached(password);
+        const passwordBreached : boolean = await isPasswordBreached(password);
         if (passwordBreached) {
             throw new InvalidDataFormatError("For security reasons, your password cannot be used");
         }
 
-        const hashedPassword = await bun.password.hash(password);
+        const hashedPassword : string = await bun.password.hash(password);
 
         await prisma.recoverySessions.update({
             where: {

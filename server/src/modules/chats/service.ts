@@ -10,48 +10,35 @@ export abstract class ChatService {
                 ],
             },
             include: {
-                user1: {
-                    select: {
-                        id: true,
-                        nickname: true,
-                    }
-                },
-                user2: {
-                    select: {
-                        id: true,
-                        nickname: true,
-                    }
-                }
-            }
-        })
-
-
-        return data.map(chat => {
-            if (chat.user1.id === userID) {
-                return {
-                    id: chat.id,
-                    name: chat.user2.nickname,
-                    status: "offline",
-                    unread: false,
-                    unreadCount: 0,
-                    receiverID: chat.user2.id,
-                    senderID: userID,
-                };
-            } else {
-                return {
-                    id: chat.id,
-                    name: chat.user1.nickname,
-                    status: "offline",
-                    unread: false,
-                    unreadCount: 0,
-                    receiverID: chat.user1.id,
-                    senderID: userID,
-                };
+                user1: { select: { id: true, nickname: true } },
+                user2: { select: { id: true, nickname: true } }
             }
         });
 
+        return Promise.all(data.map(async (chat) => {
+            const count = await prisma.message.count({
+                where: {
+                    roomID: chat.id,
+                    NOT: {
+                        senderId: userID
+                    },
+                    isSeen: false
+                }
+            });
 
+            const unread = count !== 0;
+            const otherUser = chat.user1.id === userID ? chat.user2 : chat.user1;
 
+            return {
+                id: chat.id,
+                name: otherUser.nickname,
+                status: "offline",
+                unread: unread,
+                unreadCount: count,
+                receiverID: otherUser.id,
+                senderID: userID,
+            };
+        }));
     }
 }
 

@@ -82,8 +82,11 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
   const handleSubmit = async (op : string) : Promise<void> => {
 
     try {
-      validateNickname(nickname);
-      validatePassword(password);
+
+      if (op === 'register') {
+        validateNickname(nickname);
+        validatePassword(password);
+      }
 
     } catch (err: any) {
         setTimeout(() => {
@@ -91,13 +94,12 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
         },5000)
         setErrorMsg(err.message);
         return;
-
     }
 
-    if (op === "register") {
-      await handleRegister();
+    if (op === 'register') {
+     await handleRegister();
     } else {
-      await handleLogin();
+     await handleLogin()
     }
 
   }

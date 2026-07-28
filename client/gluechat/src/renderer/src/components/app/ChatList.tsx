@@ -40,7 +40,7 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
     queryKey: ['chats', authToken],
     queryFn: () : Promise<FetchChatsResponse | null>   => loadingChats(),
     enabled: !!authToken,
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 30
   })
 
   const loadingChats = async ()  => {
@@ -87,9 +87,14 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
     setSenderID(senderID);
     setReceiverID(receiverID);
   }
-  const filteredChats : ChatInfo[] = (data?.chats || []).filter((chat) : boolean => {
-    return chat.name.toLowerCase().includes(searchTerm.toLowerCase());
-  })
+  const filteredChats: ChatInfo[] = (data?.chats || [])
+    .filter((chat): boolean => {
+      return chat.name.toLowerCase().includes(searchTerm.toLowerCase())
+    })
+    .sort((a, b) => {
+      if (a.unread === b.unread) return 0
+      return a.unread ? -1 : 1
+    })
 
   if (loading) {
     return (
@@ -123,17 +128,7 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
       <div className="flex-1 overflow-y-auto px-2 pb-4 ">
         {filteredChats.length > 0 ? (
           filteredChats.map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() =>
-                setSelectedChatData(chat.id, chat.name, chat.senderID, chat.receiverID)
-              }
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group mb-1 ${
-                selectedChat === chat.id
-                  ? 'bg-violet-500/10 border border-violet-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)]'
-                  : 'hover:bg-white/5 border border-transparent hover:border-white/5'
-              }`}
-            >
+            <button key={chat.id} onClick={() => setSelectedChatData(chat.id, chat.name, chat.senderID, chat.receiverID)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group mb-1 ${selectedChat === chat.id ? 'bg-violet-500/10 border border-violet-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)]' : 'hover:bg-white/5 border border-transparent hover:border-white/5'}`}>
               <div className="relative">
                 {data?.userAvatar[chat.receiverID] ? (
                   <img
@@ -153,19 +148,21 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
                 )}
               </div>
 
-              <div className="flex flex-col items-start">
-                <span
-                  className={`font-semibold text-sm transition-colors ${
-                    selectedChat === chat.id ? 'text-white' : 'text-gray-300 group-hover:text-white'
-                  }`}
-                >
-                  {chat.name}
-                </span>
-                <p className="text-gray-400 text-xs">
-                  {data?.lastMessages[chat.id]
-                    ? data.lastMessages[chat.id]
-                    : `Send first message to ${chat.name}`}
-                </p>
+              <div className="flex flex-1 items-center justify-between">
+                <div className="flex flex-col items-start">
+                  <span className={`font-semibold text-sm transition-colors ${selectedChat === chat.id ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                    {chat.name}
+                  </span>
+                  <p className={chat.unread ? 'font-bold text-violet-400 text-xs' : 'text-gray-400 text-xs'}>
+                    {chat.unread ? `New messages` : data?.lastMessages[chat.id] || `Send first message`}
+                  </p>
+                </div>
+
+                {chat.unread && chat.unreadCount > 0 && (
+                  <div className="bg-violet-600 text-white text-[10px] font-bold min-w-4.5 h-4.5 flex items-center justify-center rounded-full px-1 shadow-lg shadow-violet-500/20">
+                    {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
+                  </div>
+                )}
               </div>
             </button>
           ))

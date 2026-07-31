@@ -34,6 +34,10 @@ contextBridge.exposeInMainWorld("auth", {
   deleteRefreshToken: (accountName: string) => ipcRenderer.invoke("delete-refresh-token", accountName),
 });
 
+contextBridge.exposeInMainWorld('notify', {
+  newMessage: (accountName: string) => ipcRenderer.invoke('new-message-notification', accountName)
+})
+
 contextBridge.exposeInMainWorld('e2ee', {
   generateOpk: (qty: number, accountName: string, deviceId: string) => {
     return ipcRenderer.invoke('generate-opk', qty, accountName, deviceId);

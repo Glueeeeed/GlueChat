@@ -230,6 +230,8 @@ abstract class ProtocolService {
         deviceId: device,
         roomID: roomID,
         senderId: senderID,
+        receiverId: receiverID,
+        accountName: accountName,
         messageNumber: readySession.sendCounter as number,
         opkId: readySession.opkId ? readySession.opkId : null,
         salt: readySession.salt ? Buffer.from(readySession.salt).toString('base64') : null,

@@ -3,7 +3,6 @@ import path, { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../build/icon.png?asset'
 import keytar from 'keytar'
-import { randomBytes } from '@noble/post-quantum/utils.js'
 import ProtocolService from './Services/ProtocolService'
 import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore'
 import { ChatInfo, StorageService } from './Services/StorageService'
@@ -12,6 +11,7 @@ import { SecretManager } from './Managers/SecretManager'
 import { NetworkService } from './Services/NetworkService'
 import log from 'electron-log/main'
 import { DEBUG_MODE } from './config'
+import { NotificationService } from './Services/NotificationService'
 
 function createWindow(): void {
   // Create the browser window.
@@ -80,6 +80,8 @@ app.whenReady().then(() => {
 
   log.initialize();
 
+  NotificationService.showNewFriendNotification('test');
+
   if (DEBUG_MODE) {
     log.transports.file.level = 'debug'
     log.transports.console.level = 'debug'
@@ -139,6 +141,10 @@ ipcMain.handle("set-refresh-token", async (_, accountName: string, token: string
   return await keytar.setPassword("gluechat", accountName, token);
 });
 
+ipcMain.handle('new-message-notification', async (_, accountName: string) => {
+  NotificationService.showNewMessageNotification(accountName);
+})
+
 ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
   return await keytar.deletePassword("gluechat", accountName);
 });
@@ -192,7 +198,7 @@ ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempTo
    const keys : string = JSON.stringify(data);
    await NetworkService.registerDevice(accountName,deviceId,keys, tempToken);
  } catch (e) {
-   console.log("Failed to register this deviceID. Clearing keys...", e);
+   log.error("Failed to register this deviceID. Clearing keys...", e);
    await SecretManager.resetAllSecrets(accountName);
    throw e;
  }

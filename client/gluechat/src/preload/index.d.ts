@@ -5,6 +5,9 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: unknown
+    notify: {
+      newMessage: (accountName: string) => void;
+    }
     auth: {
       getRefreshToken: (accountName: string) => Promise<string | null>;
       setRefreshToken: (accountName: string, token: string) => Promise<void>;

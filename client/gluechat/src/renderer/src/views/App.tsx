@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useQuery} from '@tanstack/react-query'
 import {useQueryClient} from '@tanstack/react-query'
-import {initAuthToken} from '@renderer/assets/utils'
+import {initAuthToken } from '@renderer/assets/utils'
 import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
 import {AddFriend} from "@renderer/components/friends/AddFriend";
@@ -102,9 +102,11 @@ export function App(): React.JSX.Element {
 
 
   useEffect(() => {
-     checkIfUpdate();
+    if (Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+    checkIfUpdate()
   }, [])
-
 
   useEffect(() => {
     if (authToken) {
@@ -124,6 +126,7 @@ export function App(): React.JSX.Element {
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data)
+
         if (data.type === 'status-change') {
           setFriends((prev) =>
             prev.map((f) =>
@@ -132,8 +135,17 @@ export function App(): React.JSX.Element {
           )
         }
 
+
+        if (data.type === 'receive-message') {
+          if (!document.hasFocus()) {
+            log.info('Received message');
+            window.notify.newMessage(data.message);
+          }
+          queryClient.invalidateQueries({ queryKey: ['chats'] })
+        }
+
         if (data.type === 'PROFILE_UPDATED') {
-           queryClient.invalidateQueries({ queryKey: ['friends'] })
+          queryClient.invalidateQueries({ queryKey: ['friends'] })
           queryClient.invalidateQueries({ queryKey: ['chats'] })
         }
       }

@@ -86,6 +86,13 @@ app.use(staticPlugin({
 
             if (data.type === 'send-message') {
                 MessageHandler.sendMessage(data.chatID as string, data.payload).then(result => {
+                    const conns = activeConnections.get(data.payload.receiverId);
+                    if (conns) {
+                        conns.forEach(conn => conn.send({
+                            type: 'receive-message',
+                            payload: {name: data.payload.accountName},
+                        }))
+                    }
                     ws.publish(data.chatID, {
                         type: 'receive-message',
                         payload: data.payload,

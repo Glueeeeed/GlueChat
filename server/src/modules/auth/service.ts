@@ -276,9 +276,21 @@ export abstract class AuthService {
 
     }
 
-    static checkIfMaintenance(): boolean {
+    static checkIfMaintenance(nickname : string): boolean {
+        if (process.env.MAINTENANCE_USERS && process.env.MAINTENANCE_USERS.includes(",")) {
+            const users : string[] = process.env.MAINTENANCE_USERS.split(",");
+            for (const user of users) {
+                if (user === nickname) {
+                    return true;
+                }
+            }
+        } else if (process.env.MAINTENANCE_USER) {
+            const user : string = process.env.MAINTENANCE_USER;
+            if (user === nickname) {
+                return true;
+            }
+        }
         return !!process.env.MAINTENANCE_MODE;
-
     }
 
 }

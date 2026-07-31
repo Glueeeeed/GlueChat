@@ -281,13 +281,13 @@ export abstract class AuthService {
             const users : string[] = process.env.MAINTENANCE_USERS.split(",");
             for (const user of users) {
                 if (user === nickname) {
-                    return true;
+                    return false;
                 }
             }
         } else if (process.env.MAINTENANCE_USER) {
             const user : string = process.env.MAINTENANCE_USER;
             if (user === nickname) {
-                return true;
+                return false;
             }
         }
         return !!process.env.MAINTENANCE_MODE;

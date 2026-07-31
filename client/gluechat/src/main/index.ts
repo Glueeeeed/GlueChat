@@ -97,7 +97,6 @@ app.whenReady().then(() => {
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.gluechat.app');
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
   app.name = 'GlueChat';
 
 

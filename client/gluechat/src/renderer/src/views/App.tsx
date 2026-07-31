@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useQuery} from '@tanstack/react-query'
 import {useQueryClient} from '@tanstack/react-query'
-import {initAuthToken } from '@renderer/assets/utils'
+import {initAuthToken, WEBSOCKET_URL } from '@renderer/assets/utils'
 import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
 import {AddFriend} from "@renderer/components/friends/AddFriend";
@@ -112,7 +112,7 @@ export function App(): React.JSX.Element {
     if (authToken) {
       checkIfDeviceIsRegistered(authToken, deviceId as string, currentNickname as string);
       const decodedToken : any = jwtDecode(authToken);
-      const ws = new WebSocket('ws://localhost:3000/api/ws');
+      const ws = new WebSocket(`${WEBSOCKET_URL}/api/ws`);
       generateOpkKeys(authToken,deviceId as string, currentNickname as string);
 
       ws.onopen = () => {

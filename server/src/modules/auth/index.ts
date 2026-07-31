@@ -12,6 +12,14 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/register', async ({body}) =>  {
     try {
+
+        if (AuthService.checkIfMaintenance()) {
+            return status(503, {
+                success: false,
+                message: 'GlueChat is currently undergoing scheduled maintenance. Please try again later.',
+            });
+        }
+
         const {nickname, password, accessCode} = body;
         const nicknameFormatted : string =  nickname.toLowerCase();
         await AuthService.validate(nicknameFormatted, password);
@@ -55,6 +63,12 @@ export const auth = new Elysia({ prefix: '/auth' })
 
 .post('/login', async ({body}) =>  {
     try {
+        if (AuthService.checkIfMaintenance()) {
+            return status(503, {
+                success: false,
+                message: 'GlueChat is currently undergoing scheduled maintenance. Please try again later.',
+            });
+        }
         const {nickname, password, code2fa} = body;
         const nicknameFormatted : string =  nickname.toLowerCase();
         await AuthService.checkIfNicknameExists(nicknameFormatted, true);

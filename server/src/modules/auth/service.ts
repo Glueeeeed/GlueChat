@@ -276,4 +276,9 @@ export abstract class AuthService {
 
     }
 
+    static checkIfMaintenance(): boolean {
+        return !!process.env.MAINTENANCE_MODE;
+
+    }
+
 }

@@ -1,17 +1,16 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
-import path, { join } from 'path'
-import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import icon from '../../build/icon.png?asset'
-import keytar from 'keytar'
-import ProtocolService from './Services/ProtocolService'
-import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore'
-import { ChatInfo, StorageService } from './Services/StorageService'
-import {messageData} from './Services/StorageService'
-import { SecretManager } from './Managers/SecretManager'
-import { NetworkService } from './Services/NetworkService'
-import log from 'electron-log/main'
-import { DEBUG_MODE } from './config'
-import { NotificationService } from './Services/NotificationService'
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import path, { join } from 'path';
+import { electronApp, is, optimizer } from '@electron-toolkit/utils';
+import icon from '../../build/icon.png?asset';
+import keytar from 'keytar';
+import ProtocolService from './Services/ProtocolService';
+import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore';
+import { ChatInfo, messageData, StorageService } from './Services/StorageService';
+import { SecretManager } from './Managers/SecretManager';
+import { NetworkService } from './Services/NetworkService';
+import log from 'electron-log/main';
+import { DEBUG_MODE } from './config';
+import { NotificationService } from './Services/NotificationService';
 
 function createWindow(): void {
   // Create the browser window.
@@ -32,11 +31,11 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true
     }
-  })
+  });
 
   mainWindow.webContents.on('will-navigate', (event) => {
-    event.preventDefault()
-  })
+    event.preventDefault();
+  });
 
   mainWindow.webContents.on('dom-ready', () => {
     mainWindow.webContents.executeJavaScript(`
@@ -46,50 +45,47 @@ function createWindow(): void {
         e.stopImmediatePropagation();
       }
     }, true);
-  `)
-  })
+  `);
+  });
 
   mainWindow.on('app-command', (e, cmd) => {
     if (cmd === 'browser-backward' || cmd === 'browser-forward') {
-      e.preventDefault()
+      e.preventDefault();
     }
-  })
+  });
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+    mainWindow.show();
+  });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+    shell.openExternal(details.url);
+    return { action: 'deny' };
+  });
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 }
-
-
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-
   log.initialize();
 
   NotificationService.showNewFriendNotification('test');
 
   if (DEBUG_MODE) {
-    log.transports.file.level = 'debug'
-    log.transports.console.level = 'debug'
+    log.transports.file.level = 'debug';
+    log.transports.console.level = 'debug';
   } else {
-    log.transports.console.level = 'info'
-    log.transports.console.level = 'info'
+    log.transports.console.level = 'info';
+    log.transports.console.level = 'info';
   }
 
   log.errorHandler.startCatching();
@@ -99,144 +95,143 @@ app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.gluechat.app');
   app.name = 'GlueChat';
 
-
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+    optimizer.watchWindowShortcuts(window);
+  });
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.on('ping', () => console.log('pong'));
 
-  createWindow()
+  createWindow();
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
 
-  log.info("GlueChat started")
-})
+  log.info('GlueChat started');
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit()
+    app.quit();
   }
-})
+});
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-
-ipcMain.handle("get-refresh-token", async (_, accountName: string) => {
-  return await keytar.getPassword("gluechat", accountName);
+ipcMain.handle('get-refresh-token', async (_, accountName: string) => {
+  return await keytar.getPassword('gluechat', accountName);
 });
 
-ipcMain.handle("set-refresh-token", async (_, accountName: string, token: string) => {
-  return await keytar.setPassword("gluechat", accountName, token);
+ipcMain.handle('set-refresh-token', async (_, accountName: string, token: string) => {
+  return await keytar.setPassword('gluechat', accountName, token);
 });
 
 ipcMain.handle('new-message-notification', async (_, accountName: string) => {
   NotificationService.showNewMessageNotification(accountName);
-})
-
-ipcMain.handle("delete-refresh-token", async (_, accountName: string) => {
-  return await keytar.deletePassword("gluechat", accountName);
 });
 
-ipcMain.handle("generate-opk", async (_, qty: number, accountName: string , deviceId : string) => {
-  const prefix = `device-${deviceId}`
-  const opk: oneTimeKey[] = await CryptoCore.generateOneTimeKeys(qty,accountName,prefix);
+ipcMain.handle('delete-refresh-token', async (_, accountName: string) => {
+  return await keytar.deletePassword('gluechat', accountName);
+});
+
+ipcMain.handle('generate-opk', async (_, qty: number, accountName: string, deviceId: string) => {
+  const prefix = `device-${deviceId}`;
+  const opk: oneTimeKey[] = await CryptoCore.generateOneTimeKeys(qty, accountName, prefix);
   return JSON.stringify(opk);
-})
+});
 
-ipcMain.handle("generate-xwing-pair-keys", async (_, accountName: string, tempToken: string, forceReset: boolean) : Promise<void> => {
- try {
-   const deviceId: string = await StorageService.generateDeviceId();
-   const prefix = `device-${deviceId}`;
-   const exists: string | null = await SecretManager.getSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`);
+ipcMain.handle('generate-xwing-pair-keys', async (_, accountName: string, tempToken: string, forceReset: boolean): Promise<void> => {
+  try {
+    const deviceId: string = await StorageService.generateDeviceId();
+    const prefix = `device-${deviceId}`;
+    const exists: string | null = await SecretManager.getSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`);
 
-   if (exists && !forceReset) {
-     return;
-   } else {
-     await SecretManager.resetAllSecrets(accountName);
-   }
+    if (exists && !forceReset) {
+      return;
+    } else {
+      await SecretManager.resetAllSecrets(accountName);
+    }
 
-   // Generates Keys
+    // Generates Keys
 
-   const identityKP: KeyPair = CryptoCore.generateSignKeyPair(); // Identity Key Pair
-   const identityPubKey: string = Buffer.from(identityKP.publicKey).toString('base64');
-   const identityKey: string = Buffer.from(identityKP.secretKey).toString('base64');
+    const identityKP: KeyPair = CryptoCore.generateSignKeyPair(); // Identity Key Pair
+    const identityPubKey: string = Buffer.from(identityKP.publicKey).toString('base64');
+    const identityKey: string = Buffer.from(identityKP.secretKey).toString('base64');
 
-   const spkKP: KeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
-   const spkPubKey: string = Buffer.from(spkKP.publicKey).toString('base64');
-   const spkKey: string = Buffer.from(spkKP.secretKey).toString('base64') ;
+    const spkKP: KeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
+    const spkPubKey: string = Buffer.from(spkKP.publicKey).toString('base64');
+    const spkKey: string = Buffer.from(spkKP.secretKey).toString('base64');
 
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`, identityKey);
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityPubKey`, identityPubKey);
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPrivateKey`, spkKey);
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPubKey`, spkPubKey);
 
-   await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`, identityKey)
-   await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityPubKey`, identityPubKey)
-   await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPrivateKey`, spkKey)
-   await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPubKey`, spkPubKey)
+    const signature: string = Buffer.from(CryptoCore.sign(spkKP.publicKey, identityKP.secretKey)).toString('base64');
 
-   const signature: string = Buffer.from(CryptoCore.sign(spkKP.publicKey, identityKP.secretKey)).toString('base64');
+    const oneTimeKeys: oneTimeKey[] = await CryptoCore.generateOneTimeKeys(25, accountName, prefix);
 
+    const data = {
+      identityPubKey: identityPubKey,
+      spkPubKey: spkPubKey,
+      signature: signature,
+      oneTimeKeys: oneTimeKeys
+    };
 
-   const oneTimeKeys : oneTimeKey[] = await CryptoCore.generateOneTimeKeys(25,accountName,prefix);
-
-   const data = {
-     identityPubKey: identityPubKey,
-     spkPubKey: spkPubKey,
-     signature: signature,
-     oneTimeKeys: oneTimeKeys
-   }
-
-   const keys : string = JSON.stringify(data);
-   await NetworkService.registerDevice(accountName,deviceId,keys, tempToken);
- } catch (e) {
-   log.error("Failed to register this deviceID. Clearing keys...", e);
-   await SecretManager.resetAllSecrets(accountName);
-   throw e;
- }
-})
-
-ipcMain.handle('initializeEncryptMessage', async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => {
-    const data = await ProtocolService.initializeEncrypt(authKey, content, roomID, senderID, receiverID, accountName)
-    return data
+    const keys: string = JSON.stringify(data);
+    await NetworkService.registerDevice(accountName, deviceId, keys, tempToken);
+  } catch (e) {
+    log.error('Failed to register this deviceID. Clearing keys...', e);
+    await SecretManager.resetAllSecrets(accountName);
+    throw e;
   }
-)
+});
+
+ipcMain.handle(
+  'initializeEncryptMessage',
+  async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => {
+    const data = await ProtocolService.initializeEncrypt(authKey, content, roomID, senderID, receiverID, accountName);
+    return data;
+  }
+);
 
 ipcMain.handle('getDevice', async () => {
   return await StorageService.generateDeviceId();
-})
+});
 
 ipcMain.handle('closeApp', async () => {
   app.quit();
-})
-
+});
 
 ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string, accountID) => {
-  return await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName,accountID)
-})
+  return await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName, accountID);
+});
 
-ipcMain.handle('saveMessage', async (_,roomID: string, senderID: string, messageData  : messageData, nonce : string, chatName : string, accountName : string) => {
-  return await StorageService.saveMessage(roomID, senderID, messageData, nonce, chatName, accountName);
-})
+ipcMain.handle(
+  'saveMessage',
+  async (_, roomID: string, senderID: string, messageData: messageData, nonce: string, chatName: string, accountName: string) => {
+    return await StorageService.saveMessage(roomID, senderID, messageData, nonce, chatName, accountName);
+  }
+);
 
 ipcMain.handle('getMessages', async (_, roomID: string, accountName: string) => {
   return await StorageService.getHistory(roomID, accountName);
-})
+});
 
 ipcMain.handle('getLastMessage', async (_, roomID: ChatInfo, accountName: string) => {
   return await StorageService.getLastMessage(roomID, accountName);
-})
+});
 
 ipcMain.handle('removeLocalKeys', async (_, accountName: string) => {
   return await StorageService.removeLocalKeys(accountName);
-})
-
+});

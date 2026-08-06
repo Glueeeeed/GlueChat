@@ -1,42 +1,48 @@
-import keytar from 'keytar'
-import { randomBytes } from '@noble/post-quantum/utils.js'
-import { SecretManager } from '../Managers/SecretManager'
-import { HistoryManager } from '../Managers/HistoryManager'
+import keytar from 'keytar';
+import { randomBytes } from '@noble/post-quantum/utils.js';
+import { SecretManager } from '../Managers/SecretManager';
+import { HistoryManager } from '../Managers/HistoryManager';
 
 export interface SessionState {
-  rootKey: Uint8Array
-  messageKey?: Uint8Array
-  salt?: Uint8Array
-  opkId?: string
-  capsule?: string
-  alicePrivateKey?: Uint8Array
-  bobPublicKey?: Uint8Array
-  sendCounter?: number
-  lastSenderID?: string
+  rootKey: Uint8Array;
+  messageKey?: Uint8Array;
+  salt?: Uint8Array;
+  opkId?: string;
+  capsule?: string;
+  alicePrivateKey?: Uint8Array;
+  bobPublicKey?: Uint8Array;
+  sendCounter?: number;
+  lastSenderID?: string;
 }
 
 export interface messageData {
-  id: string,
-  sender: string,
-  content: string,
-  timestamp: string,
-  isAuthor: boolean,
-  isSeen: boolean
+  id: string;
+  sender: string;
+  content: string;
+  timestamp: string;
+  isAuthor: boolean;
+  isSeen: boolean;
 }
 
 export interface ChatInfo {
-  id: string
-  name: string
-  status: 'online' | 'offline'
-  unread: boolean
-  unreadCount: number
-  senderID: string
-  receiverID: string
+  id: string;
+  name: string;
+  status: 'online' | 'offline';
+  unread: boolean;
+  unreadCount: number;
+  senderID: string;
+  receiverID: string;
 }
 
-
 export abstract class StorageService {
-  static async saveMessage(roomID: string, senderID: string, messageData: messageData, nonce: string, chatName: string, accountName: string): Promise<void> {
+  static async saveMessage(
+    roomID: string,
+    senderID: string,
+    messageData: messageData,
+    nonce: string,
+    chatName: string,
+    accountName: string
+  ): Promise<void> {
     return HistoryManager.saveMessage(roomID, senderID, messageData, nonce, chatName, accountName);
   }
 
@@ -100,15 +106,15 @@ export abstract class StorageService {
     return deviceId;
   }
 
-  private static async checkIfDeviceExists(): Promise<string | null> {
-    return await keytar.getPassword('gluechat_device', 'id');
-  }
-
   static async removeLocalKeys(accountName: string): Promise<void> {
     await SecretManager.resetAllSecrets(accountName);
     await HistoryManager.resetAllHistory(accountName);
-    await keytar.deletePassword('gluechat', accountName)
+    await keytar.deletePassword('gluechat', accountName);
     await keytar.deletePassword('Gluechat', 'local_storage_key');
     await keytar.deletePassword('Gluechat', 'local_secret_key');
+  }
+
+  private static async checkIfDeviceExists(): Promise<string | null> {
+    return await keytar.getPassword('gluechat_device', 'id');
   }
 }

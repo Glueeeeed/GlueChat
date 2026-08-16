@@ -179,6 +179,7 @@ abstract class ProtocolService {
   }
 
   private static wipeBytes(...buffers: (Uint8Array | null | undefined)[]): void {
+    log.debug('Wiping keys from RAM...')
     for (const buf of buffers) {
       if (buf && buf.length > 0) {
         buf.fill(0);
@@ -234,6 +235,7 @@ abstract class ProtocolService {
 
     const identityKey = await NetworkService.getIdentityKey(authKey, deviceId, receiverID);
     if (!preKey.signature || !preKey.spk || !preKey.opk || !identityKey) {
+      log.debug("Prekey signature: " + !!preKey.signature + "SPK: " + !!preKey.spk + "OPK: " + !!preKey.opk + "Identity key: " + !!identityKey);
       throw new Error(`PreKey payload incomplete for device: ${deviceId}`);
     }
 
@@ -249,6 +251,7 @@ abstract class ProtocolService {
     const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKey.spk, 'base64'));
     const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKey.opk, 'base64'));
 
+    log.debug('Generating root key and saving to DB.');
     const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
     this.wipeBytes(ssSPK, ssOPK);
 
@@ -268,6 +271,9 @@ abstract class ProtocolService {
       lastSenderID: senderID
     };
     await StorageService.saveSession(JSON.stringify(dataToSave), accountName, combinedMapKey);
+    log.debug('Saved session to DB.');
+    log.debug(`PQ KEM Handshake for device ${deviceId} ended. `);
+
 
     return { session, capsuleStr };
   }
@@ -279,12 +285,14 @@ abstract class ProtocolService {
     nextRootKey: Uint8Array;
     messageKey: Uint8Array;
   } {
+    log.debug(`Deriving symmetric key for session: ${session.sendCounter}`);
     const infoMessage: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(`MESSAGE_KEY_${roomID}_${session.sendCounter}`);
     const infoNextRoot: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(`NEXT_ROOT_KEY_${roomID}_${session.sendCounter}`);
 
     const messageKey: Uint8Array<ArrayBufferLike> = hkdf(sha256, session.rootKey, new Uint8Array(32), infoMessage, 32);
     const nextRootKey: Uint8Array<ArrayBufferLike> = hkdf(sha256, session.rootKey, new Uint8Array(32), infoNextRoot, 32);
 
+    log.debug('Symmetric step ended.')
     return { nextRootKey, messageKey };
   }
 }

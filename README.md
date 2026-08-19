@@ -161,8 +161,8 @@ GlueChat is currently in the **Beta** phase.
 *Creator & Lead Architect of GlueChat*
 
 - 🐙 GitHub: [@Glueeed](https://github.com/glueeeeed)
-- 🌐 Website: [portfolio](https://glueeed.dev)
-- 👨‍💻 Contact: [official Gluechat Discord](https://discord.gg/5HZVxES5b)
+- 🌐 Website: [GlueChat Website](https://app.gluechat.dev)
+- 👨‍💻 Contact: [Official Gluechat Discord](https://discord.gg/5HZVxES5b)
 
 ---
 

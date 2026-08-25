@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useQuery} from '@tanstack/react-query'
 import {useQueryClient} from '@tanstack/react-query'
-import {initAuthToken, WEBSOCKET_URL } from '@renderer/assets/utils'
+import {initAuthToken } from '@renderer/assets/utils'
 import {ChatBar} from "@renderer/components/app/ChatBar";
 import {FriendsList} from "@renderer/components/friends/FriendsList";
 import {AddFriend} from "@renderer/components/friends/AddFriend";
@@ -102,9 +102,6 @@ export function App(): React.JSX.Element {
 
 
   useEffect(() => {
-    if (Notification.permission === 'default') {
-      Notification.requestPermission()
-    }
     checkIfUpdate()
   }, [])
 
@@ -112,45 +109,27 @@ export function App(): React.JSX.Element {
     if (authToken) {
       checkIfDeviceIsRegistered(authToken, deviceId as string, currentNickname as string);
       const decodedToken : any = jwtDecode(authToken);
-      const ws = new WebSocket(`${WEBSOCKET_URL}/api/ws`);
+      window.network.ws.authenticate(decodedToken.id, deviceId as string);
       generateOpkKeys(authToken,deviceId as string, currentNickname as string);
-
-      ws.onopen = () => {
-        ws.send(
-          JSON.stringify({
-            type: 'authenticate',
-            payload: { userID: decodedToken.id, deviceId: deviceId }
-          })
-        )
-      }
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-
-        if (data.type === 'status-change') {
-          setFriends((prev) =>
-            prev.map((f) =>
-              f.id === data.payload.userID ? { ...f, status: data.payload.status } : f
-            )
-          )
-        }
-
-
-        if (data.type === 'receive-message') {
-          if (!document.hasFocus()) {
-            log.info('Received message');
-            window.notify.newMessage(data.message);
-          }
-          queryClient.invalidateQueries({ queryKey: ['chats'] })
-        }
-
-        if (data.type === 'PROFILE_UPDATED') {
-          queryClient.invalidateQueries({ queryKey: ['friends'] })
-          queryClient.invalidateQueries({ queryKey: ['chats'] })
-        }
-      }
     }
   }, [authToken])
+
+
+  useEffect(() => {
+    const removeStatusListener = window.network.ws.onStatusChange((data) => {
+      setFriends((prev) => prev.map((f) => (f.id === data.payload.userID ? { ...f, status: data.payload.status } : f)));
+    });
+
+    const removeProfileUpdatedListener = window.network.ws.onProfileUpdated(() => {
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    });
+
+    return () => {
+      removeStatusListener();
+      removeProfileUpdatedListener();
+    };
+  }, [queryClient]);
 
   return (
     <div className="flex h-screen w-full bg-gray-950 text-gray-100 overflow-hidden">

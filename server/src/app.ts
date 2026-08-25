@@ -15,6 +15,7 @@ import {profile} from "./modules/profile";
 import {gluechat} from "./modules/app";
 import {account} from "./modules/account";
 import {Logger} from "./utils/logger";
+import {panelApi} from "./modules/apis/panel-api";
 
 export const activeConnections = new Map<string, Map<string, Set<any>>>();
 
@@ -36,6 +37,7 @@ app.use(staticPlugin({
     .use(profile)
     .use(gluechat)
     .use(account)
+    .use(panelApi)
     .ws('/ws', {
         body: t.Object({
             type: t.String(),

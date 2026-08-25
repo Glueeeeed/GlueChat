@@ -54,3 +54,33 @@ contextBridge.exposeInMainWorld('e2ee', {
 })
 
 
+contextBridge.exposeInMainWorld('network', {
+  ws: {
+    sendMessage: (data: any) => ipcRenderer.send('ws:send-message', data),
+    joinRoom: (roomId: string) => ipcRenderer.send('ws:join-room', roomId),
+    authenticate: (userId: string, deviceId: string) => ipcRenderer.send('ws:authenticate', userId, deviceId),
+
+    onMessage: (callback: (data: any) => void) => {
+      const handler = (_event: any, data: any) => callback(data);
+      ipcRenderer.on('ws:receive-message', handler);
+
+      return () => ipcRenderer.removeListener('ws:receive-message', handler);
+    },
+
+    onStatusChange: (callback: (data: any) => void) => {
+      const handler = (_event: any, data: any) => callback(data);
+      ipcRenderer.on('ws:status-change', handler);
+
+      return () => ipcRenderer.removeListener('ws:status-change', handler);
+    },
+
+    onProfileUpdated: (callback: (data: any) => void) => {
+      const handler = (_event: any, data: any) => callback(data);
+      ipcRenderer.on('ws:profile-updated', handler);
+
+      return () => ipcRenderer.removeListener('ws:profile-updated', handler);
+    }
+  }
+});
+
+

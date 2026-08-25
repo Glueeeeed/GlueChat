@@ -29,12 +29,11 @@ interface ChatViewProps {
 
 export function ChatView({senderID, authKey, chatID, chatName, receiverID, deviceId}: ChatViewProps) : React.JSX.Element {
   const [messages, setMessages] = useState<Message[]>([]);
-  const socketRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [avatarURL, setAvatarURL] = useState<string | null>(null);
 
   const scrollToBottom = () : void => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
   }
 
   useEffect(() => {
@@ -128,35 +127,25 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
 
      syncOfflineMessages();
 
-    const ws = new WebSocket(`${WEBSOCKET_URL}/api/ws`)
-    socketRef.current = ws;
+    window.network.ws.joinRoom(chatID);
+  }, [chatID, chatName, authKey, senderID, receiverID, deviceId]);
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify({
-        type: 'join-chat',
-        chatID: chatID,
-        payload: {}
-      }));
+  useEffect(() => {
+    const removeListener  =   window.network.ws.onMessage(async (data)  => {
+      for (const message of data.payload) {
+        try {
 
-    };
+          if (data?.type !== 'receive-message' || !Array.isArray(data.payload)) {
+            return;
+          }
 
-    ws.onmessage = async (event ) => {
-      const data = JSON.parse(event.data);
-
-      if (data.type === 'messages-seen') {
-        setMessages((prev) => prev.map((msg) => (msg.isAuthor ? { ...msg, isSeen: true } : msg)))
-      }
-
-      if (data.type === 'receive-message') {
-
-        for (const message of data.payload) {
           if (message.deviceId !== deviceId) continue;
-          const currentNickname : string = localStorage.getItem('nickname') || 'User';
-          const decryptedText : string | null = await window.e2ee.decryptMessage(message,currentNickname, senderID);
+          const currentNickname: string = localStorage.getItem('nickname') || 'User';
+          const decryptedText: string | null = await window.e2ee.decryptMessage(message, currentNickname, senderID);
           if (decryptedText) {
             await makeAsRead(authKey, message.nonce);
-            setMessages((prev : Message[]) : Message[] => {
-              if (prev.some((m : Message) : boolean => m.id === message.id)) return prev
+            setMessages((prev: Message[]): Message[] => {
+              if (prev.some((m: Message): boolean => m.id === message.id)) return prev;
               return [
                 ...prev,
                 {
@@ -167,8 +156,8 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
                   isAuthor: false,
                   isSeen: false
                 }
-              ]
-            })
+              ];
+            });
 
             const messageData = {
               id: Date.now().toString(),
@@ -177,16 +166,21 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               isAuthor: false,
               isSeen: false
-            }
+            };
 
             await window.e2ee.saveMessage(chatID, message.senderID, messageData, message.nonce, chatName, currentNickname);
           }
+
+
+
+        } catch (e) {
+           log.error("Failed to decrypt message", e);
         }
       }
-    };
+    });
 
-    return () => ws.close();
-  }, [chatID, chatName, authKey, senderID, receiverID, deviceId]);
+    return () => removeListener();
+  }, []);
 
 
 
@@ -197,14 +191,10 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
         const currentNickname : string = localStorage.getItem('nickname') || 'User';
         const result : string | null = await window.e2ee.initializeEncryptMessage(authToken, message, chatID, senderID, receiverID as string, currentNickname);
 
-        if (result && socketRef.current?.readyState === WebSocket.OPEN) {
+        if (result) {
           const currentNickname : string  = localStorage.getItem('nickname') || 'User'
 
-          socketRef.current.send(JSON.stringify({
-            type: 'send-message',
-            chatID: chatID,
-            payload: result
-          }));
+          window.network.ws.sendMessage(result);
 
           const messageData = {
             id: Date.now().toString(),

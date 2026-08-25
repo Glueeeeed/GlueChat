@@ -5,6 +5,16 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: unknown
+    network: {
+      ws: {
+        sendMessage: (data: any) => void;
+        joinRoom: (roomId: string) => void;
+        authenticate: (userId: string, deviceId: string) => void;
+        onMessage: (callback: (data: any) => void) => () => void;
+        onStatusChange: (callback: (data: any) => void) => () => void;
+        onProfileUpdated: (callback: (data: any) => void) => () => void;
+      }
+    };
     notify: {
       newMessage: (accountName: string) => void;
     }

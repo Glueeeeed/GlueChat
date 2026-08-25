@@ -1,4 +1,6 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+import { app, BrowserWindow, ipcMain, shell, Tray, Menu } from 'electron';
 import path, { join } from 'path';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../build/icon.png?asset';
@@ -9,8 +11,8 @@ import { ChatInfo, messageData, StorageService } from './Services/StorageService
 import { SecretManager } from './Managers/SecretManager';
 import { NetworkService } from './Services/NetworkService';
 import log from 'electron-log/main';
-import { DEBUG_MODE } from './config';
 import { NotificationService } from './Services/NotificationService';
+
 
 function createWindow(): void {
   // Create the browser window.
@@ -63,6 +65,26 @@ function createWindow(): void {
     return { action: 'deny' };
   });
 
+  mainWindow.on('close', (event) => {
+    event.preventDefault();
+    mainWindow.hide();
+  });
+
+  let tray: Tray | null = null;
+
+  tray = new Tray(path.join(__dirname, '../../resources/tray-icon.png'));
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Open', click: () => mainWindow.show() },
+    { label: 'Quit', click: () => app.quit() }
+  ]);
+
+  tray.setToolTip('GlueChat');
+  tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    mainWindow.show();
+  });
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -75,12 +97,15 @@ function createWindow(): void {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
+
+
+
 app.whenReady().then(() => {
   log.initialize();
 
   NotificationService.showNewFriendNotification('test');
 
-  if (DEBUG_MODE) {
+  if (process.env.VITE_APP_DEBUG_MODE) {
     log.transports.file.level = 'debug';
     log.transports.console.level = 'debug';
   } else {
@@ -114,7 +139,12 @@ app.whenReady().then(() => {
   });
 
   log.info('GlueChat started');
+  log.debug('Debug mode enabled');
+
+
 });
+
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

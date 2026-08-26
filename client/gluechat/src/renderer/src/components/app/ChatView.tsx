@@ -6,7 +6,6 @@ import {validateOrRefreshToken} from "@renderer/assets/main";
 import {syncMessages, makeAsRead} from '@renderer/assets/e2ee'
 import { checkIfAssetExists } from '@renderer/assets/profile'
 import log from 'electron-log'
-import { WEBSOCKET_URL } from '@renderer/assets/utils'
 
 
 interface Message {

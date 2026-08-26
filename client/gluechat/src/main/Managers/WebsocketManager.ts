@@ -19,6 +19,9 @@ export class WebsocketManager {
       log.error('Server URL is not defined.');
       return;
     }
+
+    log.debug('Connecting to WebSocket server:', this.url);
+
     this.ws = new WebSocket(this.url as string);
 
     this.ws.on('open', () : void => {

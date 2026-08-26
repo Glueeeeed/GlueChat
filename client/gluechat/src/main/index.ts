@@ -12,7 +12,9 @@ import { SecretManager } from './Managers/SecretManager';
 import { NetworkService } from './Services/NetworkService';
 import log from 'electron-log/main';
 import { NotificationService } from './Services/NotificationService';
+import { WebsocketManager } from './Managers/WebsocketManager';
 
+let websocket : any = null;
 
 function createWindow(): void {
   // Create the browser window.
@@ -37,7 +39,9 @@ function createWindow(): void {
 
   mainWindow.webContents.on('will-navigate', (event) => {
     event.preventDefault();
-  });
+  })
+
+
 
   mainWindow.webContents.on('dom-ready', () => {
     mainWindow.webContents.executeJavaScript(`
@@ -74,6 +78,7 @@ function createWindow(): void {
     event.preventDefault();
     mainWindow.hide();
   });
+  websocket = new WebsocketManager(mainWindow);
 
   let tray: Tray | null = null;
 

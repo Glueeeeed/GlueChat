@@ -66,7 +66,6 @@ export abstract class SecretManager {
 
     const userDataPath = app.getPath('userData');
     const dbPath = path.join(userDataPath, `${accountName}_secrets.db`);
-    log.debug(`dbPath: ${dbPath}`);
 
     const db = new Database(dbPath);
 

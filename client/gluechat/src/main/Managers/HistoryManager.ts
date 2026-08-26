@@ -29,7 +29,6 @@ export abstract class HistoryManager {
 
     const userDataPath: string = app.getPath('userData');
     const dbPath: string = path.join(userDataPath, `${accountName}_history.db`);
-    log.debug(`dbPath: ${dbPath}`);
 
     const db = new Database(dbPath);
 

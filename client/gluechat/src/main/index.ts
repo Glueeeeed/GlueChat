@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: path.join(__dirname, '../../.env') });
-import { app, BrowserWindow, ipcMain, shell, Tray, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage } from 'electron';
 import path, { join } from 'path';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../build/icon.png?asset';
@@ -66,6 +66,11 @@ function createWindow(): void {
   });
 
   mainWindow.on('close', (event) => {
+
+    if (process.platform === 'darwin') {
+      app.quit();
+      return;
+    }
     event.preventDefault();
     mainWindow.hide();
   });

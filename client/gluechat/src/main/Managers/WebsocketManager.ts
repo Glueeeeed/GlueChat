@@ -83,13 +83,20 @@ export class WebsocketManager {
 
   private initIpcListeners() : void {
     ipcMain.on('ws:send-message', (_event, messageData) => {
-
       if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({
-          type: 'send-message',
-          chatID: messageData.roomID,
-          payload: messageData
-        }));
+        const chatID = messageData.roomID || messageData.chatID;
+
+        log.debug('Sending message over WS to chat:', chatID, messageData);
+
+        this.ws.send(
+          JSON.stringify({
+            type: 'send-message',
+            chatID: chatID,
+            payload: messageData
+          })
+        );
+      } else {
+        log.error('Cannot send WS message, socket connection is not OPEN.');
       }
     });
 

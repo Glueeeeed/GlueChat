@@ -88,13 +88,6 @@ app.use(staticPlugin({
 
             if (data.type === 'send-message') {
                 MessageHandler.sendMessage(data.chatID as string, data.payload).then(result => {
-                    const conns = activeConnections.get(data.payload.receiverId);
-                    if (conns) {
-                        conns.forEach(conn => conn.send({
-                            type: 'receive-message',
-                            payload: {name: data.payload.accountName},
-                        }))
-                    }
                     ws.publish(data.chatID, {
                         type: 'receive-message',
                         payload: data.payload,
@@ -120,22 +113,42 @@ app.use(staticPlugin({
             }
         },
          async close(ws : any) {
-            if (ws.data.userID &&  activeConnections.has(ws.data.userID)) {
-                const conns = activeConnections.get(ws.data.userID);
-                conns?.delete(ws.data.userID);
+            const userID = ws.data?.userID;
+            const deviceId = ws.data?.deviceId;
 
-                const friends = await FriendsService.getAllFriend(ws.data.userID);
-                friends.forEach(friend => {
-                    const friendConns = activeConnections.get(friend.id);
-                    if (friendConns) {
-                        friendConns.forEach(conn => conn.send({
-                            type: 'status-change',
-                            payload: {userID: ws.data.userID, status: 'offline'},
-                        }))
-                    }
-                })
-                activeConnections.delete(ws.data.userID);
+            if (!userID || !activeConnections.has(userID)) return;
+
+            const userConns = activeConnections.get(userID)!;
+            const deviceSet = userConns.get(deviceId)!;
+
+            if (deviceSet) {
+                deviceSet.delete(ws);
+                if (deviceSet.size === 0) {
+                    userConns.delete(deviceId);
+                }
             }
+
+            if (deviceSet.size === 0) {
+                activeConnections.delete(userID);
+            }
+
+            if (!activeConnections.has(userID)) {
+                const friends = await FriendsService.getAllFriend(userID);
+                for (const friend of friends) {
+                    const friendsConns = activeConnections.get(friend.id);
+                    if (friendsConns) {
+                        for (const deviceMap of friendsConns.values()) {
+                            for (const conn of deviceMap) {
+                                conn.send({
+                                    type: 'status-change',
+                                    payload: {userID, status: 'offline'},
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+
         }
     })
     .onError(({ code, error, set }) => {

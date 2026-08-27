@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: path.join(__dirname, '../../.env') });
-import { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage,  } from 'electron';
 import path, { join } from 'path';
-import { electronApp, is, optimizer } from '@electron-toolkit/utils';
+import { is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../build/icon.png?asset';
 import keytar from 'keytar';
 import ProtocolService from './Services/ProtocolService';
@@ -13,6 +13,11 @@ import { NetworkService } from './Services/NetworkService';
 import log from 'electron-log/main';
 import { NotificationService } from './Services/NotificationService';
 import { WebsocketManager } from './Managers/WebsocketManager';
+
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.gluechat.app');
+}
+app.name = 'GlueChat';
 
 let websocket: any = null;
 let mainWindow: BrowserWindow | null = null;
@@ -42,8 +47,6 @@ function createWindow(): void {
   mainWindow.webContents.on('will-navigate', (event) => {
     event.preventDefault();
   });
-
-
 
   mainWindow.webContents.on('dom-ready', () => {
     mainWindow?.webContents.executeJavaScript(`
@@ -75,7 +78,7 @@ function createWindow(): void {
     if (!isQuitting) {
       event.preventDefault();
       if (process.platform === 'win32') {
-        NotificationService.showHideAppToTrayNotification()
+        NotificationService.showHideAppToTrayNotification();
         mainWindow?.hide();
       } else if (process.platform === 'darwin') {
         app.hide();
@@ -128,7 +131,7 @@ function initWindowsTray(): void {
   }
 }
 
-function restoreWindow(): void {
+export function restoreWindow(): void {
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.show();
@@ -139,7 +142,6 @@ function restoreWindow(): void {
 app.whenReady().then(() => {
   log.initialize();
 
-  NotificationService.showNewFriendNotification('test');
 
   if (process.env.VITE_APP_DEBUG_MODE) {
     log.transports.file.level = 'debug';
@@ -155,8 +157,6 @@ app.whenReady().then(() => {
   if (process.platform === 'linux') {
     app.setDesktopName('gluechat.desktop');
   }
-  electronApp.setAppUserModelId('com.gluechat.app');
-  app.name = 'GlueChat';
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
@@ -165,6 +165,8 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'));
 
   createWindow();
+
+  NotificationService.showNewFriendNotification('test');
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {

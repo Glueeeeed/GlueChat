@@ -9,6 +9,9 @@ export class WebsocketManager {
   private mainWindow: BrowserWindow;
   private url : string | undefined  = process.env.VITE_WEBSOCKET_URL;
 
+  private lastAuth: {userId: string, deviceId: string} | null = null;
+  private joinedRooms: Set<string> = new Set<string>();
+
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
     this.initIpcListeners();
@@ -27,6 +30,24 @@ export class WebsocketManager {
 
     this.ws.on('open', () : void => {
       log.info('Connected to WebSocket server.');
+
+      if (this.lastAuth) {
+        this.ws!.send(JSON.stringify({
+          type: 'authenticate',
+          payload: this.lastAuth
+        }))
+      }
+
+      for (const roomId of this.joinedRooms) {
+        this.ws!.send(JSON.stringify({
+          type: 'join-chat',
+          chatID: roomId,
+          payload: {}
+        }))
+      }
+
+
+
       this.mainWindow.webContents.send('ws:status', 'connected');
     });
 
@@ -37,7 +58,7 @@ export class WebsocketManager {
           log.debug('Received new message:', parsedData);
 
           if (!this.mainWindow.isFocused()) {
-            NotificationService.showNewMessageNotification(parsedData.accountName);
+            NotificationService.showNewMessageNotification(parsedData.payload.accountName);
           }
           this.mainWindow.webContents.send('ws:receive-message', parsedData);
           break;
@@ -74,6 +95,7 @@ export class WebsocketManager {
 
     ipcMain.on('ws:authenticate', (_event, userId: string, deviceId: string) => {
       if (this.ws?.readyState === WebSocket.OPEN) {
+        this.lastAuth = {userId, deviceId};
         this.ws.send(JSON.stringify({
           type: 'authenticate',
           payload: {
@@ -90,6 +112,7 @@ export class WebsocketManager {
 
     ipcMain.on('ws:join-room', (_event, roomId) => {
       if (this.ws?.readyState === WebSocket.OPEN) {
+        this.joinedRooms.add(roomId);
         this.ws.send(JSON.stringify({
           type: 'join-chat',
           chatID: roomId,

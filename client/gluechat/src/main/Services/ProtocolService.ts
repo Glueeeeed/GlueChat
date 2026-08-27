@@ -94,7 +94,7 @@ abstract class ProtocolService {
           roomID,
           senderId: senderID,
           receiverId: receiverID,
-          avatarUrl: `${API_BASE_URL}/api/profile/assets/avatar` + '/' + `${senderID} + ?t=${Date.now()}`,
+          avatarUrl: `${API_BASE_URL}/api/profile/assets/avatar` + '/' + `${senderID}`,
           accountName,
           messageNumber: session.sendCounter as number,
           opkId,

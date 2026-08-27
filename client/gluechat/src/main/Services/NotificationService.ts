@@ -22,31 +22,36 @@ export abstract class NotificationService {
   }
 
   public static async showNewMessageNotification(senderName: string, avatarUrl?: string): Promise<void> {
-    let iconPath: string | undefined;
+    try {
 
-    if (avatarUrl) {
-      if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
-        iconPath = await this.downloadAvatar(avatarUrl);
-      } else if (fs.existsSync(avatarUrl)) {
-        iconPath = avatarUrl;
+      let iconPath: string | undefined;
+
+      if (avatarUrl) {
+        if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+          iconPath = await this.downloadAvatar(avatarUrl);
+        } else if (fs.existsSync(avatarUrl)) {
+          iconPath = avatarUrl;
+        }
       }
-    }
 
-    const icon = iconPath ? true : false;
+      const icon = iconPath ? true : false;
+      log.debug('icon', icon);
 
-    if (icon) {
-      NotificationManager.sendNotificationWithIcon('New Message', `You received new message from ${senderName}`, iconPath as string, false);
-    } else {
-      NotificationManager.sendNotification('New Message', `You received new message from ${senderName}`, false);
-    }
+      if (icon) {
+        NotificationManager.sendNotificationWithIcon('New Message', `You received new message from ${senderName}`, iconPath as string, false);
+      } else {
+        NotificationManager.sendNotification('New Message', `You received new message from ${senderName}`, false);
+      }
+
+      if (iconPath && iconPath.includes(app.getPath('temp'))) {
+        setTimeout(() => {
+          fs.unlink(iconPath!, () => {});
+        }, 10000);
+      }
 
 
-
-
-    if (iconPath && iconPath.includes(app.getPath('temp'))) {
-      setTimeout(() => {
-        fs.unlink(iconPath!, () => {});
-      }, 10000);
+    } catch (error) {
+      log.error('Failed to get notification avatar:', error);
     }
   }
 

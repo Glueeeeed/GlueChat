@@ -6,6 +6,7 @@ import {validateOrRefreshToken} from "@renderer/assets/main";
 import {syncMessages, makeAsRead} from '@renderer/assets/e2ee'
 import { checkIfAssetExists } from '@renderer/assets/profile'
 import log from 'electron-log'
+import { useQueryClient } from '@tanstack/react-query';
 
 
 interface Message {
@@ -35,7 +36,11 @@ export function ChatView({senderID, authKey, chatID, chatName, receiverID, devic
     messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
   }
 
+  const queryClient = useQueryClient();
+
+
   useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['chats'] });
     scrollToBottom()
   }, [messages])
 

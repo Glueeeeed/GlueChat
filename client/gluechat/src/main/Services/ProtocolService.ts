@@ -4,11 +4,13 @@ import { CryptoCore, EncryptedData } from './CryptoCore';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import log from 'electron-log/main';
+import { API_BASE_URL } from '../config';
 
 export interface PkgStructure {
   deviceId: string;
   roomID: string;
   senderId: string;
+  avatarUrl: string;
   receiverId: string;
   accountName: string;
   messageNumber: number;
@@ -92,6 +94,7 @@ abstract class ProtocolService {
           roomID,
           senderId: senderID,
           receiverId: receiverID,
+          avatarUrl: `${API_BASE_URL}/api/profile/assets/\` + assetType + '/' + userId + \`?t=${Date.now()}\``,
           accountName,
           messageNumber: session.sendCounter as number,
           opkId,

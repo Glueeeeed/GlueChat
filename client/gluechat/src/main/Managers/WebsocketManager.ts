@@ -58,7 +58,7 @@ export class WebsocketManager {
           log.debug('Received new message:', parsedData);
 
           if (!this.mainWindow.isFocused()) {
-            NotificationService.showNewMessageNotification(parsedData.payload.accountName);
+            NotificationService.showNewMessageNotification(parsedData.payload[0].accountName, parsedData.payload[0].avatarUrl);
           }
           this.mainWindow.webContents.send('ws:receive-message', parsedData);
           break;

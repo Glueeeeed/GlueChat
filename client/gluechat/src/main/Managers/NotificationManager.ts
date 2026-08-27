@@ -8,4 +8,12 @@ export abstract class NotificationManager {
       silent: silent
     }).show();
   }
+  static sendNotificationWithIcon(title: string, message: string, icon: string, silent: boolean): void {
+    new Notification({
+      title: title,
+      body: message,
+      icon: icon,
+      silent: silent
+    })
+  }
 }

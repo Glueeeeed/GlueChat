@@ -95,14 +95,17 @@ export class WebsocketManager {
 
     ipcMain.on('ws:authenticate', (_event, userId: string, deviceId: string) => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        this.lastAuth = {userId, deviceId};
-        this.ws.send(JSON.stringify({
-          type: 'authenticate',
-          payload: {
-            userID: userId,
-            deviceId
-          }
-        }));
+        this.lastAuth = { userId, deviceId };
+
+        this.ws.send(
+          JSON.stringify({
+            type: 'authenticate',
+            payload: {
+              userID: userId,
+              deviceId: deviceId
+            }
+          })
+        );
       }
 
       setTimeout(() => {

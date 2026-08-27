@@ -143,7 +143,7 @@ app.whenReady().then(() => {
   log.initialize();
 
 
-  if (process.env.VITE_APP_DEBUG_MODE) {
+  if (process.env.VITE_APP_DEBUG_MODE === "true") {
     log.transports.file.level = 'debug';
     log.transports.console.level = 'debug';
   } else {

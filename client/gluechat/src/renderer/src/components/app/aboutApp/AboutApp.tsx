@@ -5,7 +5,7 @@ interface Props {
 }
 
 export function AboutApp({ deviceId }: Props): JSX.Element {
-  const version = '0.2.2 Seleant'
+  const version = '0.3 Gum'
   const author = 'Glueeed'
 
   return (

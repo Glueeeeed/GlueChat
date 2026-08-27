@@ -14,11 +14,13 @@ import log from 'electron-log/main';
 import { NotificationService } from './Services/NotificationService';
 import { WebsocketManager } from './Managers/WebsocketManager';
 
-let websocket : any = null;
+let websocket: any = null;
+let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let isQuitting = false;
 
 function createWindow(): void {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     title: 'GlueChat',
     icon: path.join(__dirname, '../../resources/icon.ico'),
     width: 1000,
@@ -39,19 +41,19 @@ function createWindow(): void {
 
   mainWindow.webContents.on('will-navigate', (event) => {
     event.preventDefault();
-  })
+  });
 
 
 
   mainWindow.webContents.on('dom-ready', () => {
-    mainWindow.webContents.executeJavaScript(`
-    document.addEventListener('mouseup', (e) => {
-      if (e.button === 3 || e.button === 4) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    }, true);
-  `);
+    mainWindow?.webContents.executeJavaScript(`
+      document.addEventListener('mouseup', (e) => {
+        if (e.button === 3 || e.button === 4) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        }
+      }, true);
+    `);
   });
 
   mainWindow.on('app-command', (e, cmd) => {
@@ -61,7 +63,7 @@ function createWindow(): void {
   });
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show();
+    mainWindow?.show();
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -70,33 +72,25 @@ function createWindow(): void {
   });
 
   mainWindow.on('close', (event) => {
-
-    if (process.platform === 'darwin') {
-      app.quit();
-      return;
+    if (!isQuitting) {
+      event.preventDefault();
+      if (process.platform === 'win32') {
+        NotificationService.showHideAppToTrayNotification()
+        mainWindow?.hide();
+      } else if (process.platform === 'darwin') {
+        app.hide();
+      } else {
+        mainWindow?.minimize();
+      }
     }
-    event.preventDefault();
-    mainWindow.hide();
   });
+
   websocket = new WebsocketManager(mainWindow);
 
-  let tray: Tray | null = null;
+  if (process.platform === 'win32') {
+    initWindowsTray();
+  }
 
-  tray = new Tray(path.join(__dirname, '../../resources/tray-icon.png'));
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open', click: () => mainWindow.show() },
-    { label: 'Quit', click: () => app.quit() }
-  ]);
-
-  tray.setToolTip('GlueChat');
-  tray.setContextMenu(contextMenu);
-
-  tray.on('click', () => {
-    mainWindow.show();
-  });
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
@@ -104,11 +98,43 @@ function createWindow(): void {
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+function initWindowsTray(): void {
+  try {
+    const iconPath = path.join(__dirname, '../../resources/tray-icon.png');
+    const rawIcon = nativeImage.createFromPath(iconPath);
+    tray = new Tray(rawIcon);
 
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Open GlueChat',
+        click: () => restoreWindow()
+      },
+      {
+        label: 'Close',
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        }
+      }
+    ]);
 
+    tray.setToolTip('GlueChat');
+    tray.setContextMenu(contextMenu);
+
+    tray.on('click', () => restoreWindow());
+    tray.on('double-click', () => restoreWindow());
+  } catch (error) {
+    log.error('Cannot create tray:', error);
+  }
+}
+
+function restoreWindow(): void {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  }
+}
 
 app.whenReady().then(() => {
   log.initialize();
@@ -126,47 +152,47 @@ app.whenReady().then(() => {
   log.errorHandler.startCatching();
   log.eventLogger.startLogging();
 
-  // Set app user model id for windows
+  if (process.platform === 'linux') {
+    app.setDesktopName('gluechat.desktop');
+  }
   electronApp.setAppUserModelId('com.gluechat.app');
   app.name = 'GlueChat';
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  // IPC test
   ipcMain.on('ping', () => console.log('pong'));
 
   createWindow();
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    } else {
+      restoreWindow();
+    }
   });
 
   log.info('GlueChat started');
   log.debug('Debug mode enabled');
-
-
 });
 
-
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+app.on('before-quit', () => {
+  isQuitting = true;
+});
+
+// IPC Handlers
+ipcMain.handle('closeApp', async () => {
+  isQuitting = true;
+  app.quit();
+});
 
 ipcMain.handle('get-refresh-token', async (_, accountName: string) => {
   return await keytar.getPassword('gluechat', accountName);
@@ -247,10 +273,6 @@ ipcMain.handle(
 
 ipcMain.handle('getDevice', async () => {
   return await StorageService.generateDeviceId();
-});
-
-ipcMain.handle('closeApp', async () => {
-  app.quit();
 });
 
 ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string, accountID) => {

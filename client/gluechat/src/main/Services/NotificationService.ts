@@ -12,4 +12,8 @@ export abstract class NotificationService {
   static showNewUpdateNotification(version: string): void {
     NotificationManager.sendNotification('New Update Available!', `GlueChat has a new version ${version} `, true);
   }
+
+  static showHideAppToTrayNotification(): void {
+    NotificationManager.sendNotification('GlueChat', 'GlueChat is now running in the background', false);
+  }
 }

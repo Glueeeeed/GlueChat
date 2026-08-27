@@ -2,6 +2,7 @@ import { ipcMain, BrowserWindow } from 'electron';
 import WebSocket from 'ws';
 import log from 'electron-log';
 import { NotificationService } from '../Services/NotificationService';
+import { NotificationManager } from './NotificationManager';
 
 export class WebsocketManager {
   private ws: WebSocket | null = null;
@@ -81,6 +82,10 @@ export class WebsocketManager {
           }
         }));
       }
+
+      setTimeout(() => {
+        NotificationManager.sendNotification('test', 'notification for check runtime process', true);
+      }, 20000)
     });
 
     ipcMain.on('ws:join-room', (_event, roomId) => {

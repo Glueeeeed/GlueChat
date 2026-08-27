@@ -84,7 +84,8 @@ export class WebsocketManager {
   private initIpcListeners() : void {
     ipcMain.on('ws:send-message', (_event, messageData) => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        const chatID = messageData.roomID || messageData.chatID;
+
+        const chatID = messageData[0].roomID;
 
         log.debug('Sending message over WS to chat:', chatID, messageData);
 

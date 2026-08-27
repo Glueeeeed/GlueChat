@@ -8,7 +8,7 @@
 <h1 align="center"> Post-quantum end-to-end encrypted messenger </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-0.2 Seleant-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.3.0 Gum-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-AGPLv3-red?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Post--Quantum-Ready-8A2BE2?style=for-the-badge" alt="Post-Quantum Ready">
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="Typescript">

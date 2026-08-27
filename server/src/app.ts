@@ -1,7 +1,7 @@
-import { Elysia,t } from 'elysia'
+import {Elysia, t} from 'elysia'
 import {MessageHandler} from "./utils/messageHandler";
-import { cors } from '@elysiajs/cors'
-import { staticPlugin } from '@elysiajs/static'
+import {cors} from '@elysiajs/cors'
+import {staticPlugin} from '@elysiajs/static'
 
 
 import {test} from './modules/test'
@@ -41,85 +41,103 @@ app.use(staticPlugin({
     .ws('/ws', {
         body: t.Object({
             type: t.String(),
-            chatID: t.Optional(
-                t.String(),
-            ),
+            chatID: t.Optional(t.String()),
             payload: t.Any()
         }),
-        open() {},
-        async message(ws : any, data) {
-
-
+        open(ws) {
+            ws.data.userID = null;
+            ws.data.deviceId = null;
+        },
+        async message(ws: any, data) {
             if (data.type === 'authenticate') {
-                ws.data.userID = data.payload.userID;
-                ws.data.deviceId = data.payload.deviceId;
+                const userID = data.payload.userID || data.payload.userId;
+                const deviceId = data.payload.deviceId;
 
-                if (!activeConnections.has(ws.data.userID)) {
-                    activeConnections.set(ws.data.userID, new Map());
+                ws.data.userID = userID;
+                ws.data.deviceId = deviceId;
+
+                if (!activeConnections.has(userID)) {
+                    activeConnections.set(userID, new Map());
                 }
 
-                const userConnections = activeConnections.get(ws.data.userID)!;
+                const userConnections = activeConnections.get(userID)!;
 
-                if (!userConnections.has(ws.data.deviceId)) {
-                    userConnections.set(ws.data.deviceId, new Set());
+                if (!userConnections.has(deviceId)) {
+                    userConnections.set(deviceId, new Set());
                 }
 
-                userConnections.get(ws.data.deviceId)?.add(ws);
-                Logger.log(`User ${ws.data.userID} connected on device ${ws.data.deviceId}`);
+                userConnections.get(deviceId)?.add(ws);
+                Logger.log(`User ${userID} connected on device ${deviceId}`);
 
-                const friends = await FriendsService.getAllFriend(ws.data.userID);
+                const friends = await FriendsService.getAllFriend(userID);
                 friends.forEach(friend => {
                     const friendConns = activeConnections.get(friend.id);
                     if (friendConns) {
-                        friendConns.forEach(conn => conn.send({
-                            type: 'status-change',
-                            payload: {userID: ws.data.userID, status: 'online'},
-                        }))
+                        for (const deviceSet of friendConns.values()) {
+                            for (const conn of deviceSet) {
+                                conn.send({
+                                    type: 'status-change',
+                                    payload: {userID, status: 'online'}
+                                });
+                            }
                     }
-                })
-
+                    }
+                });
             }
 
             if (data.type === 'join-chat') {
-                ws.subscribe(data.chatID);
+                Logger.debug('Joined to chat:  ' + `chat-${data.chatID}`)
+                ws.subscribe(`chat-${data.chatID}`);
             }
 
-
-
             if (data.type === 'send-message') {
-                MessageHandler.sendMessage(data.chatID as string, data.payload).then(result => {
-                    ws.publish(data.chatID, {
+                try {
+                    const targetChatID = data.chatID || data.payload?.roomID || data.payload?.chatID;
+
+                    if (!targetChatID) {
+                        Logger.error('Cannot send message: missing chatID');
+                        return;
+                    }
+
+                    const result = await MessageHandler.sendMessage(targetChatID as string, data.payload);
+
+                    const responsePayload = {
                         type: 'receive-message',
                         payload: data.payload,
                         messageID: result
-                    });
-                })
+                    };
+
+                    ws.publish(`chat-${targetChatID}`, responsePayload);
+
+                    Logger.debug(`Message sent to room chat-${targetChatID}`);
+                } catch (err) {
+                    Logger.error(`Error sending message: ${err}`);
+                }
             }
 
             if (data.type === 'mark-as-read') {
-                prisma.message.updateMany({
+                await prisma.message.updateMany({
                     where: {
                         roomID: data.chatID,
                         isSeen: false,
-                        // senderId: { not: data.payload.r }
                     },
-                    data: { isSeen: true }
-                }).then(() => {
-                    ws.publish(data.chatID, {
-                        type: 'messages-seen',
-                        chatID: data.chatID
-                    });
+                    data: {isSeen: true}
+                });
+
+                ws.publish(`chat-${data.chatID}`, {
+                    type: 'messages-seen',
+                    chatID: data.chatID
                 });
             }
         },
-         async close(ws : any) {
+        async close(ws: any) {
             const userID = ws.data?.userID;
             const deviceId = ws.data?.deviceId;
 
             if (!userID || !activeConnections.has(userID)) return;
 
             const userConns = activeConnections.get(userID)!;
-            const deviceSet = userConns.get(deviceId)!;
+            const deviceSet = userConns.get(deviceId);
 
             if (deviceSet) {
                 deviceSet.delete(ws);
@@ -128,11 +146,9 @@ app.use(staticPlugin({
                 }
             }
 
-            if (deviceSet.size === 0) {
+            if (userConns.size === 0) {
                 activeConnections.delete(userID);
-            }
 
-            if (!activeConnections.has(userID)) {
                 const friends = await FriendsService.getAllFriend(userID);
                 for (const friend of friends) {
                     const friendsConns = activeConnections.get(friend.id);
@@ -141,14 +157,13 @@ app.use(staticPlugin({
                             for (const conn of deviceMap) {
                                 conn.send({
                                     type: 'status-change',
-                                    payload: {userID, status: 'offline'},
-                                })
+                                    payload: {userID, status: 'offline'}
+                                });
                             }
                         }
                     }
                 }
             }
-
         }
     })
     .onError(({ code, error, set }) => {

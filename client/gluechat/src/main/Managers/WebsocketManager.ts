@@ -58,7 +58,7 @@ export class WebsocketManager {
           log.debug('Received new message:', parsedData);
 
           if (!this.mainWindow.isFocused()) {
-            NotificationService.showNewMessageNotification(parsedData.payload[0].accountName, parsedData.payload[0].avatarUrl);
+            NotificationService.showNewMessageNotification(parsedData.payload[0].accountName);
           }
           this.mainWindow.webContents.send('ws:receive-message', parsedData);
           break;
@@ -116,9 +116,6 @@ export class WebsocketManager {
         );
       }
 
-      setTimeout(() => {
-        NotificationManager.sendNotification('test', 'notification for check runtime process', true);
-      }, 20000)
     });
 
     ipcMain.on('ws:join-room', (_event, roomId) => {

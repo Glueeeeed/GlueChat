@@ -166,8 +166,6 @@ app.whenReady().then(() => {
 
   createWindow();
 
-  NotificationService.showNewFriendNotification('test');
-
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();

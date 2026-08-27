@@ -4,7 +4,6 @@ import Database from 'better-sqlite3';
 import keytar from 'keytar';
 import { randomBytes } from '@noble/post-quantum/utils.js';
 import { CryptoCore, EncryptedData } from '../Services/CryptoCore';
-import log from 'electron-log';
 
 export abstract class SecretManager {
   private static dbs: Map<string, any> = new Map();

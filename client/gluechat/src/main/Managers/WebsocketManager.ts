@@ -2,7 +2,6 @@ import { ipcMain, BrowserWindow } from 'electron';
 import WebSocket from 'ws';
 import log from 'electron-log';
 import { NotificationService } from '../Services/NotificationService';
-import { NotificationManager } from './NotificationManager';
 
 export class WebsocketManager {
   private ws: WebSocket | null = null;
@@ -19,66 +18,73 @@ export class WebsocketManager {
   }
 
   private connect(): void {
-    if (!this.url) {
-      log.error('Server URL is not defined.');
-      return;
+    try {
+      if (!this.url) {
+        log.error('Server URL is not defined.');
+        return;
+      }
+
+      log.debug('Connecting to WebSocket server:', this.url);
+
+      this.ws = new WebSocket(this.url as string);
+
+      this.ws.on('open', (): void => {
+        log.info('Connected to WebSocket server.');
+
+        if (this.lastAuth) {
+          this.ws!.send(
+            JSON.stringify({
+              type: 'authenticate',
+              payload: this.lastAuth
+            })
+          );
+        }
+
+        for (const roomId of this.joinedRooms) {
+          this.ws!.send(
+            JSON.stringify({
+              type: 'join-chat',
+              chatID: roomId,
+              payload: {}
+            })
+          );
+        }
+
+        this.mainWindow.webContents.send('ws:status', 'connected');
+      });
+
+      this.ws.on('message', (data: string): void => {
+        const parsedData = JSON.parse(data);
+        switch (parsedData.type) {
+          case 'receive-message':
+            log.debug('Received new message:', parsedData);
+
+            if (!this.mainWindow.isFocused()) {
+              NotificationService.showNewMessageNotification(parsedData.payload[0].accountName);
+            }
+            this.mainWindow.webContents.send('ws:receive-message', parsedData);
+            break;
+
+          case 'status-change':
+            log.debug('Received status change:', parsedData);
+            this.mainWindow.webContents.send('ws:status-change', parsedData);
+            break;
+
+          case 'PROFILE_UPDATED':
+            log.debug('Received profile update:', parsedData);
+            this.mainWindow.webContents.send('ws:profile-updated', parsedData);
+            break;
+        }
+      });
+
+      this.ws.on('close', () => {
+        log.info('Disconnected from WebSocket server. Reconnecting in 3 seconds...');
+        setTimeout(() => this.connect(), 3000);
+      });
+    } catch (error) {
+      log.error('Failed to connect to websocket:', error);
     }
 
-    log.debug('Connecting to WebSocket server:', this.url);
-
-    this.ws = new WebSocket(this.url as string);
-
-    this.ws.on('open', () : void => {
-      log.info('Connected to WebSocket server.');
-
-      if (this.lastAuth) {
-        this.ws!.send(JSON.stringify({
-          type: 'authenticate',
-          payload: this.lastAuth
-        }))
-      }
-
-      for (const roomId of this.joinedRooms) {
-        this.ws!.send(JSON.stringify({
-          type: 'join-chat',
-          chatID: roomId,
-          payload: {}
-        }))
-      }
-
-
-
-      this.mainWindow.webContents.send('ws:status', 'connected');
-    });
-
-    this.ws.on('message', (data: string) : void => {
-      const parsedData = JSON.parse(data);
-      switch (parsedData.type) {
-        case 'receive-message':
-          log.debug('Received new message:', parsedData);
-
-          if (!this.mainWindow.isFocused()) {
-            NotificationService.showNewMessageNotification(parsedData.payload[0].accountName);
-          }
-          this.mainWindow.webContents.send('ws:receive-message', parsedData);
-          break;
-
-        case 'status-change':
-          log.debug('Received status change:', parsedData);
-          this.mainWindow.webContents.send('ws:status-change', parsedData);
-          break;
-
-        case 'PROFILE_UPDATED':
-          log.debug('Received profile update:', parsedData);
-          this.mainWindow.webContents.send('ws:profile-updated', parsedData);
-          break;
-      }
-    });
-
-    this.ws.on('close', () => {
-      log.info('Disconnected from WebSocket server. Reconnecting in 3 seconds...');
-      setTimeout(() => this.connect(), 3000);
-    });
   }
 
   private initIpcListeners() : void {

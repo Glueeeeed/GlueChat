@@ -139,44 +139,50 @@ export function restoreWindow(): void {
   }
 }
 
-app.whenReady().then(() => {
-  log.initialize();
+const gotTheLock : boolean = app.requestSingleInstanceLock();
 
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.whenReady().then(() => {
+    log.initialize();
 
-  if (process.env.VITE_APP_DEBUG_MODE === "true") {
-    log.transports.file.level = 'debug';
-    log.transports.console.level = 'debug';
-  } else {
-    log.transports.console.level = 'info';
-    log.transports.console.level = 'info';
-  }
-
-  log.errorHandler.startCatching();
-  log.eventLogger.startLogging();
-
-  if (process.platform === 'linux') {
-    app.setDesktopName('gluechat.desktop');
-  }
-
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window);
-  });
-
-  ipcMain.on('ping', () => console.log('pong'));
-
-  createWindow();
-
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+    if (process.env.VITE_APP_DEBUG_MODE === 'true') {
+      log.transports.file.level = 'debug';
+      log.transports.console.level = 'debug';
     } else {
-      restoreWindow();
+      log.transports.console.level = 'info';
+      log.transports.console.level = 'info';
     }
+
+    log.errorHandler.startCatching();
+    log.eventLogger.startLogging();
+
+    if (process.platform === 'linux') {
+      app.setDesktopName('gluechat.desktop');
+    }
+
+    app.on('browser-window-created', (_, window) => {
+      optimizer.watchWindowShortcuts(window);
+    });
+
+    ipcMain.on('ping', () => console.log('pong'));
+
+    createWindow();
+
+    app.on('activate', function () {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      } else {
+        restoreWindow();
+      }
+    });
+
+    log.info('GlueChat started');
+    log.debug('Debug mode enabled');
   });
 
-  log.info('GlueChat started');
-  log.debug('Debug mode enabled');
-});
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

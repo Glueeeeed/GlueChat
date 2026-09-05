@@ -74,7 +74,7 @@ We use a modern technology stack that ensures performance and security.
 
 #### 1. Setup Client
 ```bash
-cd client/gluechat
+cd client
 npm install
 npm run dev
 ```

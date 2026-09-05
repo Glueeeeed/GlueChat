@@ -1,0 +1,22 @@
+[package]
+name = "gluechat-test"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+libsignal-protocol = { git = "https://github.com/signalapp/libsignal", tag = "v0.102.0" }
+aws-lc-rs = "1.18.1"
+
+napi = "3.12.2"
+napi-derive = "3.6.3"
+
+
+base64 = "0.23.1"
+serde = { version = "1.0.229", features = ["derive"] }
+rand = "0.10.2"
+
+[build-dependencies]
+napi-build = "2.4.1"

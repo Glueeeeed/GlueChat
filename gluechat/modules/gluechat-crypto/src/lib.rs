@@ -2,8 +2,21 @@ use napi_derive::napi;
 use napi::Error;
 use aws_lc_rs::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305};
 use aws_lc_rs::rand;
+use aws_lc_rs::kem::{ML_KEM_1024, DecapsulationKey, EncapsulationKey, EncapsulationKeyBytes, DecapsulationKeyBytes};
+
 use base64::Engine;
 use base64::engine::general_purpose;
+use hex::encode as hex_encode;
+
+#[napi(object)]
+pub struct OneTimeKey {
+    pub account_name: String,
+    pub secret_name: String,
+    pub id: String,
+    pub pub_key: String,
+    pub private_key: String,
+}
+
 
 #[napi]
 pub fn hello_crypto() -> String {
@@ -81,4 +94,53 @@ pub fn decrypt(ciphertext: String, key: String) -> napi::Result<String> {
 
     String::from_utf8(plaintext.to_vec())
         .map_err(|e| Error::from_reason(format!("Invalid UTF-8 plaintext: {e}")))
+}
+
+#[napi]
+pub fn generate_one_time_keys(qty: i32, account_name: String, prefix: String ) -> napi::Result<Vec<OneTimeKey>> {
+    let mut one_time_keys: Vec<OneTimeKey> = Vec::with_capacity(qty as usize);
+    let mut i : i32 = 0;
+
+    while i < qty {
+        let mut key_id_bytes = [0u8; 4];
+        rand::fill(&mut key_id_bytes)
+            .map_err(|_| Error::from_reason("Random generation failed"))?;
+        let key_id : String  = hex_encode(key_id_bytes);
+
+        // decapsulation_key means the private key
+        // encapsulation_key means the public key
+
+        let decapsulation_key : DecapsulationKey = DecapsulationKey::generate(&ML_KEM_1024)
+            .map_err(|_| Error::from_reason("Failed to generate pair keys"))?;
+        let encapsulation_key : EncapsulationKey = decapsulation_key.encapsulation_key()
+            .map_err(|_| Error::from_reason("Failed to generate private key"))?;
+
+        let pub_key_bytes : EncapsulationKeyBytes = encapsulation_key.key_bytes()
+            .map_err(|_| Error::from_reason("Failed convert public key to bytes"))?;
+
+        let private_key_bytes : DecapsulationKeyBytes = decapsulation_key.key_bytes()
+            .map_err(|_| Error::from_reason("Failed convert private key to bytes"))?;
+
+
+        let private_key : String = general_purpose::STANDARD.encode(private_key_bytes.as_ref());
+        let public_key : String = general_purpose::STANDARD.encode(pub_key_bytes.as_ref());
+
+
+
+        let secret_name : String = format!("{}-otk-{}", prefix, key_id);
+        let account_name : String = format!("gluechat_{}", account_name);
+
+        one_time_keys.push(OneTimeKey {
+            account_name,
+            secret_name,
+            id: key_id,
+            pub_key: public_key,
+            private_key: private_key,
+        });
+
+        i += 1;
+
+    }
+
+    Ok(one_time_keys)
 }

@@ -37,10 +37,10 @@ ___
 
 GlueChat implements a multi-layered security model, ensuring that your data remains yours alone.
 
-### 1. Hybrid Post-Quantum Cryptography (X-Wing)
-*   **Hybrid approach:** We combine classical **X25519** (elliptic curves) with **ML-KEM-768** (Kyber), the NIST standard for quantum-resistant algorithms.
+### 1. Post-Quantum Cryptography 
+*   **Post-quantum:** We use **ML-KEM-1024** (Kyber), the NIST standard for quantum-resistant algorithms.
 * **Cipher:** XChaCha20-Poly1305
-* **KEM:** ML-KEM-768 (via X-Wing construct)
+* **KEM:** ML-KEM-1024
 * **Hashing:** SHA256 & Argon2id
 * **Signatures:** ML-DSA87
 
@@ -62,7 +62,7 @@ We use a modern technology stack that ensures performance and security.
 *   **Runtime:** Bun
 *   **Framework:** Elysia
 *   **Database:** MySQL (via Prisma ORM)
-*   **Crypto:** [@noble/post-quantum](https://github.com/paulmillr/noble-post-quantum) , [@noble/ciphers](https://github.com/paulmillr/noble-ciphers)
+*   **Crypto:** gluechat-crypto *written in Rust* (Based on Signal Protocol)
 
 ---
 

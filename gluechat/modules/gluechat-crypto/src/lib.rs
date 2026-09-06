@@ -8,6 +8,13 @@ use base64::Engine;
 use base64::engine::general_purpose;
 use hex::encode as hex_encode;
 
+
+struct KeyPair {
+    pub private_key: String,
+    pub public_key: String,
+}
+
+
 #[napi(object)]
 pub struct OneTimeKey {
     pub account_name: String,
@@ -135,7 +142,7 @@ pub fn generate_one_time_keys(qty: i32, account_name: String, prefix: String ) -
             secret_name,
             id: key_id,
             pub_key: public_key,
-            private_key: private_key,
+            private_key,
         });
 
         i += 1;

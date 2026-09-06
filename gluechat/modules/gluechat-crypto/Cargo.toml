@@ -8,6 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 aws-lc-rs = "1.18.1"
+chacha20poly1305 = "0.11.0"
 
 napi = "3.12.2"
 napi-derive = "3.6.3"

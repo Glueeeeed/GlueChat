@@ -62,7 +62,7 @@ We use a modern technology stack that ensures performance and security.
 *   **Runtime:** Bun
 *   **Framework:** Elysia
 *   **Database:** MySQL (via Prisma ORM)
-*   **Crypto:** gluechat-crypto *written in Rust* (Based on Signal Protocol)
+*   **Crypto:** [GlueChat Crypto](https://github.com/Glueeeeed/GlueChat-Crypto)
 
 ---
 

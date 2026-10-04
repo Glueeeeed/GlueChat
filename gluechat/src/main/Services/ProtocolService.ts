@@ -43,7 +43,7 @@ abstract class ProtocolService {
 
     const pkgs: PkgStructure[] = [];
 
-    const masterKey: Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
+    const masterKey = CryptoCore.generateRandomBytes(32);
     const encryptedMessage: EncryptedData = CryptoCore.encryptData(content, masterKey);
 
     try {

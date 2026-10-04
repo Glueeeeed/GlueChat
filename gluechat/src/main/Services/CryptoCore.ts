@@ -1,10 +1,8 @@
-import { randomBytes } from '@noble/post-quantum/utils.js';
-import type { Cipher } from '@noble/ciphers/utils.js';
-import { ml_kem768_x25519 as xwing } from '@noble/post-quantum/hybrid.js';
+import { decapsulate, decrypt, encapsulate, EncapsulationResult, encrypt, generateKemKeypair, generateOneTimeKeys, KemLength, KeyPair, OneTimeKey, randomBytes
+} from '@glueeeed/gluechat-crypto';
 import { ml_dsa87 } from '@noble/post-quantum/ml-dsa.js';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
-import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { SecretManager } from '../Managers/SecretManager';
 
 export interface mixedKeys {
@@ -21,34 +19,18 @@ export interface EncryptedData {
   cipherText: Uint8Array<ArrayBufferLike>;
 }
 
-export interface KeyPair {
+export interface KeyPairDsa {
   secretKey: Uint8Array<ArrayBufferLike>;
   publicKey: Uint8Array<ArrayBufferLike>;
 }
 
-interface EncapsulatedData {
-  cipherText: Uint8Array;
-  sharedSecret: Uint8Array;
-}
-
 export abstract class CryptoCore {
-  static decryptData(cipherText: Uint8Array, nonce: Uint8Array, key: Uint8Array): string {
-    const cipher: Cipher = xchacha20poly1305(key, nonce);
-    const decrypted: Uint8Array = cipher.decrypt(cipherText);
-    return new TextDecoder().decode(decrypted);
+  static decrypt(cipherText: string, key: string): string {
+    return decrypt(cipherText, key);
   }
 
-  static decrypt(cipherText: Uint8Array, nonce: Uint8Array, key: Uint8Array): Uint8Array {
-    const cipher: Cipher = xchacha20poly1305(key, nonce);
-    return cipher.decrypt(cipherText);
-  }
-
-  static encryptData(content: string | Uint8Array<ArrayBufferLike>, key: Uint8Array<ArrayBufferLike>): EncryptedData {
-    const nonce: Uint8Array<ArrayBufferLike> = randomBytes(24);
-    const data: Uint8Array<ArrayBufferLike> = typeof content === 'string' ? new TextEncoder().encode(content) : content;
-    const cipher: Cipher = xchacha20poly1305(key, nonce);
-    const cipherText: Uint8Array<ArrayBufferLike> = cipher.encrypt(data);
-    return { nonce, cipherText };
+  static encryptData(content: string, key: string): string {
+    return encrypt(content, key);
   }
 
   static mixKeys(newKey: Uint8Array, oldKey: Uint8Array, message: Uint8Array): Uint8Array {
@@ -56,31 +38,27 @@ export abstract class CryptoCore {
   }
 
   static generateNewKeyPair(): KeyPair {
-    return xwing.keygen();
+    return generateKemKeypair(KemLength.MlKem1024);
   }
 
   static async generateOneTimeKeys(qty: number, accountName: string, prefix: string): Promise<oneTimeKey[]> {
-    const oneTimeKeys: oneTimeKey[] = [];
-    for (let i = 0; i <= qty; i++) {
-      const oneTimeKeyID: string = Buffer.from(randomBytes(4)).toString('hex');
-      const keyPair: KeyPair = this.generateNewKeyPair();
+    const oneTimeKeys : oneTimeKey[] = [];
 
-      const pubKey: string = Buffer.from(keyPair.publicKey).toString('base64');
-      const privateKey: string = Buffer.from(keyPair.secretKey).toString('base64');
+    const generatedOtk : OneTimeKey[] = generateOneTimeKeys(KemLength.MlKem1024, qty, accountName, prefix);
 
-      await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-otk-${oneTimeKeyID}`, privateKey);
-
+    for (const key of generatedOtk) {
+      await SecretManager.setSecret(accountName,key.accountName, key.secretName, key.privateKey);
       const oneTimeKey = {
-        id: oneTimeKeyID,
-        pubKey: pubKey
+        id: key.id,
+        pubKey: key.pubKey,
       };
-
-      oneTimeKeys.push(oneTimeKey);
+      oneTimeKeys.push(oneTimeKey)
     }
+
     return oneTimeKeys;
   }
 
-  static generateSignKeyPair(): KeyPair {
+  static generateSignKeyPair(): KeyPairDsa {
     return ml_dsa87.keygen();
   }
 
@@ -88,16 +66,19 @@ export abstract class CryptoCore {
     return ml_dsa87.sign(message, privateKey);
   }
 
-  static decapsulate(capsule: Uint8Array, privateKey: Uint8Array): Uint8Array<ArrayBufferLike> {
-    return xwing.decapsulate(capsule, privateKey);
+  static decapsulate(capsule: Uint8Array, privateKey: Uint8Array): string {
+    const capsule64: string = Buffer.from(capsule).toString('base64');
+    const privateKey64: string = Buffer.from(privateKey).toString('base64');
+    return decapsulate(KemLength.MlKem1024, capsule64, privateKey64);
   }
 
   static generateRandomBytes(size: number): Uint8Array {
     return randomBytes(size);
   }
 
-  static encapsulate(key: Uint8Array): EncapsulatedData {
-    return xwing.encapsulate(key);
+  static encapsulate(key: Uint8Array): EncapsulationResult {
+    const key64: string = Buffer.from(key).toString('base64');
+    return encapsulate(KemLength.MlKem1024, key64);
   }
 
   static verifySignature(signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array): boolean {

@@ -1,6 +1,7 @@
 {
   "name": "gluechat",
   "productName": "GlueChat",
+  "type": "module",
   "version": "0.3.0",
   "description": "Secure end-to-end encrypted chat",
   "main": "./out/main/index.js",
@@ -29,6 +30,7 @@
     "@bonhomie/react-security": "^2.1.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@glueeeed/gluechat-crypto": "^1.0.3",
     "@noble/ciphers": "^2.3.0",
     "@noble/curves": "^2.3.0",
     "@noble/hashes": "^2.3.0",

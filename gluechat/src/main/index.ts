@@ -140,7 +140,9 @@ export function restoreWindow(): void {
   }
 }
 
-const gotTheLock : boolean = app.requestSingleInstanceLock();
+// const gotTheLock : boolean = app.requestSingleInstanceLock();
+
+const gotTheLock = true;
 
 if (!gotTheLock) {
   log.info("GlueChat instance already running. Quitting...")

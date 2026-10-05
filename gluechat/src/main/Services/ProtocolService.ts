@@ -1,6 +1,6 @@
 import { SessionState, StorageService } from './StorageService';
 import { device, NetworkService, preKeysPackage } from './NetworkService';
-import { CryptoCore, EncryptedData } from './CryptoCore';
+import { CryptoCore } from './CryptoCore';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import log from 'electron-log/main';
@@ -15,20 +15,12 @@ export interface PkgStructure {
   opkId: string | null;
   capsule: string | null;
   content: string;
-  nonce: string;
   encryptedMessageKey: string;
-  messageKeyNonce: string;
   isDeleted: boolean;
 }
 
 abstract class ProtocolService {
-  public static async initializeEncrypt(
-    authKey: string,
-    content: string,
-    roomID: string,
-    senderID: string,
-    receiverID: string,
-    accountName: string
+  public static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string
   ): Promise<PkgStructure[]> {
     log.info(`Starting encryption process for room: ${roomID}`);
 
@@ -43,8 +35,8 @@ abstract class ProtocolService {
 
     const pkgs: PkgStructure[] = [];
 
-    const masterKey = CryptoCore.generateRandomBytes(32);
-    const encryptedMessage: EncryptedData = CryptoCore.encryptData(content, masterKey);
+    const masterKey : Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
+    const encryptedMessage : string = CryptoCore.encryptData(content, Buffer.from(masterKey).toString('base64'));
 
     try {
       for (const device of targetDevices) {
@@ -65,13 +57,13 @@ abstract class ProtocolService {
           opkId = preKey.opkId;
         }
 
-        const { nextRootKey, messageKey } = this.deriveSymmetricStep(session, roomID);
 
-        const encryptedMasterKey: EncryptedData = CryptoCore.encryptData(masterKey, messageKey);
+
+        const encryptedMasterKey : string = CryptoCore.encryptData(Buffer.from(masterKey).toString('base64'), Buffer.from(session.rootKey).toString('base64'));
 
         const updatedSession: SessionState = {
           ...session,
-          rootKey: nextRootKey,
+          rootKey: session.rootKey,
           sendCounter: (session.sendCounter || 0) + 1,
           lastSenderID: senderID
         };
@@ -79,7 +71,7 @@ abstract class ProtocolService {
         const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
         await StorageService.saveSession(
           JSON.stringify({
-            rootKey: Buffer.from(nextRootKey).toString('base64'),
+            rootKey: Buffer.from(session.rootKey).toString('base64'),
             sendCounter: updatedSession.sendCounter,
             lastSenderID: senderID
           }),
@@ -96,14 +88,11 @@ abstract class ProtocolService {
           messageNumber: session.sendCounter as number,
           opkId,
           capsule: capsuleStr,
-          content: Buffer.from(encryptedMessage.cipherText).toString('base64'),
-          nonce: Buffer.from(encryptedMessage.nonce).toString('base64'),
-          encryptedMessageKey: Buffer.from(encryptedMasterKey.cipherText).toString('base64'),
-          messageKeyNonce: Buffer.from(encryptedMasterKey.nonce).toString('base64'),
+          content: Buffer.from(encryptedMessage).toString('base64'),
+          encryptedMessageKey: Buffer.from(encryptedMasterKey).toString('base64'),
           isDeleted: false
         });
 
-        this.wipeBytes(messageKey, nextRootKey);
       }
     } finally {
       // Clear keys from RAM
@@ -130,11 +119,11 @@ abstract class ProtocolService {
         throw new Error('Decryption failed: Missing SPK or OPK private keys in local storage');
       }
 
-      const ssSPK: Uint8Array<ArrayBufferLike> = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey, 'base64'));
-      const ssOPK: Uint8Array<ArrayBufferLike> = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey, 'base64'));
+      const ssSPK: string = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey, 'base64'));
+      const ssOPK: string = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey, 'base64'));
 
-      const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
-      this.wipeBytes(ssSPK, ssOPK);
+      const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(Buffer.from(ssSPK, 'base64'), Buffer.from(ssOPK, 'base64'), roomID);
+      this.wipeBytes(Buffer.from(ssSPK, 'base64'), Buffer.from(ssOPK, 'base64'));
 
       session = {
         rootKey,
@@ -149,20 +138,20 @@ abstract class ProtocolService {
       throw new Error(`No active session found to decrypt message from device: ${deviceId}`);
     }
 
-    const { nextRootKey, messageKey } = this.deriveSymmetricStep(session, roomID);
-
-    let masterKey: Uint8Array | null = null;
+    let masterKeyBytes: Uint8Array | null = null;
     let decryptedContent: string = '';
 
     try {
-      masterKey = CryptoCore.decrypt(Buffer.from(pkg.encryptedMessageKey, 'base64'), Buffer.from(pkg.messageKeyNonce, 'base64'), messageKey);
 
-      decryptedContent = CryptoCore.decryptData(Buffer.from(pkg.content, 'base64'), Buffer.from(pkg.nonce, 'base64'), masterKey);
+      const masterKeyBase64: string = CryptoCore.decrypt(pkg.encryptedMessageKey, Buffer.from(session.rootKey).toString('base64'));
+      masterKeyBytes = Buffer.from(masterKeyBase64, 'base64');
+
+      decryptedContent = CryptoCore.decrypt(pkg.content, masterKeyBase64);
 
       const combinedMapKey = StorageService.generateCombinedName(roomID, pkg.senderId, deviceId);
       await StorageService.saveSession(
         JSON.stringify({
-          rootKey: Buffer.from(nextRootKey).toString('base64'),
+          rootKey: Buffer.from(session.rootKey).toString('base64'),
           sendCounter: (session.sendCounter || 0) + 1,
           lastSenderID: pkg.senderId
         }),
@@ -170,8 +159,7 @@ abstract class ProtocolService {
         combinedMapKey
       );
     } finally {
-      if (masterKey) this.wipeBytes(masterKey);
-      this.wipeBytes(messageKey, nextRootKey);
+      if (masterKeyBytes) this.wipeBytes(masterKeyBytes);
     }
 
     log.info(`Message #${pkg.messageNumber} decrypted successfully.`);
@@ -219,16 +207,7 @@ abstract class ProtocolService {
     }
   }
 
-  private static async createSenderHandshake(
-    roomID: string,
-    authKey: string,
-    receiverID: string,
-    senderID: string,
-    accountName: string,
-    deviceId: string,
-    preKey: preKeysPackage
-  ): Promise<{
-    session: SessionState;
+  private static async createSenderHandshake(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string, deviceId: string, preKey: preKeysPackage): Promise<{ session: SessionState;
     capsuleStr: string;
   }> {
     log.debug(`Executing PQ KEM Handshake for device: ${deviceId}`);
@@ -240,20 +219,20 @@ abstract class ProtocolService {
     }
 
     const isValid = CryptoCore.verifySignature(
-      Buffer.from(preKey.signature, 'base64'),
+      preKey.signature,
       Buffer.from(preKey.spk, 'base64'),
-      Buffer.from(identityKey, 'base64')
+      identityKey
     );
     if (!isValid) {
       throw new Error(`Signature verification failed for pre-key of device: ${deviceId}`);
     }
 
-    const { cipherText: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKey.spk, 'base64'));
-    const { cipherText: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKey.opk, 'base64'));
+    const { ciphertext: capsuleSPK, sharedSecret: ssSPK } = CryptoCore.encapsulate(Buffer.from(preKey.spk, 'base64'));
+    const { ciphertext: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKey.opk, 'base64'));
 
     log.debug('Generating root key and saving to DB.');
-    const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
-    this.wipeBytes(ssSPK, ssOPK);
+    const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(Buffer.from(ssSPK, 'base64'), Buffer.from(ssOPK, 'base64'), roomID);
+    this.wipeBytes(Buffer.from(ssSPK, 'base64'), Buffer.from(ssOPK, 'base64'));
 
     const capsuleStr = `${Buffer.from(capsuleSPK).toString('base64')}|${Buffer.from(capsuleOPK).toString('base64')}`;
 
@@ -278,23 +257,6 @@ abstract class ProtocolService {
     return { session, capsuleStr };
   }
 
-  private static deriveSymmetricStep(
-    session: SessionState,
-    roomID: string
-  ): {
-    nextRootKey: Uint8Array;
-    messageKey: Uint8Array;
-  } {
-    log.debug(`Deriving symmetric key for session: ${session.sendCounter}`);
-    const infoMessage: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(`MESSAGE_KEY_${roomID}_${session.sendCounter}`);
-    const infoNextRoot: Uint8Array<ArrayBufferLike> = new TextEncoder().encode(`NEXT_ROOT_KEY_${roomID}_${session.sendCounter}`);
-
-    const messageKey: Uint8Array<ArrayBufferLike> = hkdf(sha256, session.rootKey, new Uint8Array(32), infoMessage, 32);
-    const nextRootKey: Uint8Array<ArrayBufferLike> = hkdf(sha256, session.rootKey, new Uint8Array(32), infoNextRoot, 32);
-
-    log.debug('Symmetric step ended.')
-    return { nextRootKey, messageKey };
-  }
 }
 
 export default ProtocolService;

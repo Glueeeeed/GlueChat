@@ -2,10 +2,8 @@ import { app } from 'electron';
 import path from 'path';
 import Database from 'better-sqlite3';
 import keytar from 'keytar';
-import { randomBytes } from '@noble/post-quantum/utils.js';
-import { CryptoCore, EncryptedData } from '../Services/CryptoCore';
+import { CryptoCore } from '../Services/CryptoCore';
 import { ChatInfo, messageData } from '../Services/StorageService';
-import log from 'electron-log';
 
 export abstract class HistoryManager {
   private static dbs: Map<string, any> = new Map();
@@ -14,7 +12,7 @@ export abstract class HistoryManager {
     let key = await keytar.getPassword('Gluechat', 'local_storage_key');
 
     if (!key) {
-      const newKey = randomBytes(32);
+      const newKey = CryptoCore.generateRandomBytes(32);
       key = Buffer.from(newKey).toString('base64');
       await keytar.setPassword('Gluechat', 'local_storage_key', key);
     }
@@ -61,7 +59,7 @@ export abstract class HistoryManager {
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
     const db = this.getDb(accountName);
 
-    const encrypted: EncryptedData = CryptoCore.encryptData(messageData.content, key);
+    const encrypted : string    = CryptoCore.encryptData(messageData.content, Buffer.from(key).toString('base64'));
 
     const stmt = db.prepare(
       `INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, nonce)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)  `
@@ -71,11 +69,11 @@ export abstract class HistoryManager {
       roomID,
       senderID,
       chatName,
-      Buffer.from(encrypted.cipherText).toString('base64'),
+      Buffer.from(encrypted).toString('base64'),
       nonce,
       +messageData.isAuthor,
       +messageData.isSeen,
-      Buffer.from(encrypted.nonce).toString('base64')
+      "0000000"
     );
   }
 
@@ -85,7 +83,7 @@ export abstract class HistoryManager {
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
 
     return rows.map((row: any) => {
-      const decrypted: string = CryptoCore.decryptData(Buffer.from(row.encryptedContent, 'base64'), Buffer.from(row.nonce, 'base64'), key);
+      const decrypted: string = CryptoCore.decrypt(row.encryptedContent, Buffer.from(key).toString('base64'));
 
       return {
         id: row.messageID,
@@ -109,7 +107,7 @@ export abstract class HistoryManager {
     }
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
 
-    const decrypted: string = CryptoCore.decryptData(Buffer.from(row.encryptedContent, 'base64'), Buffer.from(row.nonce, 'base64'), key);
+    const decrypted: string = CryptoCore.decrypt(row.encryptedContent, Buffer.from(key).toString('base64'));
 
     return {
       senderName: row.senderName,

@@ -8,7 +8,7 @@
 <h1 align="center"> Post-quantum end-to-end encrypted messenger </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-0.3.0 Gum-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.4.0 Gel-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-AGPLv3-red?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Post--Quantum-Ready-8A2BE2?style=for-the-badge" alt="Post-Quantum Ready">
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="Typescript">
@@ -140,7 +140,7 @@ bunx prisma generate
 GlueChat is currently in the **Beta** phase.
 
 **Completed milestones:**
-- [x] Security foundations: implementation of hybrid key generation (X-Wing).
+- [x] Security foundations: implementation of post-quantum key generation.
 - [x] Secure local storage using SQLite.
 - [x] Real-time communication: WebSockets with E2EE.
 - [x] Relationship management: friend invitation system.
@@ -148,10 +148,10 @@ GlueChat is currently in the **Beta** phase.
 - [x] Support for synchronization between multiple devices.
 
 **Next steps:**
-- [ ] Full implementation of the Double Ratchet protocol.
 - [ ] Send files and images with E2EE.
 - [ ] Group chat functionality with end-to-end encryption.
 - [ ] Voice and video calls with end-to-end encryption.
+- [ ] Full implementation of the Double Ratchet protocol.
 ---
 
 

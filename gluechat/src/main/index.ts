@@ -6,13 +6,14 @@ import { is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../build/icon.png?asset';
 import keytar from 'keytar';
 import ProtocolService from './Services/ProtocolService';
-import { CryptoCore, KeyPair, oneTimeKey } from './Services/CryptoCore';
+import { CryptoCore, oneTimeKey } from './Services/CryptoCore';
 import { ChatInfo, messageData, StorageService } from './Services/StorageService';
 import { SecretManager } from './Managers/SecretManager';
 import { NetworkService } from './Services/NetworkService';
 import log from 'electron-log/main';
 import { NotificationService } from './Services/NotificationService';
 import { WebsocketManager } from './Managers/WebsocketManager';
+import { DSAKeyPair, KemKeyPair } from '@glueeeed/gluechat-crypto';
 
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.gluechat.app');
@@ -37,7 +38,7 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       webSecurity: true,
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false,
       nodeIntegration: false,
       contextIsolation: true
@@ -237,22 +238,22 @@ ipcMain.handle('generate-xwing-pair-keys', async (_, accountName: string, tempTo
 
     // Generates Keys
 
-    const identityKP: KeyPair = CryptoCore.generateSignKeyPair(); // Identity Key Pair
-    const identityPubKey: string = Buffer.from(identityKP.publicKey).toString('base64');
-    const identityKey: string = Buffer.from(identityKP.secretKey).toString('base64');
+    const identityKP: KemKeyPair = CryptoCore.generateSignKeyPair(); // Identity Key Pair
+    const identityPubKey: string = identityKP.publicKey;
+    const identityKey: string = identityKP.privateKey;
 
-    const spkKP: KeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
-    const spkPubKey: string = Buffer.from(spkKP.publicKey).toString('base64');
-    const spkKey: string = Buffer.from(spkKP.secretKey).toString('base64');
+    const spkKP: DSAKeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
+    const spkPubKey: string = spkKP.publicKey;
+    const spkKey: string = spkKP.privateKey;
 
     await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`, identityKey);
     await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityPubKey`, identityPubKey);
     await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPrivateKey`, spkKey);
     await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPubKey`, spkPubKey);
 
-    const signature: string = Buffer.from(CryptoCore.sign(spkKP.publicKey, identityKP.secretKey)).toString('base64');
+    const signature: string = CryptoCore.sign(Buffer.from(spkPubKey), identityKey)
 
-    const oneTimeKeys: oneTimeKey[] = await CryptoCore.generateOneTimeKeys(25, accountName, prefix);
+    const oneTimeKeys: oneTimeKey[] = await CryptoCore.generateOneTimeKeys(100, accountName, prefix);
 
     const data = {
       identityPubKey: identityPubKey,

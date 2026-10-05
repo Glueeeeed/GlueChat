@@ -2,8 +2,7 @@ import { app } from 'electron';
 import path from 'path';
 import Database from 'better-sqlite3';
 import keytar from 'keytar';
-import { randomBytes } from '@noble/post-quantum/utils.js';
-import { CryptoCore, EncryptedData } from '../Services/CryptoCore';
+import { CryptoCore } from '../Services/CryptoCore';
 
 export abstract class SecretManager {
   private static dbs: Map<string, any> = new Map();
@@ -12,7 +11,7 @@ export abstract class SecretManager {
     let key = await keytar.getPassword('Gluechat', 'local_secret_key');
 
     if (!key) {
-      const newKey = randomBytes(32);
+      const newKey = CryptoCore.generateRandomBytes(32);
       key = Buffer.from(newKey).toString('base64');
       await keytar.setPassword('Gluechat', 'local_secret_key', key);
     }
@@ -23,15 +22,12 @@ export abstract class SecretManager {
   static async setSecret(accountName: string, service: string, account: string, value: string): Promise<void> {
     const db = this.getDb(accountName);
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
-    const encrypted: EncryptedData = CryptoCore.encryptData(value, key);
-    const encryptedValue: string = Buffer.from(encrypted.cipherText).toString('base64');
-    const nonce: string = Buffer.from(encrypted.nonce).toString('base64');
-    const encryptedValueWithNonce: string = encryptedValue + ':' + nonce;
+    const encrypted: string = CryptoCore.encryptData(value, Buffer.from(key).toString('base64'));
 
     const stmt = db.prepare(
       `INSERT INTO secrets(service, account, value) VALUES (?,?,?) ON CONFLICT(service,account) DO UPDATE SET value = excluded.value`
     );
-    stmt.run(service, account, encryptedValueWithNonce);
+    stmt.run(service, account, encrypted);
   }
 
   static async getSecret(accountName: string, service: string, account: string): Promise<string | null> {
@@ -42,8 +38,7 @@ export abstract class SecretManager {
     if (!value) {
       return null;
     } else {
-      const [content, nonce] = value.split(':');
-      return CryptoCore.decryptData(Buffer.from(content, 'base64'), Buffer.from(nonce, 'base64'), key);
+      return CryptoCore.decrypt(value, Buffer.from(key).toString('base64'));
     }
   }
 

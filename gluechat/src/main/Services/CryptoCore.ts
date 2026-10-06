@@ -66,7 +66,7 @@ export abstract class CryptoCore {
   }
 
   static decapsulate(capsule: Uint8Array, privateKey: Uint8Array): Uint8Array {
-    return decapsulate(KemLength.MlKem1024, capsule, privateKey);
+    return decapsulate(KemLength.MlKem1024, privateKey, capsule);
   }
 
   static generateRandomBytes(size: number): Uint8Array {

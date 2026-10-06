@@ -1,4 +1,4 @@
-import { decapsulate, decrypt, DSAKeyPair, encapsulate, EncapsulationResult, encrypt, generateOneTimeKeys, kemKeypair, KemKeyPair, KemLength, mlDsaKeypair, MlDsaLength, mlDsaSign, mlDsaVerify, OneTimeKey, randomBytes
+import { decapsulate, decrypt, DsaKeyPair, encapsulate, EncapsulationResult, encrypt, generateOneTimeKeys, kemKeypair, KemKeyPair, KemLength, mlDsaKeypair, MlDsaLength, mlDsaSign, mlDsaVerify, OneTimeKey, randomBytes
 } from '@glueeeed/gluechat-crypto';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
@@ -24,11 +24,11 @@ export interface KeyPairDsa {
 }
 
 export abstract class CryptoCore {
-  static decrypt(cipherText: string, key: string): string {
+  static decrypt(cipherText: Uint8Array, key: Uint8Array): Uint8Array {
     return decrypt(cipherText, key);
   }
 
-  static encryptData(content: string, key: string): string {
+  static encryptData(content: Uint8Array, key: Uint8Array): Uint8Array {
     return encrypt(content, key);
   }
 
@@ -46,10 +46,10 @@ export abstract class CryptoCore {
     const generatedOtk: OneTimeKey[] = generateOneTimeKeys(KemLength.MlKem1024, qty, accountName, prefix);
 
     for (const key of generatedOtk) {
-      await SecretManager.setSecret(accountName, key.accountName, key.secretName, key.privateKey);
+      await SecretManager.setSecret(accountName, key.accountName, key.secretName, Buffer.from(key.privateKey).toString('base64'));
       const oneTimeKey = {
         id: key.id,
-        pubKey: key.pubKey
+        pubKey: Buffer.from(key.pubKey).toString('base64'),
       };
       oneTimeKeys.push(oneTimeKey);
     }
@@ -57,18 +57,16 @@ export abstract class CryptoCore {
     return oneTimeKeys;
   }
 
-  static generateSignKeyPair(): DSAKeyPair {
+  static generateSignKeyPair(): DsaKeyPair {
     return mlDsaKeypair(MlDsaLength.MlDsa87);
   }
 
-  static sign(message: Uint8Array, privateKey: string): string {
+  static sign(message: Uint8Array, privateKey: Uint8Array): Uint8Array {
     return mlDsaSign(MlDsaLength.MlDsa87, privateKey, message);
   }
 
-  static decapsulate(capsule: Uint8Array, privateKey: Uint8Array): string {
-    const capsule64: string = Buffer.from(capsule).toString('base64');
-    const privateKey64: string = Buffer.from(privateKey).toString('base64');
-    return decapsulate(KemLength.MlKem1024, capsule64, privateKey64);
+  static decapsulate(capsule: Uint8Array, privateKey: Uint8Array): Uint8Array {
+    return decapsulate(KemLength.MlKem1024, capsule, privateKey);
   }
 
   static generateRandomBytes(size: number): Uint8Array {
@@ -76,11 +74,10 @@ export abstract class CryptoCore {
   }
 
   static encapsulate(key: Uint8Array): EncapsulationResult {
-    const key64: string = Buffer.from(key).toString('base64');
-    return encapsulate(KemLength.MlKem1024, key64);
+    return encapsulate(KemLength.MlKem1024, key);
   }
 
-  static verifySignature(signature: string, message: Uint8Array, publicKey: string): boolean {
+  static verifySignature(signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array): boolean {
     return mlDsaVerify(MlDsaLength.MlDsa87,publicKey, message,signature);
   }
 }

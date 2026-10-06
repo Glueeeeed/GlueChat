@@ -59,7 +59,7 @@ export abstract class HistoryManager {
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
     const db = this.getDb(accountName);
 
-    const encrypted : string    = CryptoCore.encryptData(messageData.content, Buffer.from(key).toString('base64'));
+    const encrypted : Uint8Array = CryptoCore.encryptData(new TextEncoder().encode(messageData.content), key);
 
     const stmt = db.prepare(
       `INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, nonce)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)  `
@@ -83,12 +83,12 @@ export abstract class HistoryManager {
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
 
     return rows.map((row: any) => {
-      const decrypted: string = CryptoCore.decrypt(row.encryptedContent, Buffer.from(key).toString('base64'));
-
+      const decrypted : Uint8Array = CryptoCore.decrypt(Buffer.from(row.encryptedContent, 'base64'), key);
+      const result = new TextDecoder().decode(decrypted);
       return {
         id: row.messageID,
         sender: row.senderName,
-        content: decrypted,
+        content: result,
         timestamp: new Date(row.timestamp + ' UTC').toLocaleTimeString(),
         isAuthor: Boolean(row.isAuthor),
         isSeen: Boolean(row.isSeen)
@@ -107,12 +107,13 @@ export abstract class HistoryManager {
     }
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
 
-    const decrypted: string = CryptoCore.decrypt(row.encryptedContent, Buffer.from(key).toString('base64'));
+    const decrypted: Uint8Array = CryptoCore.decrypt(Buffer.from(row.encryptedContent, 'base64'), key);
+    const content = new TextDecoder().decode(decrypted);
 
     return {
       senderName: row.senderName,
       isAuthor: Boolean(row.isAuthor),
-      content: decrypted
+      content: content
     };
   }
 

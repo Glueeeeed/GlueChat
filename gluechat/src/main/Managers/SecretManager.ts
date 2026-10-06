@@ -22,12 +22,12 @@ export abstract class SecretManager {
   static async setSecret(accountName: string, service: string, account: string, value: string): Promise<void> {
     const db = this.getDb(accountName);
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
-    const encrypted: string = CryptoCore.encryptData(value, Buffer.from(key).toString('base64'));
+    const encrypted: Uint8Array = CryptoCore.encryptData(new TextEncoder().encode(value), key);
 
     const stmt = db.prepare(
       `INSERT INTO secrets(service, account, value) VALUES (?,?,?) ON CONFLICT(service,account) DO UPDATE SET value = excluded.value`
     );
-    stmt.run(service, account, encrypted);
+    stmt.run(service, account, Buffer.from(encrypted).toString('base64'));
   }
 
   static async getSecret(accountName: string, service: string, account: string): Promise<string | null> {
@@ -38,7 +38,8 @@ export abstract class SecretManager {
     if (!value) {
       return null;
     } else {
-      return CryptoCore.decrypt(value, Buffer.from(key).toString('base64'));
+      const decrypted: Uint8Array = CryptoCore.decrypt(Buffer.from(value, 'base64'), key);
+      return new TextDecoder().decode(decrypted);
     }
   }
 

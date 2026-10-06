@@ -24,13 +24,20 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:linux": "electron-vite build && electron-builder --linux",
+    "test": "ava"
+  },
+  "ava": {
+    "extensions": ["ts"],
+    "nodeArguments": ["--import=tsx"],
+    "files": ["test/**/*.ts"],
+    "timeout": "60s"
   },
   "dependencies": {
     "@bonhomie/react-security": "^2.1.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
-    "@glueeeed/gluechat-crypto": "^1.0.3",
+    "@glueeeed/gluechat-crypto": "^1.0.5",
     "@noble/ciphers": "^2.3.0",
     "@noble/curves": "^2.3.0",
     "@noble/hashes": "^2.3.0",
@@ -56,12 +63,13 @@
     "@electron-toolkit/tsconfig": "^2.0.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^22.19.1",
+    "@types/node": "^22.20.5",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/validator": "^13.15.10",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.1.1",
+    "ava": "^8.0.1",
     "electron": "^43.7.7",
     "electron-builder": "^26.0.12",
     "electron-vite": "^5.0.0",
@@ -73,6 +81,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^7.2.6"
   }

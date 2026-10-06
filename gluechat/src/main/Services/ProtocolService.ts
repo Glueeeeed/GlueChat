@@ -35,8 +35,9 @@ abstract class ProtocolService {
 
     const pkgs: PkgStructure[] = [];
 
+    const encoder = new TextEncoder();
     const masterKey : Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
-    const encryptedMessage : string = CryptoCore.encryptData(content, Buffer.from(masterKey).toString('base64'));
+    const encryptedMessage : Uint8Array = CryptoCore.encryptData(encoder.encode(content), masterKey);
 
     try {
       for (const device of targetDevices) {
@@ -59,7 +60,7 @@ abstract class ProtocolService {
 
 
 
-        const encryptedMasterKey : string = CryptoCore.encryptData(Buffer.from(masterKey).toString('base64'), Buffer.from(session.rootKey).toString('base64'));
+        const encryptedMasterKey : Uint8Array = CryptoCore.encryptData(masterKey, session.rootKey);
 
         const updatedSession: SessionState = {
           ...session,
@@ -119,11 +120,11 @@ abstract class ProtocolService {
         throw new Error('Decryption failed: Missing SPK or OPK private keys in local storage');
       }
 
-      const ssSPK: string = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey, 'base64'));
-      const ssOPK: string = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey, 'base64'));
+      const ssSPK: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey, 'base64'));
+      const ssOPK: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey, 'base64'));
 
-      const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(Buffer.from(ssSPK, 'base64'), Buffer.from(ssOPK, 'base64'), roomID);
-      this.wipeBytes(Buffer.from(ssSPK, 'base64'), Buffer.from(ssOPK, 'base64'));
+      const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
+      this.wipeBytes(ssSPK, ssOPK);
 
       session = {
         rootKey,
@@ -138,15 +139,14 @@ abstract class ProtocolService {
       throw new Error(`No active session found to decrypt message from device: ${deviceId}`);
     }
 
-    let masterKeyBytes: Uint8Array | null = null;
-    let decryptedContent: string = '';
+    let decryptedContent : Uint8Array;
+    let masterKey : Uint8Array = new Uint8Array();
 
     try {
 
-      const masterKeyBase64: string = CryptoCore.decrypt(pkg.encryptedMessageKey, Buffer.from(session.rootKey).toString('base64'));
-      masterKeyBytes = Buffer.from(masterKeyBase64, 'base64');
+      masterKey = CryptoCore.decrypt(Buffer.from(pkg.encryptedMessageKey, 'base64'), session.rootKey);
 
-      decryptedContent = CryptoCore.decrypt(pkg.content, masterKeyBase64);
+      decryptedContent = CryptoCore.decrypt(Buffer.from(pkg.content, 'base64'), masterKey);
 
       const combinedMapKey = StorageService.generateCombinedName(roomID, pkg.senderId, deviceId);
       await StorageService.saveSession(
@@ -159,11 +159,11 @@ abstract class ProtocolService {
         combinedMapKey
       );
     } finally {
-      if (masterKeyBytes) this.wipeBytes(masterKeyBytes);
+      this.wipeBytes(masterKey);
     }
-
+    const decoder = new TextDecoder();
     log.info(`Message #${pkg.messageNumber} decrypted successfully.`);
-    return decryptedContent;
+    return decoder.decode(decryptedContent);
   }
 
   private static wipeBytes(...buffers: (Uint8Array | null | undefined)[]): void {
@@ -219,9 +219,9 @@ abstract class ProtocolService {
     }
 
     const isValid = CryptoCore.verifySignature(
-      preKey.signature,
+      Buffer.from(preKey.signature, 'base64'),
       Buffer.from(preKey.spk, 'base64'),
-      identityKey
+      Buffer.from(identityKey, 'base64')
     );
     if (!isValid) {
       throw new Error(`Signature verification failed for pre-key of device: ${deviceId}`);
@@ -231,8 +231,8 @@ abstract class ProtocolService {
     const { ciphertext: capsuleOPK, sharedSecret: ssOPK } = CryptoCore.encapsulate(Buffer.from(preKey.opk, 'base64'));
 
     log.debug('Generating root key and saving to DB.');
-    const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(Buffer.from(ssSPK, 'base64'), Buffer.from(ssOPK, 'base64'), roomID);
-    this.wipeBytes(Buffer.from(ssSPK, 'base64'), Buffer.from(ssOPK, 'base64'));
+    const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
+    this.wipeBytes(ssSPK, ssOPK);
 
     const capsuleStr = `${Buffer.from(capsuleSPK).toString('base64')}|${Buffer.from(capsuleOPK).toString('base64')}`;
 

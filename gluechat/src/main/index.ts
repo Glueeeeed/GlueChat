@@ -13,7 +13,7 @@ import { NetworkService } from './Services/NetworkService';
 import log from 'electron-log/main';
 import { NotificationService } from './Services/NotificationService';
 import { WebsocketManager } from './Managers/WebsocketManager';
-import { DSAKeyPair, KemKeyPair } from '@glueeeed/gluechat-crypto';
+import { DsaKeyPair, KemKeyPair } from '@glueeeed/gluechat-crypto';
 
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.gluechat.app');
@@ -140,9 +140,8 @@ export function restoreWindow(): void {
   }
 }
 
-// const gotTheLock : boolean = app.requestSingleInstanceLock();
+const gotTheLock : boolean = app.requestSingleInstanceLock();
 
-const gotTheLock = true;
 
 if (!gotTheLock) {
   log.info("GlueChat instance already running. Quitting...")
@@ -241,26 +240,26 @@ ipcMain.handle('generate-xwing-pair-keys', async (_, accountName: string, tempTo
     // Generates Keys
 
     const identityKP: KemKeyPair = CryptoCore.generateSignKeyPair(); // Identity Key Pair
-    const identityPubKey: string = identityKP.publicKey;
-    const identityKey: string = identityKP.privateKey;
+    const identityPubKey : Uint8Array = identityKP.publicKey;
+    const identityKey: Uint8Array = identityKP.privateKey;
 
-    const spkKP: DSAKeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
-    const spkPubKey: string = spkKP.publicKey;
-    const spkKey: string = spkKP.privateKey;
+    const spkKP: DsaKeyPair = CryptoCore.generateNewKeyPair(); // Signed PreKey Pair
+    const spkPubKey : Uint8Array = spkKP.publicKey;
+    const spkKey:  Uint8Array = spkKP.privateKey;
 
-    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`, identityKey);
-    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityPubKey`, identityPubKey);
-    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPrivateKey`, spkKey);
-    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPubKey`, spkPubKey);
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityKey`, Buffer.from(identityKey).toString('base64'));
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-identityPubKey`, Buffer.from(identityPubKey).toString('base64'));
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPrivateKey`, Buffer.from(spkKey).toString('base64'));
+    await SecretManager.setSecret(accountName, 'gluechat_' + accountName, `${prefix}-signingPubKey`, Buffer.from(spkPubKey).toString('base64'));
 
-    const signature: string = CryptoCore.sign(Buffer.from(spkPubKey), identityKey)
+    const signature: Uint8Array = CryptoCore.sign(spkPubKey, identityKey);
 
     const oneTimeKeys: oneTimeKey[] = await CryptoCore.generateOneTimeKeys(100, accountName, prefix);
 
     const data = {
       identityPubKey: identityPubKey,
       spkPubKey: spkPubKey,
-      signature: signature,
+      signature: Buffer.from(signature).toString('base64'),
       oneTimeKeys: oneTimeKeys
     };
 

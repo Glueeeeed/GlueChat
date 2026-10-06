@@ -257,8 +257,8 @@ ipcMain.handle('generate-xwing-pair-keys', async (_, accountName: string, tempTo
     const oneTimeKeys: oneTimeKey[] = await CryptoCore.generateOneTimeKeys(100, accountName, prefix);
 
     const data = {
-      identityPubKey: identityPubKey,
-      spkPubKey: spkPubKey,
+      identityPubKey: Buffer.from(identityPubKey).toString('base64'),
+      spkPubKey: Buffer.from(spkPubKey).toString('base64'),
       signature: Buffer.from(signature).toString('base64'),
       oneTimeKeys: oneTimeKeys
     };

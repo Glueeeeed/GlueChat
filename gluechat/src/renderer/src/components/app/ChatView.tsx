@@ -97,7 +97,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
             const currentNickname = localStorage.getItem('nickname') || 'User';
             const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname, receiverID as string);
             if (decryptedText) {
-              await makeAsRead(authKey, pkg.nonce);
+              await makeAsRead(authKey, pkg.messageId);
               setMessages((prev) => {
                 if (prev.some((m) => m.id === pkg.id)) return prev;
 
@@ -107,7 +107,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
                     id: pkg.id,
                     sender: chatName,
                     content: decryptedText,
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestamp: new Date(pkg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     isAuthor: false,
                     isSeen: true
                   }
@@ -118,12 +118,12 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
                 id: Date.now().toString(),
                 sender: chatName,
                 content: decryptedText,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date(pkg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isAuthor: false,
                 isSeen: false
               };
 
-              await window.e2ee.saveMessage(chatID, pkg.senderId, messageData, pkg.nonce, chatName, currentNickname);
+              await window.e2ee.saveMessage(chatID, pkg.senderId, messageData, pkg.messageId, chatName, currentNickname);
             }
           }
         }
@@ -149,7 +149,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
           const currentNickname: string = localStorage.getItem('nickname') || 'User';
           const decryptedText: string | null = await window.e2ee.decryptMessage(message, currentNickname, senderID);
           if (decryptedText) {
-            await makeAsRead(authKey, message.nonce);
+            await makeAsRead(authKey, message.messageId);
             setMessages((prev: Message[]): Message[] => {
               if (prev.some((m: Message): boolean => m.id === message.id)) return prev;
               return [
@@ -158,7 +158,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
                   id: Date.now().toString(),
                   sender: chatName,
                   content: decryptedText,
-                  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  timestamp: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   isAuthor: false,
                   isSeen: false
                 }
@@ -169,7 +169,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
               id: Date.now().toString(),
               sender: localStorage.getItem('nickname') || 'Me',
               content: decryptedText,
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              timestamp: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               isAuthor: false,
               isSeen: false
             };
@@ -184,7 +184,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
                 id: Date.now().toString(),
                 sender: chatName,
                 content: '',
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isDecryptionError: true,
                 errorMessage: 'We were unable to decrypt this message. Please try again or ask the sender to resend it.'
               }

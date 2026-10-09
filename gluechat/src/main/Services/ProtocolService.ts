@@ -6,6 +6,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import log from 'electron-log/main';
 
 export interface PkgStructure {
+  messageId: string;
   deviceId: string;
   roomID: string;
   senderId: string;
@@ -15,8 +16,8 @@ export interface PkgStructure {
   opkId: string | null;
   capsule: string | null;
   content: string;
+  createdAt: string;
   encryptedMessageKey: string;
-  isDeleted: boolean;
 }
 
 abstract class ProtocolService {
@@ -80,7 +81,12 @@ abstract class ProtocolService {
           combinedMapKey
         );
 
+        const messageId : string = Buffer.from(CryptoCore.generateRandomBytes(10)).toString('hex');
+        const date = new Date();
+        const dateString : string = date.toISOString();
+
         pkgs.push({
+          messageId,
           deviceId,
           roomID,
           senderId: senderID,
@@ -90,8 +96,8 @@ abstract class ProtocolService {
           opkId,
           capsule: capsuleStr,
           content: Buffer.from(encryptedMessage).toString('base64'),
+          createdAt: dateString,
           encryptedMessageKey: Buffer.from(encryptedMasterKey).toString('base64'),
-          isDeleted: false
         });
 
       }

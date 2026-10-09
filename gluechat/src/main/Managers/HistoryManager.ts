@@ -52,7 +52,7 @@ export abstract class HistoryManager {
     roomID: string,
     senderID: string,
     messageData: messageData,
-    nonce: string,
+    messageId: string,
     chatName: string,
     accountName: string
   ): Promise<void> {
@@ -70,7 +70,7 @@ export abstract class HistoryManager {
       senderID,
       chatName,
       Buffer.from(encrypted).toString('base64'),
-      nonce,
+      messageId,
       +messageData.isAuthor,
       +messageData.isSeen,
       "0000000"

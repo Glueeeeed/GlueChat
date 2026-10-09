@@ -106,7 +106,7 @@ export abstract class E2EEService {
     static async makeAsRead(messageID: string) {
         const message = await prisma.message.findFirst({
             where: {
-                nonce: messageID,
+                messageId: messageID,
             }
         })
         if (!message) {
@@ -114,7 +114,7 @@ export abstract class E2EEService {
         }
         await prisma.message.delete({
             where: {
-                nonce: messageID,
+                messageId: messageID,
             },
         })
     }

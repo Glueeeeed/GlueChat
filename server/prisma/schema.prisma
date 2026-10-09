@@ -59,20 +59,19 @@ model PrivateRoom {
 }
 
 model Message {
-  id              String   @id @default(cuid())
-  deviceId        String
-  roomID          String
-  senderId        String
-  messageNumber   Int
-  opkId           String?
-  capsule         String?  @db.LongText
-  ephemeralPubKey String?  @db.LongText
-  salt            String?
-  content         String   @db.LongText
-  createdAt       DateTime @default(now())
+  id                  String  @id @default(cuid())
+  messageId           String
+  deviceId            String
+  roomID              String
+  senderId            String
+  receiverId          String
+  messageNumber       Int
+  opkId               String?
+  capsule             String? @db.LongText
+  content             String  @db.LongText
+  createdAt           String
   encryptedMessageKey String
-  isDeleted       Boolean
-  isSeen          Boolean
+  isSeen              Boolean
 
   privateRoom PrivateRoom @relation(fields: [roomID], references: [id], onDelete: Cascade)
   sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)

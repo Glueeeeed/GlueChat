@@ -76,6 +76,7 @@ model Message {
   privateRoom PrivateRoom @relation(fields: [roomID], references: [id], onDelete: Cascade)
   sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
+  @@unique([messageId])
   @@index([roomID])
 }
 

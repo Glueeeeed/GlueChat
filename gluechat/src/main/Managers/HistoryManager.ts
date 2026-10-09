@@ -40,7 +40,7 @@ export abstract class HistoryManager {
         messageID TEXT UNIQUE,
         isAuthor BOOLEAN DEFAULT NULL,
         isSeen BOOLEAN DEFAULT NULL,
-        timestamp TEXT DEFAULT NULL,
+        timestamp TEXT DEFAULT NULL
       )
     `);
 
@@ -61,7 +61,7 @@ export abstract class HistoryManager {
     const encrypted : Uint8Array = CryptoCore.encryptData(new TextEncoder().encode(messageData.content), key);
 
     const stmt = db.prepare(
-      `INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, nonce)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)  `
+      `INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, timestamp)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)  `
     );
 
     stmt.run(

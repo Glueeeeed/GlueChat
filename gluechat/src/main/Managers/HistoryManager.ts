@@ -26,7 +26,7 @@ export abstract class HistoryManager {
     }
 
     const userDataPath: string = app.getPath('userData');
-    const dbPath: string = path.join(userDataPath, `${accountName}_history.db`);
+    const dbPath: string = path.join(userDataPath, `${accountName}_history_v2.db`);
 
     const db = new Database(dbPath);
 
@@ -40,8 +40,7 @@ export abstract class HistoryManager {
         messageID TEXT UNIQUE,
         isAuthor BOOLEAN DEFAULT NULL,
         isSeen BOOLEAN DEFAULT NULL,
-        nonce TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        timestamp TEXT DEFAULT NULL,
       )
     `);
 
@@ -73,7 +72,8 @@ export abstract class HistoryManager {
       messageId,
       +messageData.isAuthor,
       +messageData.isSeen,
-      "0000000"
+        messageData.timestamp
+
     );
   }
 
@@ -89,7 +89,7 @@ export abstract class HistoryManager {
         id: row.messageID,
         sender: row.senderName,
         content: result,
-        timestamp: new Date(row.timestamp + ' UTC').toLocaleTimeString(),
+        timestamp: new Date(row.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isAuthor: Boolean(row.isAuthor),
         isSeen: Boolean(row.isSeen)
       };

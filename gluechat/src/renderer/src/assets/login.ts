@@ -31,7 +31,7 @@ export async function login(nickname: string, password: string, code2fa?: string
   }
 
   await window.auth.setRefreshToken(nickname, json.refreshToken);
-  localStorage.setItem("nickname", nickname);
+  localStorage.setItem("nickname", nickname.toLowerCase());
 
   const savedAccounts = JSON.parse(localStorage.getItem("accounts") || "[]");
   if (!savedAccounts.includes(nickname)) {
@@ -41,9 +41,9 @@ export async function login(nickname: string, password: string, code2fa?: string
 
 
   try {
-    await window.e2ee.generatePairKeys(nickname, json.authToken, false);
+    await window.e2ee.generatePairKeys(nickname.toLowerCase(), json.authToken, false);
   } catch {
-    return { success: false, message: 'Failed to register device keys. Try again or contact support.' }
+    return { success: false, message: "Failed to register device keys. Please try again or restart the application."}
   }
 
   return {success: true, message: "ok"};

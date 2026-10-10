@@ -24,13 +24,13 @@ export async function register(nickname: string, password: string, accessCode: s
 
   if (response.status === 201) {
     try {
-      await window.e2ee.generatePairKeys(nickname, json.authToken, false)
+      await window.e2ee.generatePairKeys(nickname.toLowerCase(), json.authToken, false)
     } catch (error) {
       log.error(error);
       return {
         success: false,
-        message: 'Failed to register device keys. Try again or contact support.'
-      }
+        message: 'Failed to register device keys. Please try again or restart the application. If the problem persists, contact support.'
+      };
     }
 
     return {success: true, message: json.message}

@@ -86,6 +86,9 @@ export function Box({ isLogin, nickname, password, setNickname,setPassword, setA
       if (op === 'register') {
         validateNickname(nickname);
         validatePassword(password);
+      } else {
+        validateNickname(nickname);
+        validatePassword(password);
       }
 
     } catch (err: any) {

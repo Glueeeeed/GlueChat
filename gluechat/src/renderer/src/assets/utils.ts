@@ -6,12 +6,17 @@ export const WEBSOCKET_URL : string = import.meta.env.VITE_WEBSOCKET_URL || 'ws:
 export const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v1';
 export const APP_VERSION_NAME = import.meta.env.VITE_APP_VERSION_NAME || 'v1';
 
-export function validateNickname (nickname: string) : void {
+export function validateNickname(nickname: string) : void {
     if (validator.isEmpty(nickname)) {
        throw new Error('Nickname is required');
     }
     if (validator.isEmail(nickname)) {
       throw new Error('Nickname cannot be emails');
+    }
+
+    console.log(nickname);
+    if (!validator.isLowercase(nickname)) {
+      throw new Error('nickname can be only lowercase');
     }
 
     if (!validator.isLength(nickname, {min: 3 , max: 20})) {

@@ -20,6 +20,9 @@ if (process.platform === 'win32') {
 }
 app.name = 'GlueChat';
 
+export const appSession = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
+
+
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
@@ -181,6 +184,7 @@ if (!gotTheLock) {
     });
 
     log.info('GlueChat started');
+    log.info('Application Session: ' + appSession);
     log.debug('Debug mode enabled');
   });
 

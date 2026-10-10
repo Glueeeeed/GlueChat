@@ -60,6 +60,7 @@ model PrivateRoom {
 
 model Message {
   id                  String  @id @default(cuid())
+  appSessionId        String
   messageId           String
   deviceId            String
   roomID              String

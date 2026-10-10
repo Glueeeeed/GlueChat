@@ -36,6 +36,24 @@ interface ChatViewProps {
   deviceId: string;
 }
 
+const formatTime = (rawDate?: any): string => {
+  if (!rawDate) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (typeof rawDate === 'string' && /^\d{1,2}:\d{2}(:\d{2})?(\s?[AP]M)?$/i.test(rawDate.trim())) {
+    return rawDate.trim();
+  }
+  const date = new Date(rawDate);
+  if (!isNaN(date.getTime())) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return typeof rawDate === 'string' ? rawDate : '';
+};
+
+const toIsoString = (rawDate?: any): string => {
+  if (!rawDate) return new Date().toISOString();
+  const date = new Date(rawDate);
+  return !isNaN(date.getTime()) ? date.toISOString() : new Date().toISOString();
+};
+
 export function ChatView({ senderID, authKey, chatID, chatName, receiverID, deviceId }: ChatViewProps): React.JSX.Element {
   const [messages, setMessages] = useState<Message[]>([]);
   const [errorMessages, setErrorMessages] = useState<ErrorMessage[]>([]);
@@ -95,35 +113,54 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
             if (pkg.deviceId !== deviceId) continue;
 
             const currentNickname = localStorage.getItem('nickname') || 'User';
-            const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname, receiverID as string);
-            if (decryptedText) {
-              await makeAsRead(authKey, pkg.messageId);
-              setMessages((prev) => {
-                if (prev.some((m) => m.id === pkg.id)) return prev;
+            try {
+              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname, receiverID as string);
+              if (decryptedText) {
+                await makeAsRead(authKey, pkg.messageId);
+                const timeStr = formatTime(pkg.createdAt);
 
+                setMessages((prev) => {
+                  if (prev.some((m) => m.id === (pkg.messageId || pkg.id))) return prev;
+
+                  return [
+                    ...prev,
+                    {
+                      id: pkg.messageId || pkg.id || Date.now().toString(),
+                      sender: chatName,
+                      content: decryptedText,
+                      timestamp: timeStr,
+                      isAuthor: false,
+                      isSeen: true
+                    }
+                  ];
+                });
+
+                const messageData = {
+                  id: pkg.messageId || pkg.id || Date.now().toString(),
+                  sender: chatName,
+                  content: decryptedText,
+                  timestamp: timeStr,
+                  isAuthor: false,
+                  isSeen: false
+                };
+
+                await window.e2ee.saveMessage(toIsoString(pkg.createdAt), chatID, pkg.senderId, messageData, pkg.messageId || pkg.id, chatName, currentNickname);
+              }
+            } catch (err) {
+              log.error('Failed to decrypt offline message', err);
+              setErrorMessages((prev: ErrorMessage[]): ErrorMessage[] => {
                 return [
                   ...prev,
                   {
-                    id: pkg.id,
+                    id: pkg.messageId || pkg.id || Date.now().toString(),
                     sender: chatName,
-                    content: decryptedText,
-                    timestamp: new Date(pkg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isAuthor: false,
-                    isSeen: true
+                    content: '',
+                    timestamp: formatTime(pkg.createdAt),
+                    isDecryptionError: true,
+                    errorMessage: 'We were unable to decrypt this message. Please try again or ask the sender to resend it.'
                   }
                 ];
               });
-
-              const messageData = {
-                id: Date.now().toString(),
-                sender: chatName,
-                content: decryptedText,
-                timestamp: new Date(pkg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isAuthor: false,
-                isSeen: false
-              };
-
-              await window.e2ee.saveMessage(chatID, pkg.senderId, messageData, pkg.messageId, chatName, currentNickname);
             }
           }
         }
@@ -139,26 +176,29 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
 
   useEffect(() => {
     const removeListener = window.network.ws.onMessage(async (data) => {
+      if (data?.type !== 'receive-message' || !Array.isArray(data.payload)) {
+        return;
+      }
+
       for (const message of data.payload) {
         try {
-          if (data?.type !== 'receive-message' || !Array.isArray(data.payload)) {
-            return;
-          }
-
           if (message.deviceId !== deviceId) continue;
           const currentNickname: string = localStorage.getItem('nickname') || 'User';
           const decryptedText: string | null = await window.e2ee.decryptMessage(message, currentNickname, senderID);
           if (decryptedText) {
             await makeAsRead(authKey, message.messageId);
+            const timeStr = formatTime(message.createdAt);
+            const msgId = message.messageId || message.id || message.nonce || Date.now().toString();
+
             setMessages((prev: Message[]): Message[] => {
-              if (prev.some((m: Message): boolean => m.id === message.id)) return prev;
+              if (prev.some((m: Message): boolean => m.id === msgId)) return prev;
               return [
                 ...prev,
                 {
-                  id: Date.now().toString(),
+                  id: msgId,
                   sender: chatName,
                   content: decryptedText,
-                  timestamp: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  timestamp: timeStr,
                   isAuthor: false,
                   isSeen: false
                 }
@@ -166,15 +206,15 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
             });
 
             const messageData = {
-              id: Date.now().toString(),
-              sender: localStorage.getItem('nickname') || 'Me',
+              id: msgId,
+              sender: chatName,
               content: decryptedText,
-              timestamp: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              timestamp: timeStr,
               isAuthor: false,
               isSeen: false
             };
 
-            await window.e2ee.saveMessage(chatID, message.senderID, messageData, message.nonce, chatName, currentNickname);
+            await window.e2ee.saveMessage(toIsoString(message.createdAt), chatID, message.senderId || message.senderID || senderID, messageData, msgId, chatName, currentNickname);
           }
         } catch (e) {
           setErrorMessages((prev: ErrorMessage[]): ErrorMessage[] => {
@@ -184,7 +224,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
                 id: Date.now().toString(),
                 sender: chatName,
                 content: '',
-                timestamp: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: formatTime(message.createdAt),
                 isDecryptionError: true,
                 errorMessage: 'We were unable to decrypt this message. Please try again or ask the sender to resend it.'
               }
@@ -197,13 +237,13 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
     });
 
     return () => removeListener();
-  }, []);
+  }, [authKey, chatID, chatName, deviceId, senderID]);
 
   const handleSendMessage = async (message: string): Promise<void> => {
+    const currentNickname: string = localStorage.getItem('nickname') || 'User';
     try {
       const authToken: string = await validateOrRefreshToken(authKey);
-      const currentNickname: string = localStorage.getItem('nickname') || 'User';
-      const result: string | null = await window.e2ee.initializeEncryptMessage(
+      const result: any = await window.e2ee.initializeEncryptMessage(
         authToken,
         message,
         chatID,
@@ -213,26 +253,32 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
       );
 
       if (result) {
-        const currentNickname: string = localStorage.getItem('nickname') || 'User';
-
         window.network.ws.sendMessage(result);
 
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const isoString = now.toISOString();
+
+        const firstPkg = Array.isArray(result) && result.length > 0 ? result[0] : (typeof result === 'object' && result !== null ? result : null);
+        const msgId = firstPkg?.messageId || Date.now().toString();
+
         const messageData = {
-          id: Date.now().toString(),
-          sender: localStorage.getItem('nickname') || 'Me',
+          id: msgId,
+          sender: currentNickname,
           content: message,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+
+          timestamp: timeStr,
           isAuthor: true,
           isSeen: false
         };
 
         setMessages((prev) => [...prev, messageData]);
 
-        const resultObj = JSON.parse(JSON.stringify(result));
-        await window.e2ee.saveMessage(chatID, senderID, messageData, resultObj.nonce, currentNickname, currentNickname);
+        await window.e2ee.saveMessage(isoString, chatID, senderID, messageData, msgId, currentNickname, currentNickname);
       } else {
         throw new Error('Failed to encrypt or send message');
       }
+
     } catch (error) {
       log.error(error);
 
@@ -240,12 +286,13 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         return [
           ...prev,
           {
+
             id: Date.now().toString(),
-            sender: chatName,
+            sender: currentNickname,
             content: message,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isDecryptionError: true,
-            errorMessage: 'We were unable to decrypt this message. Please try again or ask the sender to resend it.'
+            isDecryptionError: false,
+            errorMessage: 'Failed to send'
           }
         ];
       });

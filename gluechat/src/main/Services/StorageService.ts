@@ -36,14 +36,15 @@ export interface ChatInfo {
 
 export abstract class StorageService {
   static async saveMessage(
+    timestamp: string,
     roomID: string,
     senderID: string,
     messageData: messageData,
-    nonce: string,
+    messageId: string,
     chatName: string,
     accountName: string
   ): Promise<void> {
-    return HistoryManager.saveMessage(roomID, senderID, messageData, nonce, chatName, accountName);
+    return HistoryManager.saveMessage(timestamp, roomID, senderID, messageData, messageId, chatName, accountName);
   }
 
   static async getHistory(roomID: string, accountName: string): Promise<any> {

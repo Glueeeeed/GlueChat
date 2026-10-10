@@ -3,7 +3,6 @@ import { FaShieldHalved } from 'react-icons/fa6'
 import { IoIosUnlock, IoMdAlert } from 'react-icons/io'
 import { FaCheckCircle } from 'react-icons/fa'
 import { Eye, EyeOff } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { JSX, useEffect, useState } from 'react'
 import { validateOrRefreshToken } from '@renderer/assets/main'
 import {changePassword, disable2fa, get2faStatus, getRecoveryStatus, removeRecovery, resetKeys} from '@renderer/assets/account'
@@ -30,7 +29,6 @@ export function AccountSecurity({authToken , deviceId} : Props) : JSX.Element {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>('Successfully updated password!');
-  const navigate = useNavigate()
 
   useEffect(() => {
     const fetch2FAStatus = async () : Promise<void> => {

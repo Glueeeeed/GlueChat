@@ -20,7 +20,6 @@ if (process.platform === 'win32') {
 }
 app.name = 'GlueChat';
 
-let websocket: any = null;
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
@@ -89,7 +88,7 @@ function createWindow(): void {
     }
   });
 
-  websocket = new WebsocketManager(mainWindow);
+  new WebsocketManager(mainWindow);
 
   if (process.platform === 'win32') {
     initWindowsTray();
@@ -290,8 +289,8 @@ ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: s
 
 ipcMain.handle(
   'saveMessage',
-  async (_, roomID: string, senderID: string, messageData: messageData, nonce: string, chatName: string, accountName: string) => {
-    return await StorageService.saveMessage(roomID, senderID, messageData, nonce, chatName, accountName);
+  async (_, timestamp: string, roomID: string, senderID: string, messageData: messageData, messageId: string, chatName: string, accountName: string) => {
+    return await StorageService.saveMessage(timestamp, roomID, senderID, messageData, messageId, chatName, accountName);
   }
 );
 

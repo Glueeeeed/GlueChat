@@ -1,5 +1,23 @@
 import {ElectronAPI} from '@electron-toolkit/preload'
-import {ChatInfo, messageData} from "../main/Services/StorageService";
+
+export interface messageData {
+  id: string;
+  sender: string;
+  content: string;
+  timestamp: string;
+  isAuthor: boolean;
+  isSeen: boolean;
+}
+
+export interface ChatInfo {
+  id: string;
+  name: string;
+  status: 'online' | 'offline';
+  unread: boolean;
+  unreadCount: number;
+  senderID: string;
+  receiverID: string;
+}
 
 declare global {
   interface Window {
@@ -29,7 +47,7 @@ declare global {
       initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => Promise<string | null>;
       decryptMessage: (encryptedPackage: any, accountName: string, accountID: string) => Promise<string | null>;
       getMessages: (roomID: string,  accountName: string) => Promise<string | null>;
-      saveMessage: (roomID: string, senderID: string, content: messageData, nonce: string, chatName: string,  accountName: string) => Promise<string | null>;
+      saveMessage: (timestamp: string , roomID: string, senderID: string, content: messageData, messageId: string, chatName: string,  accountName: string) => Promise<string | null>;
       getLastMessage: (roomID: ChatInfo,  accountName: string) => Promise<any | null>;
     },
     app: {

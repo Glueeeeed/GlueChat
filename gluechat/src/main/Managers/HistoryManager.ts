@@ -48,6 +48,7 @@ export abstract class HistoryManager {
   }
 
   static async saveMessage(
+      timestamp: string,
     roomID: string,
     senderID: string,
     messageData: messageData,
@@ -72,7 +73,8 @@ export abstract class HistoryManager {
       messageId,
       +messageData.isAuthor,
       +messageData.isSeen,
-        messageData.timestamp
+        timestamp
+
 
     );
   }
@@ -85,11 +87,26 @@ export abstract class HistoryManager {
     return rows.map((row: any) => {
       const decrypted : Uint8Array = CryptoCore.decrypt(Buffer.from(row.encryptedContent, 'base64'), key);
       const result = new TextDecoder().decode(decrypted);
+
+      let formattedTimestamp = '';
+      if (row.timestamp) {
+        if (typeof row.timestamp === 'string' && /^\d{1,2}:\d{2}(:\d{2})?(\s?[AP]M)?$/i.test(row.timestamp.trim())) {
+          formattedTimestamp = row.timestamp.trim();
+        } else {
+          const date = new Date(row.timestamp);
+          if (!isNaN(date.getTime())) {
+            formattedTimestamp = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          } else if (typeof row.timestamp === 'string') {
+            formattedTimestamp = row.timestamp;
+          }
+        }
+      }
+
       return {
         id: row.messageID,
         sender: row.senderName,
         content: result,
-        timestamp: new Date(row.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: formattedTimestamp,
         isAuthor: Boolean(row.isAuthor),
         isSeen: Boolean(row.isSeen)
       };

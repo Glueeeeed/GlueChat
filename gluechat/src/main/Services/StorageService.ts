@@ -5,6 +5,7 @@ import { HistoryManager } from '../Managers/HistoryManager';
 
 export interface SessionState {
   rootKey: Uint8Array;
+  appSession: string
   messageKey?: Uint8Array;
   salt?: Uint8Array;
   opkId?: string;

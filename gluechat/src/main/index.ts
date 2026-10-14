@@ -20,7 +20,7 @@ if (process.platform === 'win32') {
 }
 app.name = 'GlueChat';
 
-export const appSession = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
+export const appSession : string = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
 
 
 let mainWindow: BrowserWindow | null = null;

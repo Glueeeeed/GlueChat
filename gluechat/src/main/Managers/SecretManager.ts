@@ -11,7 +11,7 @@ export abstract class SecretManager {
     let key = await keytar.getPassword('Gluechat', 'local_secret_key');
 
     if (!key) {
-      const newKey = CryptoCore.generateRandomBytes(32);
+      const newKey : Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
       key = Buffer.from(newKey).toString('base64');
       await keytar.setPassword('Gluechat', 'local_secret_key', key);
     }
@@ -54,13 +54,13 @@ export abstract class SecretManager {
     db.prepare('DELETE FROM secrets').run();
   }
 
-  private static getDb(accountName: string): any {
+   static getDb(accountName: string): any {
     if (this.dbs.has(accountName)) {
       return this.dbs.get(accountName);
     }
 
     const userDataPath = app.getPath('userData');
-    const dbPath = path.join(userDataPath, `${accountName}_secrets.db`);
+    const dbPath = path.join(userDataPath, `${accountName}_secrets_v2.db`);
 
     const db = new Database(dbPath);
 
@@ -72,6 +72,20 @@ export abstract class SecretManager {
         PRIMARY KEY (service,account)
       )
     `);
+
+    db.exec(`CREATE TABLE IF NOT EXISTS session_root_keys (
+  combine_name TEXT NOT NULL,
+  app_session_id TEXT NOT NULL,
+  root_key TEXT NOT NULL,
+  send_counter INTEGER DEFAULT 0,
+  is_active INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (combine_name, app_session_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_combine ON session_root_keys(combine_name);
+CREATE INDEX IF NOT EXISTS idx_session_app_id ON session_root_keys(app_session_id);`);
 
     return db;
   }

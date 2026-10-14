@@ -4,9 +4,12 @@ import { CryptoCore } from './CryptoCore';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import log from 'electron-log/main';
+import { appSession } from '../index';
+import { SessionKeyManager } from '../Managers/SessionKeyManager';
 
 export interface PkgStructure {
   messageId: string;
+  appSessionId: string;
   deviceId: string;
   roomID: string;
   senderId: string;
@@ -47,13 +50,16 @@ abstract class ProtocolService {
         let capsuleStr: string | null = null;
         let opkId: string | null = null;
 
-        if (!session) {
+        if (!session || appSession != session.appSession ) {
           const preKey: preKeysPackage | undefined = preKeysPackages.find((pk): boolean => pk.deviceId === deviceId);
           if (!preKey) {
             log.error(`Skipping device ${deviceId}: No PreKeys available`);
             continue;
           }
-          const handshakeResult = await this.createSenderHandshake(roomID, authKey, receiverID, senderID, accountName, deviceId, preKey);
+
+          const changedAppSession : boolean = appSession != session?.appSession;
+
+          const handshakeResult = await this.createSenderHandshake(roomID, authKey, receiverID, senderID, accountName, deviceId, preKey, session, changedAppSession);
           session = handshakeResult.session;
           capsuleStr = handshakeResult.capsuleStr;
           opkId = preKey.opkId;
@@ -87,6 +93,7 @@ abstract class ProtocolService {
 
         pkgs.push({
           messageId,
+          appSessionId: appSession,
           deviceId,
           roomID,
           senderId: senderID,
@@ -213,7 +220,7 @@ abstract class ProtocolService {
     }
   }
 
-  private static async createSenderHandshake(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string, deviceId: string, preKey: preKeysPackage): Promise<{ session: SessionState;
+  private static async createSenderHandshake(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string, deviceId: string, preKey: preKeysPackage, previousSession: SessionState | null, changedAppSession : boolean ): Promise<{ session: SessionState;
     capsuleStr: string;
   }> {
     log.debug(`Executing PQ KEM Handshake for device: ${deviceId}`);
@@ -242,18 +249,34 @@ abstract class ProtocolService {
 
     const capsuleStr = `${Buffer.from(capsuleSPK).toString('base64')}|${Buffer.from(capsuleOPK).toString('base64')}`;
 
+    const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
+
+
+    // Save root key in session_root_keys table
+
+    const sessionCounter = previousSession ? previousSession.sendCounter : 1;
+    await SessionKeyManager.saveRootKeyForSession(accountName,combinedMapKey,appSession,rootKey, sessionCounter as number)
+
+
+    // Change last key to inactive and delete older keys (expect previous Key and new Key) for device
+
+    if (changedAppSession && previousSession) {
+      await SessionKeyManager.handleSessionRotation(accountName, previousSession?.appSession, appSession);
+    }
+
     const session: SessionState = {
       rootKey,
       sendCounter: 1,
       lastSenderID: senderID,
-      opkId: preKey.opkId
+      opkId: preKey.opkId,
+      appSession: appSession,
     };
 
-    const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
     const dataToSave = {
       rootKey: Buffer.from(rootKey).toString('base64'),
       sendCounter: 1,
-      lastSenderID: senderID
+      lastSenderID: senderID,
+      appSession: appSession
     };
     await StorageService.saveSession(JSON.stringify(dataToSave), accountName, combinedMapKey);
     log.debug('Saved session to DB.');

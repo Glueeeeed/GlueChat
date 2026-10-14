@@ -24,7 +24,13 @@ export interface PkgStructure {
 }
 
 abstract class ProtocolService {
-  public static async initializeEncrypt(authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string
+  public static async initializeEncrypt(
+    authKey: string,
+    content: string,
+    roomID: string,
+    senderID: string,
+    receiverID: string,
+    accountName: string
   ): Promise<PkgStructure[]> {
     log.info(`Starting encryption process for room: ${roomID}`);
 
@@ -40,8 +46,8 @@ abstract class ProtocolService {
     const pkgs: PkgStructure[] = [];
 
     const encoder = new TextEncoder();
-    const masterKey : Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
-    const encryptedMessage : Uint8Array = CryptoCore.encryptData(encoder.encode(content), masterKey);
+    const masterKey: Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
+    const encryptedMessage: Uint8Array = CryptoCore.encryptData(encoder.encode(content), masterKey);
 
     try {
       for (const device of targetDevices) {
@@ -50,24 +56,32 @@ abstract class ProtocolService {
         let capsuleStr: string | null = null;
         let opkId: string | null = null;
 
-        if (!session || appSession != session.appSession ) {
+        if (!session || appSession != session.appSession) {
           const preKey: preKeysPackage | undefined = preKeysPackages.find((pk): boolean => pk.deviceId === deviceId);
           if (!preKey) {
             log.error(`Skipping device ${deviceId}: No PreKeys available`);
             continue;
           }
 
-          const changedAppSession : boolean = appSession != session?.appSession;
+          const changedAppSession: boolean = appSession != session?.appSession;
 
-          const handshakeResult = await this.createSenderHandshake(roomID, authKey, receiverID, senderID, accountName, deviceId, preKey, session, changedAppSession);
+          const handshakeResult = await this.createSenderHandshake(
+            roomID,
+            authKey,
+            receiverID,
+            senderID,
+            accountName,
+            deviceId,
+            preKey,
+            session,
+            changedAppSession
+          );
           session = handshakeResult.session;
           capsuleStr = handshakeResult.capsuleStr;
           opkId = preKey.opkId;
         }
 
-
-
-        const encryptedMasterKey : Uint8Array = CryptoCore.encryptData(masterKey, session.rootKey);
+        const encryptedMasterKey: Uint8Array = CryptoCore.encryptData(masterKey, session.rootKey);
 
         const updatedSession: SessionState = {
           ...session,
@@ -87,9 +101,9 @@ abstract class ProtocolService {
           combinedMapKey
         );
 
-        const messageId : string = Buffer.from(CryptoCore.generateRandomBytes(10)).toString('hex');
+        const messageId: string = Buffer.from(CryptoCore.generateRandomBytes(10)).toString('hex');
         const date = new Date();
-        const dateString : string = date.toISOString();
+        const dateString: string = date.toISOString();
 
         pkgs.push({
           messageId,
@@ -104,9 +118,8 @@ abstract class ProtocolService {
           capsule: capsuleStr,
           content: Buffer.from(encryptedMessage).toString('base64'),
           createdAt: dateString,
-          encryptedMessageKey: Buffer.from(encryptedMasterKey).toString('base64'),
+          encryptedMessageKey: Buffer.from(encryptedMasterKey).toString('base64')
         });
-
       }
     } finally {
       // Clear keys from RAM
@@ -120,7 +133,10 @@ abstract class ProtocolService {
   public static async initializeDecrypt(pkg: PkgStructure, roomID: string, account: string, accountID: string): Promise<string> {
     log.info(`Starting decryption for message #${pkg.messageNumber} from sender: ${pkg.senderId}`);
     const deviceId: string = pkg.deviceId;
+    const combinedMapKey: string = StorageService.generateCombinedName(roomID, pkg.senderId, deviceId);
+
     let session: SessionState | null = await this.getOrLoadSession(roomID, pkg.senderId, deviceId, account);
+    const previousSession: SessionState | null = session;
 
     if (pkg.capsule) {
       log.debug(`Capsule detected. Initializing receiver KEM decapsulation.`);
@@ -133,54 +149,88 @@ abstract class ProtocolService {
         throw new Error('Decryption failed: Missing SPK or OPK private keys in local storage');
       }
 
-      const ssSPK: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey, 'base64'));
-      const ssOPK: Uint8Array = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey, 'base64'));
+      let ssSPK: Uint8Array | null = null;
+      let ssOPK: Uint8Array | null = null;
 
-      const rootKey: Uint8Array<ArrayBufferLike> = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
-      this.wipeBytes(ssSPK, ssOPK);
+      try {
+        ssSPK = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey, 'base64'));
+        ssOPK = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey, 'base64'));
 
-      session = {
-        rootKey,
-        sendCounter: 1,
-        lastSenderID: pkg.senderId
-      };
+        const rootKey: Uint8Array = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
+        const incomingSessionId: string = pkg.appSessionId || appSession;
 
-      await StorageService.removeOneTimeKey(accountID, pkg.opkId!, account);
+        await SessionKeyManager.saveRootKeyForSession(account, combinedMapKey, incomingSessionId, rootKey, 1);
+
+        if (previousSession && previousSession.appSession && previousSession.appSession !== incomingSessionId) {
+          await SessionKeyManager.handleSessionRotation(account, previousSession.appSession, incomingSessionId);
+        }
+
+        session = {
+          appSession: incomingSessionId,
+          rootKey,
+          sendCounter: 1,
+          lastSenderID: pkg.senderId
+        };
+
+        if (pkg.opkId) {
+          await StorageService.removeOneTimeKey(accountID, pkg.opkId, account);
+        }
+      } finally {
+        this.wipeBytes(ssSPK, ssOPK);
+      }
+    }
+
+    if (!session || (pkg.appSessionId && session.appSession !== pkg.appSessionId)) {
+      log.debug(`Attempting to recover rootKey from SessionKeyManager for appSessionId: ${pkg.appSessionId}`);
+      const historicalKey = await SessionKeyManager.getRootKeyForSession(account, combinedMapKey, pkg.appSessionId);
+
+      if (historicalKey) {
+        session = {
+          appSession: pkg.appSessionId,
+          rootKey: historicalKey.rootKey,
+          sendCounter: historicalKey.sendCounter,
+          lastSenderID: pkg.senderId
+        };
+      }
     }
 
     if (!session) {
       throw new Error(`No active session found to decrypt message from device: ${deviceId}`);
     }
 
-    let decryptedContent : Uint8Array;
-    let masterKey : Uint8Array = new Uint8Array();
+    let decryptedContent: Uint8Array;
+    let masterKey: Uint8Array | null = null;
 
     try {
-
       masterKey = CryptoCore.decrypt(Buffer.from(pkg.encryptedMessageKey, 'base64'), session.rootKey);
-
       decryptedContent = CryptoCore.decrypt(Buffer.from(pkg.content, 'base64'), masterKey);
 
-      const combinedMapKey = StorageService.generateCombinedName(roomID, pkg.senderId, deviceId);
+      const updatedCounter = (session.sendCounter || 0) + 1;
+      const currentAppSession = session.appSession || pkg.appSessionId || appSession;
+
       await StorageService.saveSession(
         JSON.stringify({
           rootKey: Buffer.from(session.rootKey).toString('base64'),
-          sendCounter: (session.sendCounter || 0) + 1,
-          lastSenderID: pkg.senderId
+          sendCounter: updatedCounter,
+          lastSenderID: pkg.senderId,
+          appSession: currentAppSession
         }),
         account,
         combinedMapKey
       );
+
+      await SessionKeyManager.saveRootKeyForSession(account, combinedMapKey, currentAppSession, session.rootKey, updatedCounter);
     } finally {
       this.wipeBytes(masterKey);
     }
+
     const decoder = new TextDecoder();
     log.info(`Message #${pkg.messageNumber} decrypted successfully.`);
     return decoder.decode(decryptedContent);
   }
 
   private static wipeBytes(...buffers: (Uint8Array | null | undefined)[]): void {
-    log.debug('Wiping keys from RAM...')
+    log.debug('Wiping keys from RAM...');
     for (const buf of buffers) {
       if (buf && buf.length > 0) {
         buf.fill(0);
@@ -220,14 +270,22 @@ abstract class ProtocolService {
     }
   }
 
-  private static async createSenderHandshake(roomID: string, authKey: string, receiverID: string, senderID: string, accountName: string, deviceId: string, preKey: preKeysPackage, previousSession: SessionState | null, changedAppSession : boolean ): Promise<{ session: SessionState;
-    capsuleStr: string;
-  }> {
+  private static async createSenderHandshake(
+    roomID: string,
+    authKey: string,
+    receiverID: string,
+    senderID: string,
+    accountName: string,
+    deviceId: string,
+    preKey: preKeysPackage,
+    previousSession: SessionState | null,
+    changedAppSession: boolean
+  ): Promise<{ session: SessionState; capsuleStr: string }> {
     log.debug(`Executing PQ KEM Handshake for device: ${deviceId}`);
 
     const identityKey = await NetworkService.getIdentityKey(authKey, deviceId, receiverID);
     if (!preKey.signature || !preKey.spk || !preKey.opk || !identityKey) {
-      log.debug("Prekey signature: " + !!preKey.signature + "SPK: " + !!preKey.spk + "OPK: " + !!preKey.opk + "Identity key: " + !!identityKey);
+      log.debug('Prekey signature: ' + !!preKey.signature + 'SPK: ' + !!preKey.spk + 'OPK: ' + !!preKey.opk + 'Identity key: ' + !!identityKey);
       throw new Error(`PreKey payload incomplete for device: ${deviceId}`);
     }
 
@@ -251,12 +309,10 @@ abstract class ProtocolService {
 
     const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
 
-
     // Save root key in session_root_keys table
 
     const sessionCounter = previousSession ? previousSession.sendCounter : 1;
-    await SessionKeyManager.saveRootKeyForSession(accountName,combinedMapKey,appSession,rootKey, sessionCounter as number)
-
+    await SessionKeyManager.saveRootKeyForSession(accountName, combinedMapKey, appSession, rootKey, sessionCounter as number);
 
     // Change last key to inactive and delete older keys (expect previous Key and new Key) for device
 
@@ -269,7 +325,7 @@ abstract class ProtocolService {
       sendCounter: 1,
       lastSenderID: senderID,
       opkId: preKey.opkId,
-      appSession: appSession,
+      appSession: appSession
     };
 
     const dataToSave = {
@@ -282,10 +338,8 @@ abstract class ProtocolService {
     log.debug('Saved session to DB.');
     log.debug(`PQ KEM Handshake for device ${deviceId} ended. `);
 
-
     return { session, capsuleStr };
   }
-
 }
 
 export default ProtocolService;

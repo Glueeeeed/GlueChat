@@ -63,7 +63,13 @@ abstract class ProtocolService {
             continue;
           }
 
-          const changedAppSession: boolean = appSession != session?.appSession;
+          let changedAppSession: boolean = false;
+
+          if (session) {
+            changedAppSession = appSession != session?.appSession;
+          }
+
+          log.debug(`Current appSession: ${appSession}. App session has been changed: ${changedAppSession}. Previous Session: ${session?.appSession}`);
 
           const handshakeResult = await this.createSenderHandshake(
             roomID,
@@ -95,7 +101,8 @@ abstract class ProtocolService {
           JSON.stringify({
             rootKey: Buffer.from(session.rootKey).toString('base64'),
             sendCounter: updatedSession.sendCounter,
-            lastSenderID: senderID
+            lastSenderID: senderID,
+            appSession: appSession,
           }),
           accountName,
           combinedMapKey

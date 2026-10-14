@@ -3,7 +3,7 @@
 # GlueChat
 
 <p align="center">
-    <img src="client/gluechat/build/icon.png" alt="GlueChat Logo" width="250">
+    <img src="/gluechat/build/icon.png" alt="GlueChat Logo" width="250">
 </p>
 <h1 align="center"> Post-quantum end-to-end encrypted messenger </h1>
 
@@ -162,7 +162,7 @@ GlueChat is currently in the **Beta** phase.
 
 - 🐙 GitHub: [@Glueeed](https://github.com/glueeeeed)
 - 🌐 Website: [GlueChat Website](https://app.gluechat.dev)
-- 👨‍💻 Contact: [Official Gluechat Discord](https://discord.gg/5HZVxES5b)
+- 👨‍💻 Contact: [Official Gluechat Discord](https://discord.gg/wPeywUYA2d)
 
 ---
 
@@ -187,4 +187,5 @@ This guarantees that GlueChat remains free and open-source for the community. Ho
 
 <div align="center">
   <p>GlueChat &copy; 2026</p>
+  <p>Created with ❤️ by <a href="https://github.com/glueeeeed">Glueeed</a> </p>
 </div>

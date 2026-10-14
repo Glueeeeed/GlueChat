@@ -8,7 +8,7 @@
 <h1 align="center"> Post-quantum end-to-end encrypted messenger </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-0.3.0 Gum-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.4.0 Gel-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-AGPLv3-red?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Post--Quantum-Ready-8A2BE2?style=for-the-badge" alt="Post-Quantum Ready">
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="Typescript">
@@ -37,10 +37,10 @@ ___
 
 GlueChat implements a multi-layered security model, ensuring that your data remains yours alone.
 
-### 1. Hybrid Post-Quantum Cryptography (X-Wing)
-*   **Hybrid approach:** We combine classical **X25519** (elliptic curves) with **ML-KEM-768** (Kyber), the NIST standard for quantum-resistant algorithms.
+### 1. Post-Quantum Cryptography 
+*   **Post-quantum:** We use **ML-KEM-1024** (Kyber), the NIST standard for quantum-resistant algorithms.
 * **Cipher:** XChaCha20-Poly1305
-* **KEM:** ML-KEM-768 (via X-Wing construct)
+* **KEM:** ML-KEM-1024
 * **Hashing:** SHA256 & Argon2id
 * **Signatures:** ML-DSA87
 
@@ -62,7 +62,7 @@ We use a modern technology stack that ensures performance and security.
 *   **Runtime:** Bun
 *   **Framework:** Elysia
 *   **Database:** MySQL (via Prisma ORM)
-*   **Crypto:** [@noble/post-quantum](https://github.com/paulmillr/noble-post-quantum) , [@noble/ciphers](https://github.com/paulmillr/noble-ciphers)
+*   **Crypto:** [GlueChat Crypto](https://github.com/Glueeeeed/GlueChat-Crypto)
 
 ---
 
@@ -74,7 +74,7 @@ We use a modern technology stack that ensures performance and security.
 
 #### 1. Setup Client
 ```bash
-cd client/gluechat
+cd client
 npm install
 npm run dev
 ```
@@ -140,7 +140,7 @@ bunx prisma generate
 GlueChat is currently in the **Beta** phase.
 
 **Completed milestones:**
-- [x] Security foundations: implementation of hybrid key generation (X-Wing).
+- [x] Security foundations: implementation of post-quantum key generation.
 - [x] Secure local storage using SQLite.
 - [x] Real-time communication: WebSockets with E2EE.
 - [x] Relationship management: friend invitation system.
@@ -148,10 +148,10 @@ GlueChat is currently in the **Beta** phase.
 - [x] Support for synchronization between multiple devices.
 
 **Next steps:**
-- [ ] Full implementation of the Double Ratchet protocol.
 - [ ] Send files and images with E2EE.
 - [ ] Group chat functionality with end-to-end encryption.
 - [ ] Voice and video calls with end-to-end encryption.
+- [ ] Full implementation of the Double Ratchet protocol.
 ---
 
 

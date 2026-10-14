@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f4af55a7-34c9-4618-96d2-142e6c5dfe04" name="Changes" comment="refactor(gluechat-crypto): update function to use xchacha20poly1305 and add new dependencies">
+      <change afterPath="$PROJECT_DIR$/../../bun.lock" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../src/main/Services/TEST.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../electron-builder.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../electron-builder.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../package.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="17" />
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:dev" />
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Glueeeeed&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Glueeeeed/GlueChat.git&quot;,
+    &quot;accountId&quot;: &quot;401ed916-602f-4be5-85d6-6220f6937b64&quot;
+  }
+}</component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="aUETb7c1" />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="9.82746114634626E-18" />
+      <entry key="MS500" value="5.486638108095313E-4" />
+      <entry key="S2" value="0.27387256090913054" />
+      <entry key="S5" value="1.1036192466825252" />
+      <entry key="S10" value="2.2331072942029637" />
+      <entry key="S30" value="6.940038825956251" />
+      <entry key="S60" value="10.931843237763035" />
+      <entry key="M2" value="14.292849599780025" />
+      <entry key="M5" value="17.9220991514491" />
+      <entry key="M10" value="25.446637634875064" />
+      <entry key="M15" value="39.2238355363839" />
+      <entry key="M30" value="100.18783898293464" />
+      <entry key="H1" value="260.0641097018125" />
+      <entry key="H2" value="571.2927841316766" />
+      <entry key="H4" value="973.4676339967773" />
+      <entry key="D1" value="1670.574439975887" />
+      <entry key="W1" value="1850.617433709929" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0000000000003026" />
+      <entry key="M2" value="1.0000010340367753" />
+      <entry key="M5" value="1.0108022403348984" />
+      <entry key="M10" value="1.2655207270766167" />
+      <entry key="M15" value="1.8292554390725808" />
+      <entry key="M30" value="4.228048736627333" />
+      <entry key="H1" value="10.772775335010474" />
+      <entry key="H2" value="25.564069327906566" />
+      <entry key="H4" value="46.53332028151049" />
+      <entry key="D1" value="84.36001802313409" />
+      <entry key="W1" value="94.22445092950997" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="2.188042065453851E-5" />
+      <entry key="MS500" value="0.11718968065275367" />
+      <entry key="S2" value="0.8052025896409813" />
+      <entry key="S5" value="1.8129104449825302" />
+      <entry key="S10" value="3.0459987945553486" />
+      <entry key="S30" value="7.862373952554179" />
+      <entry key="S60" value="11.890395616529482" />
+      <entry key="M2" value="15.271379581289002" />
+      <entry key="M5" value="18.92397873429036" />
+      <entry key="M10" value="26.70594468328797" />
+      <entry key="M15" value="41.0462276436711" />
+      <entry key="M30" value="104.40606186949222" />
+      <entry key="H1" value="270.82247483278064" />
+      <entry key="H2" value="596.8392215955251" />
+      <entry key="H4" value="1019.9850754376188" />
+      <entry key="D1" value="1754.9297584920982" />
+      <entry key="W1" value="1944.8411379915276" />
+    </decayedShown>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3IuO8rwaRBcQBDOF9PPoWlVaMqH" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Cargo.Run.executor": "Run",
+    "CidrDebugProfileConversion": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.rust.reset.selective.auto.import": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "version/v0.4",
+    "javascript.nodejs.core.library.configured.version": "22.23.1",
+    "javascript.nodejs.core.library.typings.version": "22.20.1",
+    "last_opened_file_path": "/home/glueeed/RustroverProjects/untitled",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.jshint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.jshint": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
+    "org.rust.first.attach.projects": "true",
+    "settings.editor.selected.configurable": "ml.llm.LLMThirdPartyAiProvidersConfigurable",
+    "ts.external.directory.path": "/home/glueeed/.local/share/JetBrains/Toolbox/apps/rustrover/plugins/javascript-plugin/jsLanguageServicesImpl/external"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="Run" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="run --package gluechat-crypto --bin gluechat-crypto" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f4af55a7-34c9-4618-96d2-142e6c5dfe04" name="Changes" comment="" />
+      <created>1788610832555</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1788610832555</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat(gluechat-crypto): add generate one-time keys function" />
+    <MESSAGE value="docs: update post-quantum crypto section" />
+    <MESSAGE value="refactor(gluechat-crypto): update function to use xchacha20poly1305 and add new dependencies" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(gluechat-crypto): update function to use xchacha20poly1305 and add new dependencies" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/lib.rs</url>
+          <line>35</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>

@@ -48,7 +48,7 @@ export abstract class HistoryManager {
   }
 
   static async saveMessage(
-      timestamp: string,
+    timestamp: string,
     roomID: string,
     senderID: string,
     messageData: messageData,
@@ -59,31 +59,19 @@ export abstract class HistoryManager {
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
     const db = this.getDb(accountName);
 
-    const encrypted : Uint8Array = CryptoCore.encryptData(new TextEncoder().encode(messageData.content), key);
+    const encrypted: Uint8Array = CryptoCore.encryptData(new TextEncoder().encode(messageData.content), key);
 
     const stmt = db.prepare(
       `INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, timestamp)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)  `
     );
 
-    stmt.run(
-      roomID,
-      senderID,
-      chatName,
-      Buffer.from(encrypted).toString('base64'),
-      messageId,
-      +messageData.isAuthor,
-      +messageData.isSeen,
-        timestamp
-    );
+    stmt.run(roomID, senderID, chatName, Buffer.from(encrypted).toString('base64'), messageId, +messageData.isAuthor, +messageData.isSeen, timestamp);
   }
 
-  static async checkIfMessageExists(accountName: string, messageId: string) : Promise<boolean> {
+  static async checkIfMessageExists(accountName: string, messageId: string): Promise<boolean> {
     const db = this.getDb(accountName);
-    const rows = db.prepare('SELECT * FROM chat_history WHERE messageId = ?').run(messageId);
-    if (!rows) {
-      return false;
-    }
-    return true;
+    const row = db.prepare('SELECT 1 FROM chat_history WHERE messageID = ?').get(messageId);
+    return Boolean(row);
   }
 
   static async getHistory(roomID: string, accountName: string): Promise<any> {
@@ -92,7 +80,7 @@ export abstract class HistoryManager {
     const key: Uint8Array<ArrayBufferLike> = await this.getStorageKey();
 
     return rows.map((row: any) => {
-      const decrypted : Uint8Array = CryptoCore.decrypt(Buffer.from(row.encryptedContent, 'base64'), key);
+      const decrypted: Uint8Array = CryptoCore.decrypt(Buffer.from(row.encryptedContent, 'base64'), key);
       const result = new TextDecoder().decode(decrypted);
 
       let formattedTimestamp = '';

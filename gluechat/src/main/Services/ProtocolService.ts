@@ -222,7 +222,7 @@ abstract class ProtocolService {
           await StorageService.removeOneTimeKey(accountID, pkg.opkId, account);
         }
       } finally {
-        this.wipeBytes(ssSPK, ssOPK, rootKey);
+        this.wipeBytes(ssSPK, ssOPK);
       }
     }
 
@@ -244,7 +244,7 @@ abstract class ProtocolService {
       throw new Error(`No active session found to decrypt message from device: ${deviceId}`);
     }
 
-    let decryptedContent: Uint8Array;
+    let decryptedContent: Uint8Array | null = null;
     let masterKey: Uint8Array | null = null;
 
     try {
@@ -266,17 +266,13 @@ abstract class ProtocolService {
       );
 
       await SessionKeyManager.saveRootKeyForSession(account, combinedMapKey, currentAppSession, session.rootKey, updatedCounter);
-    } finally {
-      this.wipeBytes(masterKey);
-    }
 
-    try {
       const decoder = new TextDecoder();
       log.info(`Message #${pkg.messageNumber} decrypted successfully.`);
       return decoder.decode(decryptedContent);
+
     } finally {
-      this.wipeBytes(decryptedContent)
-      this.wipeBytes(masterKey)
+      this.wipeBytes(masterKey,decryptedContent);
     }
 
   }

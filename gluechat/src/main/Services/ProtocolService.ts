@@ -75,7 +75,10 @@ abstract class ProtocolService {
         let capsuleStr: string | null = null;
         let opkId: string | null = null;
 
-        if (!session || appSession != session.appSession) {
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        if (!session || appSession != session.appSession || session.sendCounter >= 10) {
           const preKey: preKeysPackage | undefined = preKeysPackages.find((pk): boolean => pk.deviceId === deviceId);
           if (!preKey) {
             log.error(`Skipping device ${deviceId}: No PreKeys available`);

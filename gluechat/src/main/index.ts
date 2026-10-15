@@ -20,7 +20,7 @@ if (process.platform === 'win32') {
 }
 app.name = 'GlueChat';
 
-export const appSession : string = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
+export let appSession : string = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
 
 
 let mainWindow: BrowserWindow | null = null;
@@ -113,7 +113,10 @@ function initWindowsTray(): void {
     const contextMenu = Menu.buildFromTemplate([
       {
         label: 'Open GlueChat',
-        click: () => restoreWindow()
+        click: () => {
+          appSession = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
+          restoreWindow();
+        }
       },
       {
         label: 'Close',
@@ -127,8 +130,14 @@ function initWindowsTray(): void {
     tray.setToolTip('GlueChat');
     tray.setContextMenu(contextMenu);
 
-    tray.on('click', () => restoreWindow());
-    tray.on('double-click', () => restoreWindow());
+    tray.on('click', () =>  {
+       appSession = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
+      restoreWindow()
+    });
+    tray.on('double-click', () => {
+       appSession = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
+      restoreWindow();
+    });
   } catch (error) {
     log.error('Cannot create tray:', error);
   }

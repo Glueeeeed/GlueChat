@@ -164,11 +164,10 @@ abstract class ProtocolService {
    * @param pkg - Encrypted message package structure.
    * @param roomID - Identifier of the chat room.
    * @param account - Name of the local user account in storage.
-   * @param accountID - Identifier of the local user account.
    * @returns Decrypted plaintext message.
    * @throws Error if SPK/OPK private keys are missing or no active session can be found/recovered.
    */
-  public static async initializeDecrypt(pkg: PkgStructure, roomID: string, account: string, accountID: string): Promise<string> {
+  public static async initializeDecrypt(pkg: PkgStructure, roomID: string, account: string): Promise<string> {
     log.info(`Starting decryption for message #${pkg.messageNumber} from sender: ${pkg.senderId}`);
     const deviceId: string = pkg.deviceId;
     const messageId: string = pkg.messageId;
@@ -219,7 +218,7 @@ abstract class ProtocolService {
         };
 
         if (pkg.opkId) {
-          await StorageService.removeOneTimeKey(accountID, pkg.opkId, account);
+          await StorageService.removeOneTimeKey(pkg.opkId, account);
         }
       } finally {
         this.wipeBytes(ssSPK, ssOPK);

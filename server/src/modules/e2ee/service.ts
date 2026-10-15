@@ -32,9 +32,8 @@ export abstract class E2EEService {
             });
 
             if (opk) {
-                await prisma.oneTimePreKeys.update({
-                    where: { id: opk.id },
-                    data: { isUsed: true, usedAt: new Date() }
+                await prisma.oneTimePreKeys.delete({
+                    where: { id: opk.id }
                 });
             }
 

@@ -92,10 +92,10 @@ export abstract class StorageService {
     return await SecretManager.getSecret(accountName, 'gluechat_' + account, `${prefix}-otk-${keyID}`);
   }
 
-  static async removeOneTimeKey(account: string, keyID: string, accountName: string): Promise<void> {
+  static async removeOneTimeKey(keyID: string, accountName: string): Promise<void> {
     const deviceId: string = await StorageService.generateDeviceId();
     const prefix = `device-${deviceId}`;
-    await SecretManager.deleteSecret(accountName, 'gluechat_' + account, `${prefix}-otk-${keyID}`);
+    await SecretManager.deleteSecret(accountName, 'gluechat_' + accountName, `${prefix}-otk-${keyID}`);
   }
 
   static async generateDeviceId(): Promise<string> {

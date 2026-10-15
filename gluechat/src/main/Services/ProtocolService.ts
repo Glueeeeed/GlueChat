@@ -6,6 +6,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import log from 'electron-log/main';
 import { appSession } from '../index';
 import { SessionKeyManager } from '../Managers/SessionKeyManager';
+import { HistoryManager } from '../Managers/HistoryManager';
 
 export interface PkgStructure {
   messageId: string;
@@ -23,7 +24,25 @@ export interface PkgStructure {
   encryptedMessageKey: string;
 }
 
+/**
+ * Service managing post-quantum end-to-end encryption KEM protocol,
+ * session establishment, key derivation, and message encryption/decryption across devices.
+ */
+
 abstract class ProtocolService {
+
+  /**
+   * Encrypts a plaintext message for all active devices of the recipient.
+   *
+   * @param authKey - Authorization key used to fetch recipient pre-keys and devices from the network.
+   * @param content - Plaintext message content to encrypt.
+   * @param roomID - Identifier of the chat room.
+   * @param senderID - Identifier of the sender account.
+   * @param receiverID - Identifier of the receiver account.
+   * @param accountName - Name of the local user account in storage.
+   * @returns Array of encrypted message packages, one for each target recipient device.
+   * @throws Error if no target devices are found for the receiver.
+   */
   public static async initializeEncrypt(
     authKey: string,
     content: string,
@@ -69,7 +88,9 @@ abstract class ProtocolService {
             changedAppSession = appSession != session?.appSession;
           }
 
-          log.debug(`Current appSession: ${appSession}. App session has been changed: ${changedAppSession}. Previous Session: ${session?.appSession}`);
+          log.debug(
+            `Current appSession: ${appSession}. App session has been changed: ${changedAppSession}. Previous Session: ${session?.appSession}`
+          );
 
           const handshakeResult = await this.createSenderHandshake(
             roomID,
@@ -102,7 +123,7 @@ abstract class ProtocolService {
             rootKey: Buffer.from(session.rootKey).toString('base64'),
             sendCounter: updatedSession.sendCounter,
             lastSenderID: senderID,
-            appSession: appSession,
+            appSession: appSession
           }),
           accountName,
           combinedMapKey
@@ -137,9 +158,26 @@ abstract class ProtocolService {
     return pkgs;
   }
 
+  /**
+   * Decrypts an incoming encrypted message package into plaintext.
+   *
+   * @param pkg - Encrypted message package structure.
+   * @param roomID - Identifier of the chat room.
+   * @param account - Name of the local user account in storage.
+   * @param accountID - Identifier of the local user account.
+   * @returns Decrypted plaintext message.
+   * @throws Error if SPK/OPK private keys are missing or no active session can be found/recovered.
+   */
   public static async initializeDecrypt(pkg: PkgStructure, roomID: string, account: string, accountID: string): Promise<string> {
     log.info(`Starting decryption for message #${pkg.messageNumber} from sender: ${pkg.senderId}`);
     const deviceId: string = pkg.deviceId;
+    const messageId: string = pkg.messageId;
+    const messageExists : boolean = await  HistoryManager.checkIfMessageExists(account,messageId);
+
+    if (messageExists) {
+      throw new Error('Message already exists, stopping decryption');
+    }
+
     const combinedMapKey: string = StorageService.generateCombinedName(roomID, pkg.senderId, deviceId);
 
     let session: SessionState | null = await this.getOrLoadSession(roomID, pkg.senderId, deviceId, account);
@@ -158,12 +196,13 @@ abstract class ProtocolService {
 
       let ssSPK: Uint8Array | null = null;
       let ssOPK: Uint8Array | null = null;
+      let rootKey: Uint8Array | null = null;
 
       try {
         ssSPK = CryptoCore.decapsulate(Buffer.from(capsuleSPK, 'base64'), Buffer.from(spkPrivateKey, 'base64'));
         ssOPK = CryptoCore.decapsulate(Buffer.from(capsuleOPK, 'base64'), Buffer.from(opkPrivateKey, 'base64'));
 
-        const rootKey: Uint8Array = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
+        rootKey = this.deriveRootKeyFromSecrets(ssSPK, ssOPK, roomID);
         const incomingSessionId: string = pkg.appSessionId || appSession;
 
         await SessionKeyManager.saveRootKeyForSession(account, combinedMapKey, incomingSessionId, rootKey, 1);
@@ -183,7 +222,7 @@ abstract class ProtocolService {
           await StorageService.removeOneTimeKey(accountID, pkg.opkId, account);
         }
       } finally {
-        this.wipeBytes(ssSPK, ssOPK);
+        this.wipeBytes(ssSPK, ssOPK, rootKey);
       }
     }
 
@@ -231,11 +270,22 @@ abstract class ProtocolService {
       this.wipeBytes(masterKey);
     }
 
-    const decoder = new TextDecoder();
-    log.info(`Message #${pkg.messageNumber} decrypted successfully.`);
-    return decoder.decode(decryptedContent);
+    try {
+      const decoder = new TextDecoder();
+      log.info(`Message #${pkg.messageNumber} decrypted successfully.`);
+      return decoder.decode(decryptedContent);
+    } finally {
+      this.wipeBytes(decryptedContent)
+      this.wipeBytes(masterKey)
+    }
+
   }
 
+  /**
+   * Overwrites sensitive byte buffers in memory with zeros.
+   *
+   * @param buffers - Byte buffers to zeroize.
+   */
   private static wipeBytes(...buffers: (Uint8Array | null | undefined)[]): void {
     log.debug('Wiping keys from RAM...');
     for (const buf of buffers) {
@@ -245,6 +295,14 @@ abstract class ProtocolService {
     }
   }
 
+  /**
+   * Derives a 32-byte session root key from SPK and OPK shared secrets using HKDF-SHA256.
+   *
+   * @param ssSPK - Shared secret from Signed Pre-Key KEM encapsulation/decapsulation.
+   * @param ssOPK - Shared secret from One-Time Pre-Key KEM encapsulation/decapsulation.
+   * @param roomID - Room identifier used as HKDF context info.
+   * @returns The derived 32-byte root key.
+   */
   private static deriveRootKeyFromSecrets(ssSPK: Uint8Array, ssOPK: Uint8Array, roomID: string): Uint8Array {
     const combinedSecrets = new Uint8Array(ssSPK.length + ssOPK.length);
     combinedSecrets.set(ssSPK, 0);
@@ -258,6 +316,15 @@ abstract class ProtocolService {
     return rootKey;
   }
 
+  /**
+   * Retrieves and deserializes the stored session state for a specific room, account, and device.
+   *
+   * @param roomID - Room identifier.
+   * @param accountID - Account identifier of the peer.
+   * @param deviceId - Device identifier.
+   * @param accountName - Local user account name in storage.
+   * @returns The session state if found, or null otherwise.
+   */
   private static async getOrLoadSession(roomID: string, accountID: string, deviceId: string, accountName: string): Promise<SessionState | null> {
     try {
       const combinedName: string = StorageService.generateCombinedName(roomID, accountID, deviceId);
@@ -277,6 +344,21 @@ abstract class ProtocolService {
     }
   }
 
+  /**
+   * Performs the sender-side Post-Quantum KEM handshake with the recipient's pre-keys.
+   *
+   * @param roomID - Room identifier.
+   * @param authKey - Authorization key for network requests.
+   * @param receiverID - Identifier of the receiver.
+   * @param senderID - Identifier of the sender.
+   * @param accountName - Local user account name in storage.
+   * @param deviceId - Target device identifier.
+   * @param preKey - Pre-keys package containing SPK, OPK, and signature.
+   * @param previousSession - Previous session state if one existed.
+   * @param changedAppSession - Whether the application session ID has changed.
+   * @returns An object containing the newly created session state and serialized KEM capsules.
+   * @throws Error if pre-key payload is incomplete or signature verification fails.
+   */
   private static async createSenderHandshake(
     roomID: string,
     authKey: string,

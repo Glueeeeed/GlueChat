@@ -74,9 +74,16 @@ export abstract class HistoryManager {
       +messageData.isAuthor,
       +messageData.isSeen,
         timestamp
-
-
     );
+  }
+
+  static async checkIfMessageExists(accountName: string, messageId: string) : Promise<boolean> {
+    const db = this.getDb(accountName);
+    const rows = db.prepare('SELECT * FROM chat_history WHERE messageId = ?').run(messageId);
+    if (!rows) {
+      return false;
+    }
+    return true;
   }
 
   static async getHistory(roomID: string, accountName: string): Promise<any> {

@@ -135,7 +135,7 @@ export function App(): React.JSX.Element {
     <div className="flex h-screen w-full bg-gray-950 text-gray-100 overflow-hidden">
       <ChatBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <div className="flex flex-col w-80 bg-gray-900/40 border-r border-white/5 backdrop-blur-sm h-full">
+      <div className="flex flex-col w-65 lg:w-80 bg-gray-900/40 border-r border-white/5 backdrop-blur-sm h-full">
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chats' ? (
             <ChatList
@@ -197,11 +197,11 @@ export function App(): React.JSX.Element {
             className={`flex-1 flex ${addFriendOption ? 'items-start' : 'items-center justify-center'}`}
           >
             {addFriendOption ? (
-              <div className="flex h-screen w-full justify-between">
-                <div className="flex h-full flex-col w-full max-w-[35%]">
+              <div className="flex flex-col xl:flex-row h-full w-full gap-0 lg:gap-0">
+                <div className="flex h-auto xl:h-full flex-col w-full xl:w-[350px] xl:flex-shrink-0">
                   <AddFriend authToken={authToken} />
                 </div>
-                <div className={'mt-5 h-full w-full max-lg:w-[75%]'}>
+                <div className={'flex-1 w-full min-h-0'}>
                   <FriendsRequests authToken={authToken} />
                 </div>
               </div>

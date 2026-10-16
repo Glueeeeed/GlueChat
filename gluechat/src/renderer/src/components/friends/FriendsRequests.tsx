@@ -68,52 +68,51 @@ export function FriendsRequests({authToken} : friendsRequestsProps) : JSX.Elemen
   return (
     <>
       <div className="flex flex-col h-full">
-        <div className=" mt-2 ml-10 flex flex-col justify-start w-full">
-          <h2 className="text-xl font-bold tracking-tight text-white uppercase">Requests</h2>
-          <p className="text-gray-500 text-sm">You can view and manage friend requests</p>
+        <div className="px-4 pt-4 pb-2 sm:px-6 sm:pt-6 sm:pb-3 flex flex-col justify-start w-full">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white uppercase">Requests</h2>
+          <p className="text-gray-500 text-xs sm:text-sm mt-1">You can view and manage friend requests</p>
         </div>
 
-        <div className="flex-1 flex-col mt-10 overflow-y-auto ">
+        {error && (
+          <div className="mx-4 sm:mx-6 mt-2 bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-xl text-xs sm:text-sm font-medium">
+            {error}
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 mt-2">
           {requests.length > 0 ? (
             requests.map((friend) => (
               <div
                 key={friend.id}
-                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 group mb-1
-              'hover:bg-white/10 hover:bg-gray-700/10 border border-b-white/5 border-transparent hover:border-white/5`}
+                className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl transition-all duration-200 group mb-1 hover:bg-white/10 border border-white/5 border-transparent hover:border-white/5"
               >
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <FaUserCircle
-                    size={40}
+                    size={32}
                     className="text-gray-700 group-hover:text-gray-600 transition-colors"
                   />
                 </div>
 
-                <div className="flex flex-col items-start">
-                  <span className={`font-semibold text-sm transition-colors `}>
+                <div className="flex flex-col items-start min-w-0 flex-1">
+                  <span className="font-semibold text-sm text-gray-200 truncate">
                     {friend.nickname}
                   </span>
-                  <span className={`font-base text-xs opacity-40 transition-colors `}>
+                  <span className="font-base text-xs text-gray-500 truncate">
                     {friend.id}
                   </span>
                 </div>
 
-                <div className="flex gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  {error && (
-                    <div className=" mt-3 bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm font-medium">
-                      {error}
-                    </div>
-                  )}
-
+                <div className="flex gap-2 flex-shrink-0 sm:opacity-0 sm:group-hover:sm:opacity-100 transition-opacity duration-200">
                   <button
                     onClick={() => manageRequest(friend.id, true, authToken)}
-                    className="p-2  bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-lg transition-all duration-200"
+                    className="p-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-lg transition-all duration-200"
                     title="Accept"
                   >
                     <FaCheck size={14} />
                   </button>
                   <button
                     onClick={() => manageRequest(friend.id, false, authToken)}
-                    className="p-2  bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all duration-200"
+                    className="p-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all duration-200"
                     title="Decline"
                   >
                     <FaTimes size={14} />

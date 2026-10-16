@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { SetStateAction, useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import { loadFriend } from '@renderer/assets/friends'
 import { checkIfAssetExists } from '@renderer/assets/profile'
@@ -26,7 +26,7 @@ interface FriendsListProps {
 
 export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAddFriendOption, addFriendOption, }: FriendsListProps): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('')
-  const [filter, setFilter] = useState<'all' | 'online' | 'null'>('all')
+  const [filter, setFilterValue] = useState<'all' | 'online'>('all')
 
   const { data } = useQuery({
     queryKey: ['friends', authToken],
@@ -34,8 +34,6 @@ export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAd
     enabled: !!authToken,
     staleTime: 1000 * 60 * 3
   })
-
-
 
   const loadFriends = async (): Promise<Friend[] | null> => {
     return await fetchFriends()
@@ -63,12 +61,21 @@ export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAd
 
   const setAddFriend = (): void => {
     setAddFriendOption(!addFriendOption)
-    setFilter('null')
+  }
+
+  const setFilter = (value: any): void => {
+    setFilterValue(value);
+    setAddFriendOption(false);
+  }
+
+  const setFriend = (friend: Friend): void => {
+    setAddFriendOption(false);
+    onSelectFriend?.(friend);
   }
 
 
+
   let filteredFriends: Friend[] | undefined = []
-  if (!addFriendOption) {
     filteredFriends = data?.filter((friend) => {
       const matchesSearch: boolean = friend.nickname
         .toLowerCase()
@@ -76,12 +83,19 @@ export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAd
       const matchesFilter: boolean = filter === 'all' || friend.status === 'online'
       return matchesSearch && matchesFilter
     })
-  }
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="p-4 space-y-4">
-        <h2 className="text-xl font-bold tracking-tight text-white uppercase">Friends</h2>
+      <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+        <div className={'flex flex-row justify-between items-center'}>
+          <h2 className="text-base sm:text-xl font-bold tracking-tight text-white uppercase">Friends</h2>
+          <button
+            onClick={setAddFriend}
+            className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-bold rounded-lg bg-violet-800 text-white hover:bg-violet-700 transition-all shadow-lg"
+          >
+            Add friend
+          </button>
+        </div>
 
         <div className="relative group">
           <FaSearch
@@ -93,83 +107,61 @@ export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAd
             placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-gray-950/50 border border-white/5 text-sm text-white pl-10 pr-4 py-2 rounded-xl focus:ring-2 focus:ring-violet-500/30 outline-none transition-all placeholder-gray-600 shadow-inner"
+            className="w-full bg-gray-950/50 border border-white/5 text-xs sm:text-sm text-white pl-10 pr-4 py-2 rounded-xl focus:ring-2 focus:ring-violet-500/30 outline-none transition-all placeholder-gray-600 shadow-inner"
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 h-6">
           <button
-            hidden={addFriendOption}
             onClick={() => setFilter('all')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-              filter === 'all'
-                ? 'bg-violet-800 text-white shadow-lg'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+            className={`px-2 py-1 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${
+              filter === 'all' ? 'bg-violet-800 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
           >
             ALL
           </button>
           <button
-            hidden={addFriendOption}
             onClick={() => setFilter('online')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-              filter === 'online'
-                ? 'bg-violet-800 text-white shadow-lg'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+            className={`px-2 py-1 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${
+              filter === 'online' ? 'bg-violet-800 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
           >
             ONLINE
           </button>
-          <button
-            onClick={() => setAddFriend()}
-            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-              addFriendOption
-                ? 'bg-violet-800 text-white shadow-lg'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-            }`}
-          >
-            FRIENDS PANEL
-          </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 pb-4 ">
+      <div className="flex-1 overflow-y-auto px-2 pb-4">
         {filteredFriends?.length && filteredFriends.length > 0
           ? filteredFriends.map((friend) => (
               <button
                 key={friend.id}
-                onClick={() => onSelectFriend?.(friend)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group mb-1 ${
+                onClick={() => setFriend(friend)}
+                className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl transition-all duration-200 group mb-1 ${
                   selectedFriendId === friend.id
                     ? 'bg-violet-500/10 border border-violet-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)]'
                     : 'hover:bg-white/5 border border-transparent hover:border-white/5'
                 }`}
               >
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   {friend.avatar ? (
-                    <img
-                      className={'w-9 h-9 rounded-full object-cover'}
-                      src={`${friend.avatar}?t=${Date.now()}`}
-                      alt={friend.nickname}
-                    />
+                    <img className={'w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover'} src={`${friend.avatar}?t=${Date.now()}`} alt={friend.nickname} />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold uppercase">
                       {friend.nickname.substring(0, 2)}
                     </div>
                   )}
                   <div
-                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${
+                    className={`absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-gray-900 ${
                       friend.status === 'online' ? 'bg-violet-500' : 'bg-gray-500'
                     }`}
                   />
                 </div>
 
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col items-start min-w-0 flex-1">
                   <span
-                    className={`font-semibold text-sm transition-colors ${
-                      selectedFriendId === friend.id
-                        ? 'text-white'
-                        : 'text-gray-300 group-hover:text-white'
+                    className={`font-semibold text-xs sm:text-sm transition-colors truncate ${
+                      selectedFriendId === friend.id ? 'text-white' : 'text-gray-300 group-hover:text-white'
                     }`}
                   >
                     {friend.nickname}
@@ -185,5 +177,5 @@ export function FriendsList({ authToken, onSelectFriend, selectedFriendId, setAd
             )}
       </div>
     </div>
-  )
+  );
 }

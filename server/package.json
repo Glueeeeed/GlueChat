@@ -23,7 +23,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@react-email/ui": "^6.11.1",
+    "@react-email/ui": "^6.11.3",
     "@types/bun": "^1.4.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.9.9",

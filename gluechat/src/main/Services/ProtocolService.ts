@@ -53,14 +53,21 @@ abstract class ProtocolService {
   ): Promise<PkgStructure[]> {
     log.info(`Starting encryption process for room: ${roomID}`);
 
-    const devices: device[] = await NetworkService.getAllBobDevices(authKey, receiverID);
-    if (!devices || devices.length === 0) {
+    const bobDevices: device[] = await NetworkService.getAllBobDevices(authKey, receiverID);
+    if (!bobDevices || bobDevices.length === 0) {
       throw new Error('No target devices found for receiver');
     }
 
     const myDeviceId: string = await StorageService.generateDeviceId();
-    const targetDevices: device[] = devices.filter((d) => d.deviceId !== myDeviceId);
-    const preKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, receiverID);
+
+    const myDevices: device[] = await NetworkService.getAllBobDevices(authKey, senderID);
+
+    const targetDevices: device[] = bobDevices
+      .filter((d) => d.deviceId !== myDeviceId)
+      .concat(myDevices.filter((d) => d.deviceId !== myDeviceId));
+
+    const bobPreKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, receiverID);
+    const myPreKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, senderID);
 
     const pkgs: PkgStructure[] = [];
 
@@ -70,15 +77,19 @@ abstract class ProtocolService {
     try {
       for (const device of targetDevices) {
         const deviceId: string = device.deviceId;
-        let session: SessionState | null = await this.getOrLoadSession(roomID, receiverID, deviceId, accountName);
+
+        const isMyDevice: boolean = myDevices.some((d) => d.deviceId === deviceId);
+        const targetUserID: string = isMyDevice ? senderID : receiverID;
+        const preKeysPool: preKeysPackage[] = isMyDevice ? myPreKeysPackages : bobPreKeysPackages;
+
+        let session: SessionState | null = await this.getOrLoadSession(roomID, targetUserID, deviceId, accountName);
         let capsuleStr: string | null = null;
         let opkId: string | null = null;
-
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         if (!session || appSession != session.appSession || session.sendCounter >= 10) {
-          const preKey: preKeysPackage | undefined = preKeysPackages.find((pk): boolean => pk.deviceId === deviceId);
+          const preKey: preKeysPackage | undefined = preKeysPool.find((pk): boolean => pk.deviceId === deviceId);
           if (!preKey) {
             log.error(`Skipping device ${deviceId}: No PreKeys available`);
             continue;
@@ -97,7 +108,7 @@ abstract class ProtocolService {
           const handshakeResult = await this.createSenderHandshake(
             roomID,
             authKey,
-            receiverID,
+            targetUserID,
             senderID,
             accountName,
             deviceId,
@@ -119,7 +130,7 @@ abstract class ProtocolService {
           lastSenderID: senderID
         };
 
-        const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
+        const combinedMapKey: string = StorageService.generateCombinedName(roomID, targetUserID, deviceId);
         await StorageService.saveSession(
           JSON.stringify({
             rootKey: Buffer.from(session.rootKey).toString('base64'),
@@ -141,7 +152,7 @@ abstract class ProtocolService {
           deviceId,
           roomID,
           senderId: senderID,
-          receiverId: receiverID,
+          receiverId: targetUserID,
           accountName,
           messageNumber: session.sendCounter as number,
           opkId,
@@ -346,7 +357,7 @@ abstract class ProtocolService {
    *
    * @param roomID - Room identifier.
    * @param authKey - Authorization key for network requests.
-   * @param receiverID - Identifier of the receiver.
+   * @param targetUserID - Identifier of the device owner (receiver or sender for self-encryption).
    * @param senderID - Identifier of the sender.
    * @param accountName - Local user account name in storage.
    * @param deviceId - Target device identifier.
@@ -359,7 +370,7 @@ abstract class ProtocolService {
   private static async createSenderHandshake(
     roomID: string,
     authKey: string,
-    receiverID: string,
+    targetUserID: string,
     senderID: string,
     accountName: string,
     deviceId: string,
@@ -369,7 +380,7 @@ abstract class ProtocolService {
   ): Promise<{ session: SessionState; capsuleStr: string }> {
     log.debug(`Executing PQ KEM Handshake for device: ${deviceId}`);
 
-    const identityKey = await NetworkService.getIdentityKey(authKey, deviceId, receiverID);
+    const identityKey = await NetworkService.getIdentityKey(authKey, deviceId, targetUserID);
     if (!preKey.signature || !preKey.spk || !preKey.opk || !identityKey) {
       log.debug('Prekey signature: ' + !!preKey.signature + 'SPK: ' + !!preKey.spk + 'OPK: ' + !!preKey.opk + 'Identity key: ' + !!identityKey);
       throw new Error(`PreKey payload incomplete for device: ${deviceId}`);
@@ -393,7 +404,7 @@ abstract class ProtocolService {
 
     const capsuleStr = `${Buffer.from(capsuleSPK).toString('base64')}|${Buffer.from(capsuleOPK).toString('base64')}`;
 
-    const combinedMapKey: string = StorageService.generateCombinedName(roomID, receiverID, deviceId);
+    const combinedMapKey: string = StorageService.generateCombinedName(roomID, targetUserID, deviceId);
 
     // Save root key in session_root_keys table
 

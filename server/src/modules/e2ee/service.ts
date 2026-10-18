@@ -83,9 +83,6 @@ export abstract class E2EEService {
             where: {
                 roomID: roomID,
                 deviceId: deviceId,
-                NOT: {
-                    senderId: userID
-                },
                 isSeen: false
             },
             orderBy: {

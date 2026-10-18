@@ -4,7 +4,7 @@
     "@elysiajs/cors": "^1.4.2",
     "@elysiajs/jwt": "^1.4.2",
     "@elysiajs/static": "^1.4.10",
-    "@prisma/adapter-mariadb": "^7.10.0",
+    "@prisma/adapter-mariadb": "^7.10.1",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@react-email/components": "^1.0.12",

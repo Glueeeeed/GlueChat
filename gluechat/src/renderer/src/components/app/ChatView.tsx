@@ -317,7 +317,6 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
       </header>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-
         {messages.length === 0 && errorMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-30">
             <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center mb-4">
@@ -329,7 +328,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         ) : (
           <div className="flex flex-col">
             {messages.map((m) => (
-              <ChatMessage avatar={avatarURL} key={m.id} text={m.content} isAuthor={m.isAuthor} timestamp={m.timestamp} nickname={m.sender} />
+              <ChatMessage messageId={m.id} avatar={avatarURL} key={m.id} text={m.content} isAuthor={m.isAuthor} timestamp={m.timestamp} nickname={m.sender} />
             ))}
 
             {errorMessages.map((m) => (

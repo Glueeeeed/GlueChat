@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, JSX } from 'react';
-import { Send, Smile } from 'lucide-react';
+import { Send } from 'lucide-react';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
+import { MdEmojiEmotions, MdOutlineAttachFile } from 'react-icons/md';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -67,16 +68,16 @@ export function ChatInput({ onSendMessage }: ChatInputProps): JSX.Element {
   }, [message]);
 
   return (
-    <div className="p-4 bg-gray-950/20 border-t border-white/5 backdrop-blur-sm relative">
+    <div className="p-3 sm:p-4 bg-gray-950/20 border-t border-white/5 backdrop-blur-sm relative">
       {showEmojiPicker && (
-        <div ref={pickerRef} className="absolute bottom-20 left-4 z-50 shadow-2xl">
+        <div ref={pickerRef} className="absolute bottom-16 sm:bottom-20 left-2 sm:left-4 z-50 shadow-2xl">
           <EmojiPicker
             onEmojiClick={handleEmojiClick}
             searchDisabled={true}
             skinTonesDisabled={true}
             theme={Theme.DARK}
             lazyLoadEmojis={true}
-            width={320}
+            width={300}
             height={400}
             style={
               {
@@ -99,7 +100,7 @@ export function ChatInput({ onSendMessage }: ChatInputProps): JSX.Element {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto flex items-end gap-3">
+      <div className="w-full mx-auto flex items-end gap-2 sm:gap-3">
         <div className="flex-1 relative group">
           <textarea
             ref={textareaRef}
@@ -108,7 +109,7 @@ export function ChatInput({ onSendMessage }: ChatInputProps): JSX.Element {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="w-full bg-white/5 text-gray-100 placeholder:text-gray-500 rounded-2xl px-3 py-2.5 focus:outline-hidden focus:ring-1 focus:ring-violet-500/50 resize-none transition-all"
+            className="w-full bg-white/5 text-gray-100 placeholder:text-gray-500 rounded-lg px-3 py-2.5 focus:outline-hidden focus:ring-1 focus:ring-violet-500/50 resize-none transition-all"
           />
         </div>
 
@@ -117,15 +118,33 @@ export function ChatInput({ onSendMessage }: ChatInputProps): JSX.Element {
           onClick={() => setShowEmojiPicker((prev) => !prev)}
           className="p-3 mb-1 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all flex-shrink-0"
         >
-          <Smile size={22} />
+          <MdEmojiEmotions size={22} />
         </button>
+
+        <input
+          type="file"
+          id="file-upload"
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files) {
+
+            }
+          }}
+        />
+
+        <label
+          htmlFor="file-upload"
+          className="p-3 mb-1 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all flex-shrink-0 cursor-pointer flex items-center justify-center"
+        >
+          <MdOutlineAttachFile size={22} />
+        </label>
 
         <button
           onClick={handleSend}
           disabled={!message.trim()}
-          className="p-3 mb-1 rounded-2xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:hover:bg-violet-600 text-white transition-all shadow-lg shadow-violet-600/20 flex-shrink-0"
+          className="p-3 mb-2 rounded-2xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:hover:bg-violet-600 text-white transition-all shadow-lg shadow-violet-600/20 flex-shrink-0"
         >
-          <Send size={20} />
+          <Send size={18} />
         </button>
       </div>
     </div>

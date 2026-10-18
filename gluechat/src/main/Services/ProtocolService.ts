@@ -45,7 +45,7 @@ abstract class ProtocolService {
    */
   public static async initializeEncrypt(
     authKey: string,
-    content: string,
+    content: Uint8Array,
     roomID: string,
     senderID: string,
     receiverID: string,
@@ -64,9 +64,8 @@ abstract class ProtocolService {
 
     const pkgs: PkgStructure[] = [];
 
-    const encoder = new TextEncoder();
     const masterKey: Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
-    const encryptedMessage: Uint8Array = CryptoCore.encryptData(encoder.encode(content), masterKey);
+    const encryptedMessage: Uint8Array = CryptoCore.encryptData(content, masterKey);
 
     try {
       for (const device of targetDevices) {

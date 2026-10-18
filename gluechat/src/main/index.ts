@@ -5,7 +5,7 @@ import path, { join } from 'path';
 import { is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../build/icon.png?asset';
 import keytar from 'keytar';
-import ProtocolService from './Services/ProtocolService';
+import ProtocolService, { PkgStructure } from './Services/ProtocolService';
 import { CryptoCore, oneTimeKey } from './Services/CryptoCore';
 import { ChatInfo, messageData, StorageService } from './Services/StorageService';
 import { SecretManager } from './Managers/SecretManager';
@@ -287,7 +287,8 @@ ipcMain.handle('generate-xwing-pair-keys', async (_, accountName: string, tempTo
 ipcMain.handle(
   'initializeEncryptMessage',
   async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => {
-    const data = await ProtocolService.initializeEncrypt(authKey, content, roomID, senderID, receiverID, accountName);
+    const encoder = new TextEncoder();
+    const data : PkgStructure[] = await ProtocolService.initializeEncrypt(authKey,encoder.encode(content), roomID, senderID, receiverID, accountName);
     return data;
   }
 );

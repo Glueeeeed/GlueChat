@@ -1,1 +1,1 @@
-export const API_BASE_URL = 'https://app.gluechat.dev/';
+export const API_BASE_URL = 'https://gluechat.dev/';

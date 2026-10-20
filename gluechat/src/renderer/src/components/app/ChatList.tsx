@@ -67,7 +67,7 @@ export function ChatList({setSenderID ,setReceiverID,authToken, selectedChat, se
 
         const lastMsg = await window.e2ee.getLastMessage(chat, currentNickname);
         if (lastMsg) {
-          const formattedLastMessage = lastMsg.content.length > 20 ? lastMsg.content.slice(0, 20) + '...' : lastMsg.content;
+          const formattedLastMessage = lastMsg.content.length > 15 ? lastMsg.content.slice(0, 15) + '...' : lastMsg.content;
 
           messagesMap[chat.id] = lastMsg.isAuthor ? `You: ${formattedLastMessage}` : `${lastMsg.senderName}: ${formattedLastMessage}`;
         }

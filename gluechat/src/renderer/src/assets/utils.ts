@@ -25,6 +25,11 @@ export function validateNickname(nickname: string) : void {
 
 }
 
+export function bytesToMB(bytes: number) : string {
+  return (bytes / (1024 * 1024)).toFixed(2);
+}
+
+
 
 export function validatePassword (password : string) : void {
   if (validator.isEmpty(password)) {

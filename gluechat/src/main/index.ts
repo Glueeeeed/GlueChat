@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: path.join(__dirname, '../../.env') });
-import { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage,  } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage, protocol, net, dialog } from 'electron';
 import path, { join } from 'path';
 import { is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../build/icon.png?asset';
@@ -14,6 +14,8 @@ import log from 'electron-log/main';
 import { NotificationService } from './Services/NotificationService';
 import { WebsocketManager } from './Managers/WebsocketManager';
 import { DsaKeyPair, KemKeyPair } from '@glueeeed/gluechat-crypto';
+import * as fs from "node:fs";
+
 
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.gluechat.app');
@@ -21,7 +23,6 @@ if (process.platform === 'win32') {
 app.name = 'GlueChat';
 
 export let appSession : string = Buffer.from(CryptoCore.generateRandomBytes(16)).toString('hex');
-
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -182,6 +183,11 @@ if (!gotTheLock) {
 
     ipcMain.on('ping', () => console.log('pong'));
 
+    protocol.handle('glue-image', (request) => {
+      const filePath = request.url.replace('glue-image://', '');
+      return net.fetch(`file://${filePath}`);
+    });
+
     createWindow();
 
     app.on('activate', function () {
@@ -288,7 +294,7 @@ ipcMain.handle(
   'initializeEncryptMessage',
   async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => {
     const encoder = new TextEncoder();
-    const data : PkgStructure[] = await ProtocolService.initializeEncrypt(authKey,encoder.encode(content), roomID, senderID, receiverID, accountName);
+    const data : PkgStructure[] = await ProtocolService.initializeEncrypt(authKey,encoder.encode(content), roomID, senderID, receiverID, accountName, false);
     return data;
   }
 );
@@ -308,6 +314,28 @@ ipcMain.handle(
   }
 );
 
+ipcMain.handle(
+  'initializeEncryptFile', async (_, authKey: string, file: Uint8Array, roomID: string, senderID: string, receiverID: string, accountName: string) => {
+    const data: PkgStructure[] = await ProtocolService.initializeEncrypt(authKey, file, roomID, senderID, receiverID, accountName , true);
+    return data;
+  }
+);
+
+
+ipcMain.handle('saveImage', async (_, fileData: Uint8Array, fileName: string) => {
+  const uploadDir = path.join(app.getPath('userData'), 'uploads');
+
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+  }
+
+  const filePath = path.join(uploadDir, `${Date.now()}_${fileName}`);
+  const fileBuffer = Buffer.from(fileData);
+  fs.writeFileSync(filePath, fileBuffer);
+
+  return filePath;
+});
+
 ipcMain.handle('getMessages', async (_, roomID: string, accountName: string) => {
   return await StorageService.getHistory(roomID, accountName);
 });
@@ -318,4 +346,25 @@ ipcMain.handle('getLastMessage', async (_, roomID: ChatInfo, accountName: string
 
 ipcMain.handle('removeLocalKeys', async (_, accountName: string) => {
   return await StorageService.removeLocalKeys(accountName);
+});
+
+ipcMain.handle('downloadFile', async (_, filePath: string, fileName: string) => {
+  if (!mainWindow) return null;
+
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Save file',
+    defaultPath: fileName,
+  });
+
+  if (!result.canceled && result.filePath) {
+    try {
+      await fs.promises.copyFile(filePath, result.filePath);
+      return result.filePath;
+    } catch (error) {
+      console.error('Failed to copy file:', error);
+      return null;
+    }
+  }
+
+  return null;
 });

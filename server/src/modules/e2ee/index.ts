@@ -101,7 +101,7 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
         try {
             if (!query) return status(400, { success: false, message: "Missing parameters" });
             const isFriends = await FriendsService.checkIfTheyAreFriends(user.id, query.userId);
-            if (!isFriends) throw new NotFoundError('identity key not found ddd');
+            if (!isFriends) throw new NotFoundError('identity key not found');
             const data : string = await E2EEService.getIdentityKey(deviceId, query.userId);
             return status(200, {
                 success: true,

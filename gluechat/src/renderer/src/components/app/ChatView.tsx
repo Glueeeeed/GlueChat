@@ -1,5 +1,5 @@
 import { ChatInput } from './ChatInput';
-import { Info } from 'lucide-react';
+import { Info, X } from 'lucide-react';
 import { ChatMessage } from '@renderer/components/app/ChatMessage';
 import React, { useEffect, useRef, useState } from 'react';
 import { validateOrRefreshToken } from '@renderer/assets/main';
@@ -8,6 +8,7 @@ import { checkIfAssetExists } from '@renderer/assets/profile';
 import log from 'electron-log';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChatErrorMessage } from '@renderer/components/app/ChatErrorMessage';
+import { bytesToMB } from '@renderer/assets/utils';
 
 interface Message {
   id: string;
@@ -16,6 +17,11 @@ interface Message {
   timestamp: string;
   isAuthor: boolean;
   isSeen: boolean;
+  isImage?: boolean;
+  isVideo?: boolean;
+  isFile?: boolean;
+  fileName?: string;
+  fileSize?: number;
 }
 
 interface ErrorMessage {
@@ -59,6 +65,8 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
   const [errorMessages, setErrorMessages] = useState<ErrorMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [avatarURL, setAvatarURL] = useState<string | null>(null);
+  const [showFileSizeModal, setShowFileSizeModal] = useState(false);
+  const [fileSizeErrorMsg, setFileSizeErrorMsg] = useState('');
 
   const scrollToBottom = (): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
@@ -91,7 +99,12 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
             content: msg.content,
             timestamp: msg.timestamp,
             isAuthor: msg.isAuthor,
-            isSeen: msg.isSeen
+            isSeen: msg.isSeen,
+            isImage: msg.isImage,
+            isVideo: msg.isVideo,
+            isFile: msg.isFile,
+            fileName: msg.fileName,
+            fileSize: msg.fileSize
           }));
           setMessages(formattedMessages);
         }
@@ -102,6 +115,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
 
     loadAvatar();
     loadLocalHistory();
+
 
     const syncOfflineMessages = async (): Promise<void> => {
       try {
@@ -239,6 +253,73 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
     return () => removeListener();
   }, [authKey, chatID, chatName, deviceId, senderID]);
 
+
+  const handleSendFile = async (file: File): Promise<void> => {
+    const MAX_FILE_SIZE_MB = 50;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+    const fileSizeMB: string = bytesToMB(file.size);
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setFileSizeErrorMsg(`File "${file.name}" is too large (${fileSizeMB} MB). Max size is ${MAX_FILE_SIZE_MB} MB.`);
+      setShowFileSizeModal(true);
+      return;
+    }
+
+    const mimeType = file.type;
+    let isImage = false;
+    let isVideo = false;
+    let isFile = false;
+
+    if (mimeType.startsWith('image/')) {
+      isImage = true;
+    } else if (mimeType.startsWith('video/')) {
+      isVideo = true;
+    } else {
+      isFile = true;
+    }
+
+    const bytes = await file.arrayBuffer();
+    const fileData = new Uint8Array(bytes);
+    const filePath: string = await window.e2ee.saveImage(fileData, file.name);
+
+    const currentNickname: string = localStorage.getItem('nickname') || 'User';
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const isoString = now.toISOString();
+    const msgId = Date.now().toString();
+
+    const messageData = {
+      id: msgId,
+      sender: currentNickname,
+      content: filePath,
+      timestamp: timeStr,
+      isAuthor: true,
+      isSeen: false,
+      isImage,
+      isVideo,
+      isFile,
+      fileName: file.name,
+      fileSize: file.size
+    };
+
+    setMessages((prev) => [...prev, messageData]);
+
+    const historyMessageData = {
+      id: msgId,
+      sender: currentNickname,
+      content: filePath,
+      timestamp: timeStr,
+      isAuthor: true,
+      isSeen: false,
+      isImage,
+      isVideo,
+      isFile,
+      fileName: file.name,
+      fileSize: file.size
+    };
+    await window.e2ee.saveMessage(isoString, chatID, senderID, historyMessageData, msgId, currentNickname, currentNickname);
+  }
+
+
   const handleSendMessage = async (message: string): Promise<void> => {
     const currentNickname: string = localStorage.getItem('nickname') || 'User';
     try {
@@ -301,6 +382,32 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
 
   return (
     <div className="flex flex-col h-full relative overflow-hidden">
+      {showFileSizeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowFileSizeModal(false)}>
+          <div
+            className="bg-gray-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-100">File is too large</h3>
+              <button
+                onClick={() => setShowFileSizeModal(false)}
+                className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-400 mb-6">{fileSizeErrorMsg}</p>
+            <button
+              onClick={() => setShowFileSizeModal(false)}
+              className="w-full py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-all"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="px-6 py-4 border-b border-white/5 bg-gray-950/40 backdrop-blur-md flex items-center justify-between">
         <div className="flex items-center gap-4">
           {avatarURL ? (
@@ -328,7 +435,20 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         ) : (
           <div className="flex flex-col">
             {messages.map((m) => (
-              <ChatMessage messageId={m.id} avatar={avatarURL} key={m.id} text={m.content} isAuthor={m.isAuthor} timestamp={m.timestamp} nickname={m.sender} />
+              <ChatMessage
+                messageId={m.id}
+                avatar={avatarURL}
+                key={m.id}
+                text={m.content}
+                isAuthor={m.isAuthor}
+                timestamp={m.timestamp}
+                nickname={m.sender}
+                isImage={m.isImage || false}
+                isVideo={m.isVideo || false}
+                isFile={m.isFile || false}
+                fileName={m.fileName}
+                fileSize={m.fileSize}
+              />
             ))}
 
             {errorMessages.map((m) => (
@@ -347,7 +467,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         )}
       </div>
 
-      <ChatInput onSendMessage={handleSendMessage} />
+      <ChatInput onSendMessage={handleSendMessage} onSendFile={handleSendFile} />
     </div>
   );
 }

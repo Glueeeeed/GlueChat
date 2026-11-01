@@ -5,9 +5,10 @@ import { MdEmojiEmotions, MdOutlineAttachFile } from 'react-icons/md';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
+  onSendFile: (file: any) => void;
 }
 
-export function ChatInput({ onSendMessage }: ChatInputProps): JSX.Element {
+export function ChatInput({ onSendMessage, onSendFile }: ChatInputProps): JSX.Element {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -127,7 +128,7 @@ export function ChatInput({ onSendMessage }: ChatInputProps): JSX.Element {
           className="hidden"
           onChange={(e) => {
             if (e.target.files) {
-
+              onSendFile(e.target.files[0]);
             }
           }}
         />

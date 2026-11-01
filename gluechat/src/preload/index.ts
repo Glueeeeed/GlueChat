@@ -52,6 +52,8 @@ contextBridge.exposeInMainWorld('e2ee', {
   saveMessage: (timestamp: string, roomID: string, senderID: string, content: messageData, nonce: string, chatName: string, accountName: string) =>
     ipcRenderer.invoke('saveMessage', timestamp, roomID, senderID, content, nonce, chatName, accountName),
   getLastMessage: (roomID: ChatInfo, accountName: string) => ipcRenderer.invoke('getLastMessage', roomID, accountName),
+  saveImage: (fileData: Uint8Array, fileName: string)=> ipcRenderer.invoke('saveImage', fileData, fileName),
+  downloadFile: (filePath: string, fileName: string) => ipcRenderer.invoke('downloadFile', filePath, fileName),
 })
 
 

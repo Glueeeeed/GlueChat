@@ -1,4 +1,5 @@
 import {ElectronAPI} from '@electron-toolkit/preload'
+import { ipcRenderer } from 'electron';
 
 export interface messageData {
   id: string;
@@ -7,6 +8,11 @@ export interface messageData {
   timestamp: string;
   isAuthor: boolean;
   isSeen: boolean;
+  isImage?: boolean;
+  isVideo?: boolean;
+  isFile?: boolean;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface ChatInfo {
@@ -49,6 +55,8 @@ declare global {
       getMessages: (roomID: string,  accountName: string) => Promise<string | null>;
       saveMessage: (timestamp: string , roomID: string, senderID: string, content: messageData, messageId: string, chatName: string,  accountName: string) => Promise<string | null>;
       getLastMessage: (roomID: ChatInfo,  accountName: string) => Promise<any | null>;
+      saveImage: (fileData: Uint8Array, fileName: string)=> Promise<string>,
+      downloadFile: (filePath: string, fileName: string) => Promise<string | null>,
     },
     app: {
       getDeviceID: () => Promise<string>;

@@ -40,7 +40,12 @@ export abstract class HistoryManager {
         messageID TEXT UNIQUE,
         isAuthor BOOLEAN DEFAULT NULL,
         isSeen BOOLEAN DEFAULT NULL,
-        timestamp TEXT DEFAULT NULL
+        timestamp TEXT DEFAULT NULL,
+        isImage BOOLEAN DEFAULT NULL,
+        isVideo BOOLEAN DEFAULT NULL,
+        isFile BOOLEAN DEFAULT NULL,
+        fileName TEXT DEFAULT NULL,
+        fileSize INTEGER DEFAULT NULL
       )
     `);
 
@@ -62,10 +67,10 @@ export abstract class HistoryManager {
     const encrypted: Uint8Array = CryptoCore.encryptData(new TextEncoder().encode(messageData.content), key);
 
     const stmt = db.prepare(
-      `INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, timestamp)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)  `
+      `INSERT OR IGNORE INTO chat_history (roomID, senderID, senderName, encryptedContent, messageID, isAuthor, isSeen, timestamp, isImage, isVideo, isFile, fileName, fileSize)  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)  `
     );
 
-    stmt.run(roomID, senderID, chatName, Buffer.from(encrypted).toString('base64'), messageId, +messageData.isAuthor, +messageData.isSeen, timestamp);
+    stmt.run(roomID, senderID, chatName, Buffer.from(encrypted).toString('base64'), messageId, +messageData.isAuthor, +messageData.isSeen, timestamp, +messageData.isImage, +messageData.isVideo, +messageData.isFile, messageData.fileName, messageData.fileSize);
   }
 
   static async checkIfMessageExists(accountName: string, messageId: string): Promise<boolean> {
@@ -103,7 +108,12 @@ export abstract class HistoryManager {
         content: result,
         timestamp: formattedTimestamp,
         isAuthor: Boolean(row.isAuthor),
-        isSeen: Boolean(row.isSeen)
+        isSeen: Boolean(row.isSeen),
+        isImage: Boolean(row.isImage),
+        isVideo: Boolean(row.isVideo),
+        isFile: Boolean(row.isFile),
+        fileName: row.fileName,
+        fileSize: row.fileSize
       };
     });
   }

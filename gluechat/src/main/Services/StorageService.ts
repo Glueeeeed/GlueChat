@@ -23,6 +23,11 @@ export interface messageData {
   timestamp: string;
   isAuthor: boolean;
   isSeen: boolean;
+  isImage?: boolean;
+  isVideo?: boolean;
+  isFile?: boolean;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface ChatInfo {

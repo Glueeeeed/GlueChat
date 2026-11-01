@@ -1,18 +1,23 @@
 import { JSX } from 'react';
-import { MoreVertical, Trash2 } from 'lucide-react';
+import { MoreVertical, Trash2, File, Download } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 interface ChatMessage {
   text: string;
+  isImage: boolean;
+  isVideo: boolean;
+  isFile: boolean;
   isAuthor: boolean;
   timestamp: string;
   nickname: string;
   avatar: string | null;
   messageId: string;
+  fileName?: string;
+  fileSize?: number;
   onDelete?: (messageId: string) => void;
 }
 
-export function ChatMessage({ avatar, text, isAuthor, timestamp, nickname, messageId, onDelete }: ChatMessage): JSX.Element {
+export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, timestamp, nickname, messageId, fileName, fileSize, onDelete }: ChatMessage): JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -29,6 +34,11 @@ export function ChatMessage({ avatar, text, isAuthor, timestamp, nickname, messa
   const handleDelete = () => {
     if (onDelete) onDelete(messageId);
     setMenuOpen(false);
+  };
+
+  const handleDownload = async () => {
+    const displayName = fileName || 'file';
+    await window.e2ee.downloadFile(text, displayName);
   };
 
   return (
@@ -73,7 +83,52 @@ export function ChatMessage({ avatar, text, isAuthor, timestamp, nickname, messa
                 : 'bg-white/10 text-gray-100 border border-white/5 rounded-bl-none'
             }`}
           >
-            {text}
+            {isImage ? (
+              <div className="flex flex-col gap-2">
+                <img src={`glue-image://${text}`} alt="Chat image" style={{ maxWidth: '300px', borderRadius: '2px' }} />
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium transition-colors self-center"
+                >
+                  <Download size={14} />
+                  Download
+                </button>
+              </div>
+            ) : isVideo ? (
+              <div className="flex flex-col gap-2">
+                <video src={`glue-image://${text}`} controls style={{ maxWidth: '300px', borderRadius: '2px' }} />
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium transition-colors self-center"
+                >
+                  <Download size={14} />
+                  Download
+                </button>
+              </div>
+            ) : isFile ? (
+              <div className="flex flex-col gap-2 min-w-[250px]">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                    <File size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{fileName || 'file'}</p>
+                    <p className="text-xs text-white/50">
+                      {fileSize ? (fileSize < 1024 * 1024 ? `${(fileSize / 1024).toFixed(1)} KB` : `${(fileSize / (1024 * 1024)).toFixed(1)} MB`) : ''}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium transition-colors"
+                >
+                  <Download size={14} />
+                  Download
+                </button>
+              </div>
+            ) : (
+              text
+            )}
           </div>
         </div>
 

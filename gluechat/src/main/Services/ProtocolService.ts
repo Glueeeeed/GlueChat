@@ -30,7 +30,6 @@ export interface PkgStructure {
  */
 
 abstract class ProtocolService {
-
   /**
    * Encrypts a plaintext message for all active devices of the recipient.
    *
@@ -40,6 +39,7 @@ abstract class ProtocolService {
    * @param senderID - Identifier of the sender account.
    * @param receiverID - Identifier of the receiver account.
    * @param accountName - Name of the local user account in storage.
+   * @param isFile - A flag indicating whether the encrypted data is a file
    * @returns Array of encrypted message packages, one for each target recipient device.
    * @throws Error if no target devices are found for the receiver.
    */
@@ -49,7 +49,8 @@ abstract class ProtocolService {
     roomID: string,
     senderID: string,
     receiverID: string,
-    accountName: string
+    accountName: string,
+    isFile: boolean
   ): Promise<PkgStructure[]> {
     log.info(`Starting encryption process for room: ${roomID}`);
 
@@ -62,9 +63,7 @@ abstract class ProtocolService {
 
     const myDevices: device[] = await NetworkService.getAllBobDevices(authKey, senderID);
 
-    const targetDevices: device[] = bobDevices
-      .filter((d) => d.deviceId !== myDeviceId)
-      .concat(myDevices.filter((d) => d.deviceId !== myDeviceId));
+    const targetDevices: device[] = bobDevices.filter((d) => d.deviceId !== myDeviceId).concat(myDevices.filter((d) => d.deviceId !== myDeviceId));
 
     const bobPreKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, receiverID);
     const myPreKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, senderID);
@@ -145,6 +144,20 @@ abstract class ProtocolService {
         const messageId: string = Buffer.from(CryptoCore.generateRandomBytes(10)).toString('hex');
         const date = new Date();
         const dateString: string = date.toISOString();
+        let filename : null | string = null;
+
+        if (isFile) {
+          filename = "D";
+
+        }
+
+        if (isFile && filename === null) {
+          log.error("Failed to encrypt file: filename is missing");
+          throw new Error('Failed to encrypt file: filename is missing');
+        }
+
+
+
 
         pkgs.push({
           messageId,
@@ -157,7 +170,7 @@ abstract class ProtocolService {
           messageNumber: session.sendCounter as number,
           opkId,
           capsule: capsuleStr,
-          content: Buffer.from(encryptedMessage).toString('base64'),
+          content: isFile ? filename as string : Buffer.from(encryptedMessage).toString('base64'),
           createdAt: dateString,
           encryptedMessageKey: Buffer.from(encryptedMasterKey).toString('base64')
         });
@@ -184,7 +197,7 @@ abstract class ProtocolService {
     log.info(`Starting decryption for message #${pkg.messageNumber} from sender: ${pkg.senderId}`);
     const deviceId: string = pkg.deviceId;
     const messageId: string = pkg.messageId;
-    const messageExists : boolean = await  HistoryManager.checkIfMessageExists(account,messageId);
+    const messageExists: boolean = await HistoryManager.checkIfMessageExists(account, messageId);
 
     if (messageExists) {
       throw new Error('Message already exists, stopping decryption');
@@ -282,11 +295,9 @@ abstract class ProtocolService {
       const decoder = new TextDecoder();
       log.info(`Message #${pkg.messageNumber} decrypted successfully.`);
       return decoder.decode(decryptedContent);
-
     } finally {
-      this.wipeBytes(masterKey,decryptedContent);
+      this.wipeBytes(masterKey, decryptedContent);
     }
-
   }
 
   /**

@@ -52,7 +52,10 @@ export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, 
           </div>
         ))}
       <div className="flex flex-col max-w-[75%] gap-1 relative group">
-        <div ref={menuRef} className={`absolute ${isAuthor ? '-left-8' : '-right-8'} -top-2 opacity-0 group-hover:opacity-100 transition-opacity z-50`}>
+        <div
+          ref={menuRef}
+          className={`absolute ${isAuthor ? '-left-8' : '-right-8'} -top-2 opacity-0 group-hover:opacity-100 transition-opacity z-50`}
+        >
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 hover:text-gray-200 transition-colors"
@@ -66,11 +69,21 @@ export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, 
             >
               <button
                 onClick={handleDelete}
-                className="w-full flex items-center gap-2 px-4 py-2 text-xs text-red-400 hover:bg-white/5 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs text-red-400 hover:bg-white/5 transition-colors"
               >
                 <Trash2 size={14} />
                 Delete
               </button>
+
+              {(isVideo || isFile || isImage) && (
+                  <button
+                    onClick={handleDownload}
+                    className=" w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg  hover:bg-white/5 text-xs font-medium transition-colors"
+                  >
+                    <Download size={14} />
+                    Download
+                  </button>
+                )}
             </div>
           )}
         </div>
@@ -86,13 +99,6 @@ export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, 
             {isImage ? (
               <div className="flex flex-col gap-2">
                 <img src={`glue-image://${text}`} alt="Chat image" style={{ maxWidth: '300px', borderRadius: '2px' }} />
-                <button
-                  onClick={handleDownload}
-                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium transition-colors self-center"
-                >
-                  <Download size={14} />
-                  Download
-                </button>
               </div>
             ) : isVideo ? (
               <div className="flex flex-col gap-2">
@@ -118,13 +124,6 @@ export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, 
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={handleDownload}
-                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium transition-colors"
-                >
-                  <Download size={14} />
-                  Download
-                </button>
               </div>
             ) : (
               text

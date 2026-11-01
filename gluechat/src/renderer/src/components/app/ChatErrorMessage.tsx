@@ -22,7 +22,7 @@ export function ChatErrorMessage({ avatar, text, isDecryptionError, errorMessage
         ))}
       <div className="flex flex-col max-w-[75%] gap-1">
         <div
-          className={`px-4 py-2.5 text-sm font-medium rounded-2xl shadow-sm ${
+          className={`px-4 break-all py-2.5 text-sm font-medium rounded-2xl shadow-sm ${
             !isDecryptionError
               ? 'bg-violet-950/40  text-gray-300 rounded-br-none opacity-75'
               : 'bg-white/10 text-gray-400 border text-xs border-white/5 rounded-bl-none'

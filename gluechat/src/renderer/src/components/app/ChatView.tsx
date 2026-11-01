@@ -255,6 +255,16 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
 
 
   const handleSendFile = async (file: File): Promise<void> => {
+    const currentNickname: string = localStorage.getItem('nickname') || 'User';
+
+    // Validate receiverID before sending file
+    if (!receiverID) {
+      log.error('Cannot send file: receiverID is missing');
+      setFileSizeErrorMsg('Cannot send file: recipient not found. Please refresh the chat list.');
+      setShowFileSizeModal(true);
+      return;
+    }
+
     const MAX_FILE_SIZE_MB = 50;
     const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
     const fileSizeMB: string = bytesToMB(file.size);
@@ -277,51 +287,76 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
       isFile = true;
     }
 
-    const bytes = await file.arrayBuffer();
-    const fileData = new Uint8Array(bytes);
-    const filePath: string = await window.e2ee.saveImage(fileData, file.name);
+    try {
+      const bytes = await file.arrayBuffer();
+      const fileData = new Uint8Array(bytes);
+      const filePath: string = await window.e2ee.saveImage(fileData, file.name);
 
-    const currentNickname: string = localStorage.getItem('nickname') || 'User';
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const isoString = now.toISOString();
-    const msgId = Date.now().toString();
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const isoString = now.toISOString();
+      const msgId = Date.now().toString();
 
-    const messageData = {
-      id: msgId,
-      sender: currentNickname,
-      content: filePath,
-      timestamp: timeStr,
-      isAuthor: true,
-      isSeen: false,
-      isImage,
-      isVideo,
-      isFile,
-      fileName: file.name,
-      fileSize: file.size
-    };
+      const messageData = {
+        id: msgId,
+        sender: currentNickname,
+        content: filePath,
+        timestamp: timeStr,
+        isAuthor: true,
+        isSeen: false,
+        isImage,
+        isVideo,
+        isFile,
+        fileName: file.name,
+        fileSize: file.size
+      };
 
-    setMessages((prev) => [...prev, messageData]);
+      setMessages((prev) => [...prev, messageData]);
 
-    const historyMessageData = {
-      id: msgId,
-      sender: currentNickname,
-      content: filePath,
-      timestamp: timeStr,
-      isAuthor: true,
-      isSeen: false,
-      isImage,
-      isVideo,
-      isFile,
-      fileName: file.name,
-      fileSize: file.size
-    };
-    await window.e2ee.saveMessage(isoString, chatID, senderID, historyMessageData, msgId, currentNickname, currentNickname);
+      const historyMessageData = {
+        id: msgId,
+        sender: currentNickname,
+        content: filePath,
+        timestamp: timeStr,
+        isAuthor: true,
+        isSeen: false,
+        isImage,
+        isVideo,
+        isFile,
+        fileName: file.name,
+        fileSize: file.size
+      };
+      await window.e2ee.saveMessage(isoString, chatID, senderID, historyMessageData, msgId, currentNickname, currentNickname);
+    } catch (error) {
+      log.error('Failed to send file:', error);
+      setFileSizeErrorMsg('Failed to send file. Please try again.');
+      setShowFileSizeModal(true);
+    }
   }
 
 
   const handleSendMessage = async (message: string): Promise<void> => {
     const currentNickname: string = localStorage.getItem('nickname') || 'User';
+
+    // Validate receiverID before sending
+    if (!receiverID) {
+      log.error('Cannot send message: receiverID is missing');
+      setErrorMessages((prev: ErrorMessage[]): ErrorMessage[] => {
+        return [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            sender: currentNickname,
+            content: message,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isDecryptionError: false,
+            errorMessage: 'Cannot send: recipient not found. Please refresh the chat list.'
+          }
+        ];
+      });
+      return;
+    }
+
     try {
       const authToken: string = await validateOrRefreshToken(authKey);
       const result: any = await window.e2ee.initializeEncryptMessage(
@@ -329,7 +364,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         message,
         chatID,
         senderID,
-        receiverID as string,
+        receiverID,
         currentNickname
       );
 
@@ -361,19 +396,25 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
       }
 
     } catch (error) {
-      log.error(error);
+      log.error('Failed to send message:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const userFriendlyMessage = errorMessage.includes('Not Found')
+        ? 'Cannot send: The recipient may not have registered devices.'
+        : errorMessage.includes('Failed to encrypt')
+        ? 'Encryption failed. Please try again.'
+        : 'Failed to send message. Please check your connection.';
 
       setErrorMessages((prev: ErrorMessage[]): ErrorMessage[] => {
         return [
           ...prev,
           {
-
             id: Date.now().toString(),
             sender: currentNickname,
             content: message,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             isDecryptionError: false,
-            errorMessage: 'Failed to send'
+            errorMessage: userFriendlyMessage
           }
         ];
       });

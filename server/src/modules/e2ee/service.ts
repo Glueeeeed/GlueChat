@@ -7,8 +7,10 @@ import {NotFoundError} from "elysia";
 export abstract class E2EEService {
 
     static async getBobPreKeys(aliceID: string, bobID: string): Promise<string> {
-        const isFriends = await FriendsService.checkIfTheyAreFriends(aliceID, bobID);
-        if (!isFriends) throw new NotFoundError("Pre-Keys do not exist");
+        if (aliceID !== bobID) {
+            const isFriends = await FriendsService.checkIfTheyAreFriends(aliceID, bobID);
+            if (!isFriends) throw new NotFoundError("Pre-Keys do not exist");
+        }
 
         const devices = await prisma.registeredDevices.findMany({
             where: { userId: bobID },
@@ -64,8 +66,10 @@ export abstract class E2EEService {
     }
 
     static async getUserDevices(userId: string, id : string) {
-        const isFriends : boolean = await FriendsService.checkIfTheyAreFriends(userId, id);
-        if (!isFriends) throw new NotFoundError("Devices do not exist");
+        if (userId !== id) {
+            const isFriends = await FriendsService.checkIfTheyAreFriends(userId, id);
+            if (!isFriends) throw new NotFoundError("Devices do not exist");
+        }
 
         return prisma.registeredDevices.findMany({
             where: {

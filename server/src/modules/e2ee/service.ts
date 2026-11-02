@@ -151,6 +151,10 @@ export abstract class E2EEService {
         const url = process.env.FILE_SERVER_URL;
         const apiKey = process.env.FILE_SERVER_API_KEY;
 
+
+        const formData = new FormData();
+        formData.append('file', file);
+
         if (!url || !apiKey) {
             throw new Error("Url or Api key has not set in environment variable");
         }
@@ -160,7 +164,7 @@ export abstract class E2EEService {
             headers: {
                 "X-API-Key": apiKey
             },
-            body: file
+            body: formData
         });
 
         if (!response.ok) {

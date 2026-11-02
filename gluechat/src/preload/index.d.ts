@@ -1,5 +1,4 @@
-import {ElectronAPI} from '@electron-toolkit/preload'
-import { ipcRenderer } from 'electron';
+import { ElectronAPI } from '@electron-toolkit/preload';
 
 export interface messageData {
   id: string;
@@ -27,8 +26,8 @@ export interface ChatInfo {
 
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: unknown
+    electron: ElectronAPI;
+    api: unknown;
     network: {
       ws: {
         sendMessage: (data: any) => void;
@@ -37,11 +36,11 @@ declare global {
         onMessage: (callback: (data: any) => void) => () => void;
         onStatusChange: (callback: (data: any) => void) => () => void;
         onProfileUpdated: (callback: (data: any) => void) => () => void;
-      }
+      };
     };
     notify: {
       newMessage: (accountName: string) => void;
-    }
+    };
     auth: {
       getRefreshToken: (accountName: string) => Promise<string | null>;
       setRefreshToken: (accountName: string, token: string) => Promise<void>;
@@ -50,18 +49,42 @@ declare global {
     e2ee: {
       generateOpk: (qty: number, accountName: string, deviceId: string) => Promise<string>;
       generatePairKeys: (accountName: string, tempToken: string, forceReset: boolean) => Promise<void>;
-      initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => Promise<string | null>;
+      initializeEncryptMessage: (
+        publicKey: string,
+        content: string,
+        roomID: string,
+        senderID: string,
+        receiverID: string,
+        accountName: string
+      ) => Promise<string | null>;
+      initializeEncryptFile: (
+        authKey: string,
+        file: Uint8Array,
+        roomID: string,
+        senderID: string,
+        receiverID: string,
+        accountName: string,
+        fileName: string
+      ) => Promise<string | null>;
       decryptMessage: (encryptedPackage: any, accountName: string) => Promise<string | null>;
-      getMessages: (roomID: string,  accountName: string) => Promise<string | null>;
-      saveMessage: (timestamp: string , roomID: string, senderID: string, content: messageData, messageId: string, chatName: string,  accountName: string) => Promise<string | null>;
-      getLastMessage: (roomID: ChatInfo,  accountName: string) => Promise<any | null>;
-      saveImage: (fileData: Uint8Array, fileName: string)=> Promise<string>,
-      downloadFile: (filePath: string, fileName: string) => Promise<string | null>,
-    },
+      getMessages: (roomID: string, accountName: string) => Promise<string | null>;
+      saveMessage: (
+        timestamp: string,
+        roomID: string,
+        senderID: string,
+        content: messageData,
+        messageId: string,
+        chatName: string,
+        accountName: string
+      ) => Promise<string | null>;
+      getLastMessage: (roomID: ChatInfo, accountName: string) => Promise<any | null>;
+      saveImage: (fileData: Uint8Array, fileName: string) => Promise<string>;
+      downloadFile: (filePath: string, fileName: string) => Promise<string | null>;
+    };
     app: {
       getDeviceID: () => Promise<string>;
       removeLocalKeys: (accountName: string) => Promise<void>;
       closeApp: () => Promise<void>;
-    }
+    };
   }
 }

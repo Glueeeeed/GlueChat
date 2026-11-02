@@ -219,3 +219,27 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
             201: e2eeModel.response
         }
     })
+
+    .post('/upload/file', async ({body, user}) => {
+        const {file} = body;
+        try {
+            const filename: string  =  await E2EEService.uploadFile(file);
+            return status(201, {
+                success: true,
+                message: 'File is uploaded',
+                filename: filename
+            })
+
+        } catch (e) {
+            Logger.error(e);
+            return status(500, {
+                success: false,
+                message: `something went wrong`,
+            })
+        }
+    }, {
+        body: e2eeModel.file,
+        response: {
+            201: e2eeModel.response
+        }
+    })

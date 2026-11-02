@@ -327,6 +327,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         fileSize: file.size
       };
       await window.e2ee.saveMessage(isoString, chatID, senderID, historyMessageData, msgId, currentNickname, currentNickname);
+      await window.e2ee.initializeEncryptFile(authKey, fileData, chatID, senderID, receiverID, currentNickname, file.name);
     } catch (error) {
       log.error('Failed to send file:', error);
       setFileSizeErrorMsg('Failed to send file. Please try again.');

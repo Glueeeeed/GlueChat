@@ -294,7 +294,7 @@ ipcMain.handle(
   'initializeEncryptMessage',
   async (_, authKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) => {
     const encoder = new TextEncoder();
-    const data : PkgStructure[] = await ProtocolService.initializeEncrypt(authKey,encoder.encode(content), roomID, senderID, receiverID, accountName, false);
+    const data : PkgStructure[] = await ProtocolService.initializeEncrypt(authKey,encoder.encode(content), roomID, senderID, receiverID, accountName, false, "");
     return data;
   }
 );
@@ -315,8 +315,8 @@ ipcMain.handle(
 );
 
 ipcMain.handle(
-  'initializeEncryptFile', async (_, authKey: string, file: Uint8Array, roomID: string, senderID: string, receiverID: string, accountName: string) => {
-    const data: PkgStructure[] = await ProtocolService.initializeEncrypt(authKey, file, roomID, senderID, receiverID, accountName , true);
+  'initializeEncryptFile', async (_, authKey: string, file: Uint8Array, roomID: string, senderID: string, receiverID: string, accountName: string, fileName: string) => {
+    const data: PkgStructure[] = await ProtocolService.initializeEncrypt(authKey, file, roomID, senderID, receiverID, accountName, true, fileName);
     return data;
   }
 );

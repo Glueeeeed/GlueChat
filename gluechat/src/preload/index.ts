@@ -1,42 +1,42 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
-import { ChatInfo, messageData } from '../main/Services/StorageService'
+import { contextBridge, ipcRenderer } from 'electron';
+import { electronAPI } from '@electron-toolkit/preload';
+import { ChatInfo, messageData } from '../main/Services/StorageService';
 
 // Custom APIs for renderer
-const api = {}
+const api = {};
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('electron', electronAPI);
+    contextBridge.exposeInMainWorld('api', api);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 } else {
   // @ts-ignore (define in dts)
-  window.electron = electronAPI
+  window.electron = electronAPI;
   // @ts-ignore (define in dts)
-  window.api = api
+  window.api = api;
 }
 
 contextBridge.exposeInMainWorld('app', {
   getDeviceID: () => ipcRenderer.invoke('getDevice'),
   removeLocalKeys: (accountName: string) => ipcRenderer.invoke('removeLocalKeys', accountName),
-  closeApp: () => ipcRenderer.invoke('closeApp'),
-})
+  closeApp: () => ipcRenderer.invoke('closeApp')
+});
 
-contextBridge.exposeInMainWorld("auth", {
-  getRefreshToken: (accountName: string) => ipcRenderer.invoke("get-refresh-token", accountName),
-  setRefreshToken: (accountName: string, token: string) => ipcRenderer.invoke("set-refresh-token", accountName, token),
-  deleteRefreshToken: (accountName: string) => ipcRenderer.invoke("delete-refresh-token", accountName),
+contextBridge.exposeInMainWorld('auth', {
+  getRefreshToken: (accountName: string) => ipcRenderer.invoke('get-refresh-token', accountName),
+  setRefreshToken: (accountName: string, token: string) => ipcRenderer.invoke('set-refresh-token', accountName, token),
+  deleteRefreshToken: (accountName: string) => ipcRenderer.invoke('delete-refresh-token', accountName)
 });
 
 contextBridge.exposeInMainWorld('notify', {
   newMessage: (accountName: string) => ipcRenderer.invoke('new-message-notification', accountName)
-})
+});
 
 contextBridge.exposeInMainWorld('e2ee', {
   generateOpk: (qty: number, accountName: string, deviceId: string) => {
@@ -46,16 +46,16 @@ contextBridge.exposeInMainWorld('e2ee', {
     ipcRenderer.invoke('generate-xwing-pair-keys', accountName, tempToken, forceReset),
   initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) =>
     ipcRenderer.invoke('initializeEncryptMessage', publicKey, content, roomID, senderID, receiverID, accountName),
-  decryptMessage: (encryptedPackage: any, accountName: string) =>
-    ipcRenderer.invoke('decryptMessage', encryptedPackage, accountName),
-  getMessages: (roomID: string, accountName: string) => ipcRenderer.invoke('getMessages', roomID,accountName),
+  initializeEncryptFile: (authKey: string, file: Uint8Array, roomID: string, senderID: string, receiverID: string, accountName: string, fileName: string) =>
+    ipcRenderer.invoke('initializeEncryptFile', authKey, file, roomID, senderID, receiverID, accountName, fileName),
+  decryptMessage: (encryptedPackage: any, accountName: string) => ipcRenderer.invoke('decryptMessage', encryptedPackage, accountName),
+  getMessages: (roomID: string, accountName: string) => ipcRenderer.invoke('getMessages', roomID, accountName),
   saveMessage: (timestamp: string, roomID: string, senderID: string, content: messageData, nonce: string, chatName: string, accountName: string) =>
     ipcRenderer.invoke('saveMessage', timestamp, roomID, senderID, content, nonce, chatName, accountName),
   getLastMessage: (roomID: ChatInfo, accountName: string) => ipcRenderer.invoke('getLastMessage', roomID, accountName),
-  saveImage: (fileData: Uint8Array, fileName: string)=> ipcRenderer.invoke('saveImage', fileData, fileName),
-  downloadFile: (filePath: string, fileName: string) => ipcRenderer.invoke('downloadFile', filePath, fileName),
-})
-
+  saveImage: (fileData: Uint8Array, fileName: string) => ipcRenderer.invoke('saveImage', fileData, fileName),
+  downloadFile: (filePath: string, fileName: string) => ipcRenderer.invoke('downloadFile', filePath, fileName)
+});
 
 contextBridge.exposeInMainWorld('network', {
   ws: {
@@ -85,5 +85,3 @@ contextBridge.exposeInMainWorld('network', {
     }
   }
 });
-
-

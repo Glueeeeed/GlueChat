@@ -2,6 +2,7 @@ import {prisma} from "../../lib/prisma";
 import {FriendsService} from "../friends/service";
 import {OneTimeKey} from "../account/service"
 import {NotFoundError} from "elysia";
+import {Logger} from "../../utils/logger";
 
 
 export abstract class E2EEService {
@@ -143,6 +144,32 @@ export abstract class E2EEService {
         } else {
             throw new NotFoundError("Failed to update onetime pre key");
         }
+
+    }
+
+    static async uploadFile(file : File) : Promise<string> {
+        const url = process.env.FILE_SERVER_URL;
+        const apiKey = process.env.FILE_SERVER_API_KEY;
+
+        if (!url || !apiKey) {
+            throw new Error("Url or Api key has not set in environment variable");
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                "X-API-Key": apiKey
+            },
+            body: file
+        });
+
+        if (!response.ok) {
+            Logger.error(response.statusText);
+            throw new Error("Failed to upload file");
+        }
+
+        const json = await response.json();
+        return json.filename;
 
     }
 

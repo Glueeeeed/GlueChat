@@ -9,6 +9,7 @@ import { SessionKeyManager } from '../Managers/SessionKeyManager';
 import { HistoryManager } from '../Managers/HistoryManager';
 
 export interface PkgStructure {
+  isFile: boolean;
   messageId: string;
   appSessionId: string;
   deviceId: string;
@@ -50,7 +51,8 @@ abstract class ProtocolService {
     senderID: string,
     receiverID: string,
     accountName: string,
-    isFile: boolean
+    isFile: boolean,
+    fileName: string
   ): Promise<PkgStructure[]> {
     log.info(`Starting encryption process for room: ${roomID}`);
 
@@ -147,8 +149,7 @@ abstract class ProtocolService {
         let filename : null | string = null;
 
         if (isFile) {
-          filename = "D";
-
+          filename = await NetworkService.uploadEncryptedFile(authKey, encryptedMessage,fileName);
         }
 
         if (isFile && filename === null) {
@@ -160,6 +161,7 @@ abstract class ProtocolService {
 
 
         pkgs.push({
+          isFile,
           messageId,
           appSessionId: appSession,
           deviceId,

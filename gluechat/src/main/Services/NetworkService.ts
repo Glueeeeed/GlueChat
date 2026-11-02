@@ -93,4 +93,29 @@ export abstract class NetworkService {
     const json = await response.json();
     return json.data;
   }
+
+  static async uploadEncryptedFile(authKey: string, fileBytes: Uint8Array<ArrayBufferLike>, filename: string): Promise<string> {
+    const encryptedFile = new File([fileBytes as unknown as Uint8Array<ArrayBuffer>], filename, {
+      type: 'application/octet-stream',
+      lastModified: Date.now()
+    });
+
+    const formData = new FormData();
+    formData.append('file', encryptedFile);
+
+    const response = await fetch(`${API_BASE_URL}/api/e2ee/upload/file`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authKey}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const json = await response.json();
+    return json.filename;
+  }
 }

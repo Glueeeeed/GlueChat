@@ -25,6 +25,10 @@ export const e2eeModel = {
     update: t.Object({
         deviceId: t.String(),
         opk: t.String(),
+    }),
+
+    file: t.Object({
+        file: t.File()
     })
 
 }

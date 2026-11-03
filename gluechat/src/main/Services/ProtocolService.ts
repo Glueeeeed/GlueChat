@@ -64,9 +64,7 @@ abstract class ProtocolService {
 
     const myDeviceId: string = await StorageService.generateDeviceId();
 
-    const myDevices: device[] = await NetworkService.getAllBobDevices(authKey, senderID);
-
-    const targetDevices: device[] = bobDevices.filter((d) => d.deviceId !== myDeviceId).concat(myDevices.filter((d) => d.deviceId !== myDeviceId));
+    const targetDevices: device[] = bobDevices.filter((d) => d.deviceId !== myDeviceId);
 
     const bobPreKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, receiverID);
     const myPreKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, senderID);
@@ -79,8 +77,18 @@ abstract class ProtocolService {
     let filename: null | string = null;
 
     if (isFile) {
-      log.info("Sending encrypted file to GlueChat File Server..")
-      filename = await NetworkService.uploadEncryptedFile(authKey, encryptedMessage, fileName);
+      try {
+        log.info("Sending encrypted file to GlueChat File Server..")
+        filename = await NetworkService.uploadEncryptedFile(authKey, encryptedMessage, fileName);
+        log.debug('Trying decrypting encrypted file to GlueChat File Server..');
+        const decrypted = CryptoCore.decrypt(encryptedMessage, masterKey);
+        if (decrypted) {
+          log.debug('Decrypted successfully, wiping decrypted bytes');
+          this.wipeBytes(decrypted);
+        }
+      } catch {
+        throw new Error("Encrypted file is interrupted");
+      }
     }
 
     if (isFile && filename === null) {

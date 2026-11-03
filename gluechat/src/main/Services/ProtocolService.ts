@@ -67,7 +67,6 @@ abstract class ProtocolService {
     const targetDevices: device[] = bobDevices.filter((d) => d.deviceId !== myDeviceId);
 
     const bobPreKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, receiverID);
-    const myPreKeysPackages: preKeysPackage[] = await NetworkService.getPreKeys(authKey, senderID);
 
     const pkgs: PkgStructure[] = [];
 
@@ -100,9 +99,8 @@ abstract class ProtocolService {
       for (const device of targetDevices) {
         const deviceId: string = device.deviceId;
 
-        const isMyDevice: boolean = myDevices.some((d) => d.deviceId === deviceId);
-        const targetUserID: string = isMyDevice ? senderID : receiverID;
-        const preKeysPool: preKeysPackage[] = isMyDevice ? myPreKeysPackages : bobPreKeysPackages;
+        const targetUserID: string = receiverID;
+        const preKeysPool: preKeysPackage[] = bobPreKeysPackages;
 
         let session: SessionState | null = await this.getOrLoadSession(roomID, targetUserID, deviceId, accountName);
         let capsuleStr: string | null = null;

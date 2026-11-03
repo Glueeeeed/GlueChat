@@ -75,6 +75,18 @@ abstract class ProtocolService {
     const masterKey: Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
     const encryptedMessage: Uint8Array = CryptoCore.encryptData(content, masterKey);
 
+    let filename: null | string = null;
+
+    if (isFile) {
+      log.info("Sending encrypted file to GlueChat File Server..")
+      filename = await NetworkService.uploadEncryptedFile(authKey, encryptedMessage, fileName);
+    }
+
+    if (isFile && filename === null) {
+      log.error('Failed to encrypt file: filename is missing');
+      throw new Error('Failed to encrypt file: filename is missing');
+    }
+
     try {
       for (const device of targetDevices) {
         const deviceId: string = device.deviceId;
@@ -146,16 +158,7 @@ abstract class ProtocolService {
         const messageId: string = Buffer.from(CryptoCore.generateRandomBytes(10)).toString('hex');
         const date = new Date();
         const dateString: string = date.toISOString();
-        let filename : null | string = null;
 
-        if (isFile) {
-          filename = await NetworkService.uploadEncryptedFile(authKey, encryptedMessage,fileName);
-        }
-
-        if (isFile && filename === null) {
-          log.error("Failed to encrypt file: filename is missing");
-          throw new Error('Failed to encrypt file: filename is missing');
-        }
 
 
 

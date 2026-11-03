@@ -73,6 +73,7 @@ model Message {
   createdAt           String
   encryptedMessageKey String
   isSeen              Boolean
+  isFile              Boolean
 
   privateRoom PrivateRoom @relation(fields: [roomID], references: [id], onDelete: Cascade)
   sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)

@@ -1,4 +1,4 @@
-import React, { SetStateAction, useState } from 'react'
+import React, { useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import { loadFriend } from '@renderer/assets/friends'
 import { checkIfAssetExists } from '@renderer/assets/profile'

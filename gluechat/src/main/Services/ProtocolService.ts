@@ -23,6 +23,7 @@ export interface PkgStructure {
   content: string;
   createdAt: string;
   encryptedMessageKey: string;
+  fileName?: string;
 }
 
 /**
@@ -177,7 +178,8 @@ abstract class ProtocolService {
           capsule: capsuleStr,
           content: isFile ? filename as string : Buffer.from(encryptedMessage).toString('base64'),
           createdAt: dateString,
-          encryptedMessageKey: Buffer.from(encryptedMasterKey).toString('base64')
+          encryptedMessageKey: Buffer.from(encryptedMasterKey).toString('base64'),
+          fileName: isFile ? fileName : undefined
         });
       }
     } finally {
@@ -195,10 +197,10 @@ abstract class ProtocolService {
    * @param pkg - Encrypted message package structure.
    * @param roomID - Identifier of the chat room.
    * @param account - Name of the local user account in storage.
-   * @returns Decrypted plaintext message.
+   * @returns Decrypted plaintext message or decrypted file bytes (Uint8Array) for file messages.
    * @throws Error if SPK/OPK private keys are missing or no active session can be found/recovered.
    */
-  public static async initializeDecrypt(pkg: PkgStructure, roomID: string, account: string): Promise<string> {
+  public static async initializeDecrypt(pkg: PkgStructure, roomID: string, account: string): Promise<string | Uint8Array> {
     log.info(`Starting decryption for message #${pkg.messageNumber} from sender: ${pkg.senderId}`);
     const deviceId: string = pkg.deviceId;
     const messageId: string = pkg.messageId;
@@ -279,7 +281,16 @@ abstract class ProtocolService {
 
     try {
       masterKey = CryptoCore.decrypt(Buffer.from(pkg.encryptedMessageKey, 'base64'), session.rootKey);
-      decryptedContent = CryptoCore.decrypt(Buffer.from(pkg.content, 'base64'), masterKey);
+
+      if (pkg.isFile) {
+        log.info(`Downloading encrypted file: ${pkg.content}`);
+        const encryptedFileBytes : Uint8Array = await NetworkService.downloadEncryptedFile(pkg.content);
+        decryptedContent = CryptoCore.decrypt(encryptedFileBytes, masterKey);
+        log.info(`File #${pkg.messageNumber} decrypted successfully.`);
+        return decryptedContent;
+      } else {
+        decryptedContent = CryptoCore.decrypt(Buffer.from(pkg.content, 'base64'), masterKey);
+      }
 
       const updatedCounter = (session.sendCounter || 0) + 1;
       const currentAppSession = session.appSession || pkg.appSessionId || appSession;

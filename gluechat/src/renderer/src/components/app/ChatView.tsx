@@ -24,6 +24,12 @@ interface Message {
   fileSize?: number;
 }
 
+interface decryptedResult {
+   type: string;
+   content: string;
+   fileName?: string;
+}
+
 interface ErrorMessage {
   id: string;
   sender: string;
@@ -128,37 +134,83 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
 
             const currentNickname = localStorage.getItem('nickname') || 'User';
             try {
-              const decryptedText = await window.e2ee.decryptMessage(pkg, currentNickname);
-              if (decryptedText) {
+              const decryptedResult : decryptedResult = await window.e2ee.decryptMessage(pkg, currentNickname);
+              if (decryptedResult) {
                 await makeAsRead(authKey, pkg.messageId);
                 const timeStr = formatTime(pkg.createdAt);
 
-                setMessages((prev) => {
-                  if (prev.some((m) => m.id === (pkg.messageId || pkg.id))) return prev;
+                if (decryptedResult.type === 'file' && pkg.isFile) {
+                  // Handle file message
+                  const fileName = pkg.fileName || decryptedResult.fileName || 'file';
+                  const ext = fileName.split('.').pop()?.toLowerCase();
 
-                  return [
-                    ...prev,
-                    {
-                      id: pkg.messageId || pkg.id || Date.now().toString(),
-                      sender: chatName,
-                      content: decryptedText,
-                      timestamp: timeStr,
-                      isAuthor: false,
-                      isSeen: true
-                    }
-                  ];
-                });
+                  let isImage = false;
+                  let isVideo = false;
+                  let isFile = false;
 
-                const messageData = {
-                  id: pkg.messageId || pkg.id || Date.now().toString(),
-                  sender: chatName,
-                  content: decryptedText,
-                  timestamp: timeStr,
-                  isAuthor: false,
-                  isSeen: false
-                };
+                  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+                    isImage = true;
+                  } else if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) {
+                    isVideo = true;
+                  } else {
+                    isFile = true;
+                  }
 
-                await window.e2ee.saveMessage(toIsoString(pkg.createdAt), chatID, pkg.senderId, messageData, pkg.messageId || pkg.id, chatName, currentNickname);
+                  const msg = {
+                    id: pkg.messageId || pkg.id || Date.now().toString(),
+                    sender: chatName,
+                    content: decryptedResult.content,
+                    timestamp: timeStr,
+                    isAuthor: false,
+                    isSeen: true,
+                    isImage,
+                    isVideo,
+                    isFile,
+                    fileName: fileName
+                  };
+
+                  setMessages((prev) => {
+                    if (prev.some((m) => m.id === (pkg.messageId || pkg.id))) return prev;
+                    return [...prev, msg];
+                  });
+
+                  const messageData = {
+                    ...msg,
+                    isSeen: false
+                  };
+
+                  await window.e2ee.saveMessage(toIsoString(pkg.createdAt), chatID, pkg.senderId, messageData, pkg.messageId || pkg.id, chatName, currentNickname);
+                } else {
+                  // Handle text message
+                  const decryptedText = decryptedResult.content;
+
+                  setMessages((prev) => {
+                    if (prev.some((m) => m.id === (pkg.messageId || pkg.id))) return prev;
+
+                    return [
+                      ...prev,
+                      {
+                        id: pkg.messageId || pkg.id || Date.now().toString(),
+                        sender: chatName,
+                        content: decryptedText,
+                        timestamp: timeStr,
+                        isAuthor: false,
+                        isSeen: true
+                      }
+                    ];
+                  });
+
+                  const messageData = {
+                    id: pkg.messageId || pkg.id || Date.now().toString(),
+                    sender: chatName,
+                    content: decryptedText,
+                    timestamp: timeStr,
+                    isAuthor: false,
+                    isSeen: false
+                  };
+
+                  await window.e2ee.saveMessage(toIsoString(pkg.createdAt), chatID, pkg.senderId, messageData, pkg.messageId || pkg.id, chatName, currentNickname);
+                }
               }
             } catch (err) {
               log.error('Failed to decrypt offline message', err);
@@ -198,37 +250,83 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         try {
           if (message.deviceId !== deviceId) continue;
           const currentNickname: string = localStorage.getItem('nickname') || 'User';
-          const decryptedText: string | null = await window.e2ee.decryptMessage(message, currentNickname);
-          if (decryptedText) {
+          const decryptedResult = await window.e2ee.decryptMessage(message, currentNickname);
+          if (decryptedResult) {
             await makeAsRead(authKey, message.messageId);
             const timeStr = formatTime(message.createdAt);
             const msgId = message.messageId || message.id || message.nonce || Date.now().toString();
 
-            setMessages((prev: Message[]): Message[] => {
-              if (prev.some((m: Message): boolean => m.id === msgId)) return prev;
-              return [
-                ...prev,
-                {
-                  id: msgId,
-                  sender: chatName,
-                  content: decryptedText,
-                  timestamp: timeStr,
-                  isAuthor: false,
-                  isSeen: false
-                }
-              ];
-            });
+            if (decryptedResult.type === 'file' && message.isFile) {
+              // Handle file message
+              const fileName = message.fileName || decryptedResult.fileName || 'file';
+              const ext = fileName.split('.').pop()?.toLowerCase();
 
-            const messageData = {
-              id: msgId,
-              sender: chatName,
-              content: decryptedText,
-              timestamp: timeStr,
-              isAuthor: false,
-              isSeen: false
-            };
+              let isImage = false;
+              let isVideo = false;
+              let isFile = false;
 
-            await window.e2ee.saveMessage(toIsoString(message.createdAt), chatID, message.senderId || message.senderID || senderID, messageData, msgId, chatName, currentNickname);
+              if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+                isImage = true;
+              } else if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) {
+                isVideo = true;
+              } else {
+                isFile = true;
+              }
+
+              const msg = {
+                id: msgId,
+                sender: chatName,
+                content: decryptedResult.content,
+                timestamp: timeStr,
+                isAuthor: false,
+                isSeen: false,
+                isImage,
+                isVideo,
+                isFile,
+                fileName: fileName
+              };
+
+              setMessages((prev: Message[]): Message[] => {
+                if (prev.some((m: Message): boolean => m.id === msgId)) return prev;
+                return [...prev, msg];
+              });
+
+              const messageData = {
+                ...msg,
+                isSeen: false
+              };
+
+              await window.e2ee.saveMessage(toIsoString(message.createdAt), chatID, message.senderId || message.senderID || senderID, messageData, msgId, chatName, currentNickname);
+            } else {
+              // Handle text message
+              const decryptedText = decryptedResult.content;
+
+              setMessages((prev: Message[]): Message[] => {
+                if (prev.some((m: Message): boolean => m.id === msgId)) return prev;
+                return [
+                  ...prev,
+                  {
+                    id: msgId,
+                    sender: chatName,
+                    content: decryptedText,
+                    timestamp: timeStr,
+                    isAuthor: false,
+                    isSeen: false
+                  }
+                ];
+              });
+
+              const messageData = {
+                id: msgId,
+                sender: chatName,
+                content: decryptedText,
+                timestamp: timeStr,
+                isAuthor: false,
+                isSeen: false
+              };
+
+              await window.e2ee.saveMessage(toIsoString(message.createdAt), chatID, message.senderId || message.senderID || senderID, messageData, msgId, chatName, currentNickname);
+            }
           }
         } catch (e) {
           setErrorMessages((prev: ErrorMessage[]): ErrorMessage[] => {

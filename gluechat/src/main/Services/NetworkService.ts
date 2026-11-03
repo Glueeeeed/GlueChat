@@ -118,4 +118,27 @@ export abstract class NetworkService {
     const json = await response.json();
     return json.filename;
   }
+
+  static async downloadEncryptedFile(filename: string): Promise<Uint8Array> {
+    const response = await fetch(`https://gluechat.dev/storage/download/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        filename: filename,
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      log.error(`Failed to download file ${filename}: ${response.statusText} - ${errorText}`);
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+
+    const arrayBuffer = await blob.arrayBuffer();
+    return new Uint8Array(arrayBuffer);
+  }
 }

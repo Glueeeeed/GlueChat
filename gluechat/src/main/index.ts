@@ -304,7 +304,24 @@ ipcMain.handle('getDevice', async () => {
 });
 
 ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string) => {
-  return await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName);
+  const result = await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName);
+
+  if (encryptedPackage.isFile) {
+    const fileData = result as Uint8Array;
+    const fileName = encryptedPackage.fileName || 'file';
+    const uploadDir = path.join(app.getPath('userData'), 'downloads');
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const filePath = path.join(uploadDir, `${Date.now()}_${fileName}`);
+    fs.writeFileSync(filePath, Buffer.from(fileData));
+
+    return { type: 'file', content: filePath, fileName: fileName };
+  }
+
+  return { type: 'text', content: result as string };
 });
 
 ipcMain.handle(

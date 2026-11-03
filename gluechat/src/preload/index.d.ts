@@ -14,6 +14,12 @@ export interface messageData {
   fileSize?: number;
 }
 
+interface decryptedResult {
+  type: string;
+  content: string;
+  fileName?: string;
+}
+
 export interface ChatInfo {
   id: string;
   name: string;
@@ -66,7 +72,7 @@ declare global {
         accountName: string,
         fileName: string
       ) => Promise<string | null>;
-      decryptMessage: (encryptedPackage: any, accountName: string) => Promise<string | null>;
+      decryptMessage: (encryptedPackage: any, accountName: string) => Promise<decryptedResult>;
       getMessages: (roomID: string, accountName: string) => Promise<string | null>;
       saveMessage: (
         timestamp: string,

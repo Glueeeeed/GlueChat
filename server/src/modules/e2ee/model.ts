@@ -28,7 +28,8 @@ export const e2eeModel = {
     }),
 
     file: t.Object({
-        file: t.File()
+        file: t.String(),
+        filename: t.String()
     })
 
 }

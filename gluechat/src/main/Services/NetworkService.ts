@@ -95,20 +95,19 @@ export abstract class NetworkService {
   }
 
   static async uploadEncryptedFile(authKey: string, fileBytes: Uint8Array<ArrayBufferLike>, filename: string): Promise<string> {
-    const encryptedFile = new File([fileBytes as unknown as Uint8Array<ArrayBuffer>], filename, {
-      type: 'application/octet-stream',
-      lastModified: Date.now()
-    });
-
-    const formData = new FormData();
-    formData.append('file', encryptedFile);
+    // Encode binary data to base64 to avoid corruption during transfer
+    const base64File = Buffer.from(fileBytes).toString('base64');
 
     const response = await fetch(`${API_BASE_URL}/api/e2ee/upload/file`, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${authKey}`
       },
-      body: formData
+      body: JSON.stringify({
+        file: base64File,
+        filename: filename
+      })
     });
 
     if (!response.ok) {
@@ -136,9 +135,10 @@ export abstract class NetworkService {
       throw new Error(`Failed to download file: ${response.statusText}`);
     }
 
-    const blob = await response.blob();
-
-    const arrayBuffer = await blob.arrayBuffer();
-    return new Uint8Array(arrayBuffer);
+    // Expect base64-encoded file content in JSON response
+    const json = await response.json();
+    const base64File = json.file || json.data;
+    const fileBuffer = Buffer.from(base64File, 'base64');
+    return new Uint8Array(fileBuffer);
   }
 }

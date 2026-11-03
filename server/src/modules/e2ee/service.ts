@@ -147,17 +147,19 @@ export abstract class E2EEService {
 
     }
 
-    static async uploadFile(file : File) : Promise<string> {
+    static async uploadFile(fileBase64: string, filename: string) : Promise<string> {
         const url = process.env.FILE_SERVER_URL;
         const apiKey = process.env.FILE_SERVER_API_KEY;
-
-
-        const formData = new FormData();
-        formData.append('file', file);
 
         if (!url || !apiKey) {
             throw new Error("Url or Api key has not set in environment variable");
         }
+
+        // Decode base64 to binary Buffer for upload
+        const fileBuffer = Buffer.from(fileBase64, 'base64');
+
+        const formData = new FormData();
+        formData.append('file', new Blob([fileBuffer]), filename);
 
         const response = await fetch(url, {
             method: 'POST',

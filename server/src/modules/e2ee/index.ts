@@ -221,13 +221,13 @@ export const e2ee = new Elysia({ prefix: '/e2ee' })
     })
 
     .post('/upload/file', async ({body, user}) => {
-        const {file} = body;
+        const {file, filename} = body;
         try {
-            const filename: string  =  await E2EEService.uploadFile(file);
+            const uploadedFilename: string  =  await E2EEService.uploadFile(file, filename);
             return status(201, {
                 success: true,
                 message: 'File is uploaded',
-                filename: filename
+                filename: uploadedFilename
             })
 
         } catch (e) {

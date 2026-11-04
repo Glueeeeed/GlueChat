@@ -298,6 +298,11 @@ abstract class ProtocolService {
         const encryptedFileBytes : Uint8Array = await NetworkService.downloadEncryptedFile(pkg.content, authKey );
         decryptedContent = CryptoCore.decrypt(encryptedFileBytes, masterKey);
         log.info(`File #${pkg.messageNumber} decrypted successfully.`);
+
+        const hash: string = sha256(decryptedContent).toString();
+        log.debug('decrypted file Checksum: ' + hash);
+
+        this.wipeBytes(masterKey);
         return decryptedContent;
       } else {
         decryptedContent = CryptoCore.decrypt(Buffer.from(pkg.content, 'base64'), masterKey);
@@ -323,7 +328,10 @@ abstract class ProtocolService {
       log.info(`Message #${pkg.messageNumber} decrypted successfully.`);
       return decoder.decode(decryptedContent);
     } finally {
-      this.wipeBytes(masterKey, decryptedContent);
+      this.wipeBytes(masterKey);
+      if (!pkg.isFile) {
+        this.wipeBytes(decryptedContent);
+      }
     }
   }
 

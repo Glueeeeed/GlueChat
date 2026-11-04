@@ -142,9 +142,6 @@ export abstract class NetworkService {
     const base64File = json.file64
     const fileBuffer = Buffer.from(base64File, 'base64');
 
-    const hash: string = sha256(fileBuffer).toString();
-    log.debug('Checksum: ' + hash);
-
     return fileBuffer;
   }
 }

@@ -303,8 +303,8 @@ ipcMain.handle('getDevice', async () => {
   return await StorageService.generateDeviceId();
 });
 
-ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string) => {
-  const result = await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName);
+ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: string, authKey : string) => {
+  const result = await ProtocolService.initializeDecrypt(encryptedPackage, encryptedPackage.roomID, accountName, authKey);
 
   if (encryptedPackage.isFile) {
     const fileData = result as Uint8Array;

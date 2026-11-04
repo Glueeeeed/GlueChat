@@ -72,7 +72,7 @@ declare global {
         accountName: string,
         fileName: string
       ) => Promise<string | null>;
-      decryptMessage: (encryptedPackage: any, accountName: string) => Promise<decryptedResult>;
+      decryptMessage: (encryptedPackage: any, accountName: string, authKey: string) => Promise<decryptedResult>;
       getMessages: (roomID: string, accountName: string) => Promise<string | null>;
       saveMessage: (
         timestamp: string,

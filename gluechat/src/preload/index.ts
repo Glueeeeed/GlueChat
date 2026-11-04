@@ -46,9 +46,10 @@ contextBridge.exposeInMainWorld('e2ee', {
     ipcRenderer.invoke('generate-xwing-pair-keys', accountName, tempToken, forceReset),
   initializeEncryptMessage: (publicKey: string, content: string, roomID: string, senderID: string, receiverID: string, accountName: string) =>
     ipcRenderer.invoke('initializeEncryptMessage', publicKey, content, roomID, senderID, receiverID, accountName),
-  initializeEncryptFile: (authKey: string, file: Uint8Array, roomID: string, senderID: string, receiverID: string, accountName: string, fileName: string) =>
-    ipcRenderer.invoke('initializeEncryptFile', authKey, file, roomID, senderID, receiverID, accountName, fileName),
-  decryptMessage: (encryptedPackage: any, accountName: string) => ipcRenderer.invoke('decryptMessage', encryptedPackage, accountName),
+  initializeEncryptFile: (authKey: string, file: Uint8Array, roomID: string, senderID: string, receiverID: string, accountName: string, fileName: string
+  ) => ipcRenderer.invoke('initializeEncryptFile', authKey, file, roomID, senderID, receiverID, accountName, fileName),
+  decryptMessage: (encryptedPackage: any, accountName: string, authKey: string) =>
+    ipcRenderer.invoke('decryptMessage', encryptedPackage, accountName, authKey),
   getMessages: (roomID: string, accountName: string) => ipcRenderer.invoke('getMessages', roomID, accountName),
   saveMessage: (timestamp: string, roomID: string, senderID: string, content: messageData, nonce: string, chatName: string, accountName: string) =>
     ipcRenderer.invoke('saveMessage', timestamp, roomID, senderID, content, nonce, chatName, accountName),

@@ -134,7 +134,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
 
             const currentNickname = localStorage.getItem('nickname') || 'User';
             try {
-              const decryptedResult : decryptedResult = await window.e2ee.decryptMessage(pkg, currentNickname);
+              const decryptedResult : decryptedResult = await window.e2ee.decryptMessage(pkg, currentNickname, authToken);
               if (decryptedResult) {
                 await makeAsRead(authKey, pkg.messageId);
                 const timeStr = formatTime(pkg.createdAt);
@@ -250,7 +250,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         try {
           if (message.deviceId !== deviceId) continue;
           const currentNickname: string = localStorage.getItem('nickname') || 'User';
-          const decryptedResult = await window.e2ee.decryptMessage(message, currentNickname);
+          const decryptedResult = await window.e2ee.decryptMessage(message, currentNickname, authKey);
           if (decryptedResult) {
             await makeAsRead(authKey, message.messageId);
             const timeStr = formatTime(message.createdAt);

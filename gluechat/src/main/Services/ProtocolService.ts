@@ -70,6 +70,10 @@ abstract class ProtocolService {
 
     const pkgs: PkgStructure[] = [];
 
+
+    const hash : string = sha256(content).toString();
+    log.debug("Checksum: " + hash)
+
     const masterKey: Uint8Array<ArrayBufferLike> = CryptoCore.generateRandomBytes(32);
     const encryptedMessage: Uint8Array = CryptoCore.encryptData(content, masterKey);
 
@@ -207,7 +211,7 @@ abstract class ProtocolService {
    * @returns Decrypted plaintext message or decrypted file bytes (Uint8Array) for file messages.
    * @throws Error if SPK/OPK private keys are missing or no active session can be found/recovered.
    */
-  public static async initializeDecrypt(pkg: PkgStructure, roomID: string, account: string): Promise<string | Uint8Array> {
+  public static async initializeDecrypt(pkg: PkgStructure, roomID: string, account: string , authKey : string): Promise<string | Uint8Array> {
     log.info(`Starting decryption for message #${pkg.messageNumber} from sender: ${pkg.senderId}`);
     const deviceId: string = pkg.deviceId;
     const messageId: string = pkg.messageId;
@@ -291,7 +295,7 @@ abstract class ProtocolService {
 
       if (pkg.isFile) {
         log.info(`Downloading encrypted file: ${pkg.content}`);
-        const encryptedFileBytes : Uint8Array = await NetworkService.downloadEncryptedFile(pkg.content);
+        const encryptedFileBytes : Uint8Array = await NetworkService.downloadEncryptedFile(pkg.content, authKey );
         decryptedContent = CryptoCore.decrypt(encryptedFileBytes, masterKey);
         log.info(`File #${pkg.messageNumber} decrypted successfully.`);
         return decryptedContent;

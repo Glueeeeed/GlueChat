@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '../config';
 import keytar from 'keytar';
 import log from 'electron-log/main';
+import { sha256 } from '@noble/hashes/sha2.js';
 
 export interface preKeysPackage {
   deviceId: string;
@@ -118,11 +119,12 @@ export abstract class NetworkService {
     return json.filename;
   }
 
-  static async downloadEncryptedFile(filename: string): Promise<Uint8Array<ArrayBufferLike>> {
+  static async downloadEncryptedFile(filename: string, authKey: string): Promise<Uint8Array<ArrayBufferLike>> {
     const response = await fetch(`https://gluechat.dev/storage/download/`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-API-Key': authKey
       },
       body: JSON.stringify({
         filename: filename,
@@ -139,6 +141,10 @@ export abstract class NetworkService {
     const json = await response.json();
     const base64File = json.file64
     const fileBuffer = Buffer.from(base64File, 'base64');
+
+    const hash: string = sha256(fileBuffer).toString();
+    log.debug('Checksum: ' + hash);
+
     return fileBuffer;
   }
 }

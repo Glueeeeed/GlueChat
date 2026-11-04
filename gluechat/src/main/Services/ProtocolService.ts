@@ -85,7 +85,8 @@ abstract class ProtocolService {
           log.debug('Decrypted successfully, wiping decrypted bytes');
           this.wipeBytes(decrypted);
         }
-      } catch {
+      } catch (e) {
+        log.error(e);
         throw new Error("Encrypted file is interrupted");
       }
     }

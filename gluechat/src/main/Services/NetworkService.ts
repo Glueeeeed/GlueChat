@@ -102,11 +102,11 @@ export abstract class NetworkService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `X-API-Key ${authKey}`
+        'X-API-Key': authKey
       },
       body: JSON.stringify({
         file64: base64File,
-        filename: filename
+        fileName: filename
       })
     });
 

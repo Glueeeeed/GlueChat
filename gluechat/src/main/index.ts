@@ -308,7 +308,7 @@ ipcMain.handle('decryptMessage', async (_, encryptedPackage: any, accountName: s
 
   if (encryptedPackage.isFile) {
     const fileData = result as Uint8Array;
-    const fileName = encryptedPackage.fileName || 'file';
+    const [fileName, other] = encryptedPackage.content.split('|');
     const uploadDir = path.join(app.getPath('userData'), 'downloads');
 
     if (!fs.existsSync(uploadDir)) {

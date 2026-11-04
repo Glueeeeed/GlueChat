@@ -98,14 +98,14 @@ export abstract class NetworkService {
     // Encode binary data to base64 to avoid corruption during transfer
     const base64File = Buffer.from(fileBytes).toString('base64');
 
-    const response = await fetch(`${API_BASE_URL}/api/e2ee/upload/file`, {
+    const response = await fetch(`https://gluechat.dev/storage/files`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authKey}`
+        Authorization: `X-API-Key ${authKey}`
       },
       body: JSON.stringify({
-        file: base64File,
+        file64: base64File,
         filename: filename
       })
     });
@@ -118,7 +118,7 @@ export abstract class NetworkService {
     return json.filename;
   }
 
-  static async downloadEncryptedFile(filename: string): Promise<Uint8Array> {
+  static async downloadEncryptedFile(filename: string): Promise<Uint8Array<ArrayBufferLike>> {
     const response = await fetch(`https://gluechat.dev/storage/download/`, {
       method: 'POST',
       headers: {
@@ -137,8 +137,8 @@ export abstract class NetworkService {
 
     // Expect base64-encoded file content in JSON response
     const json = await response.json();
-    const base64File = json.file || json.data;
+    const base64File = json.file64
     const fileBuffer = Buffer.from(base64File, 'base64');
-    return new Uint8Array(fileBuffer);
+    return fileBuffer;
   }
 }

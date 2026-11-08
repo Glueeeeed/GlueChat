@@ -184,7 +184,8 @@ if (!gotTheLock) {
     ipcMain.on('ping', () => console.log('pong'));
 
     protocol.handle('glue-image', async (request) => {
-      const filePath = request.url.replace('glue-image://', '');
+      const encodedPath = request.url.replace('glue-image://', '');
+      const filePath = decodeURIComponent(encodedPath);
       const fileExtension = path.extname(filePath).toLowerCase();
 
       const mimeTypes: Record<string, string> = {

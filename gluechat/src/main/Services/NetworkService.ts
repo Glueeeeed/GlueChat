@@ -96,19 +96,16 @@ export abstract class NetworkService {
   }
 
   static async uploadEncryptedFile(authKey: string, fileBytes: Uint8Array<ArrayBufferLike>, filename: string): Promise<string> {
-    // Encode binary data to base64 to avoid corruption during transfer
-    const base64File = Buffer.from(fileBytes).toString('base64');
+    const formData = new FormData();
+    const fileBlob = new Blob([fileBytes] as BlobPart[]);
+    formData.append('file', fileBlob, filename);
 
     const response = await fetch(`https://gluechat.dev/storage/files`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'X-API-Key': authKey
       },
-      body: JSON.stringify({
-        file64: base64File,
-        fileName: filename
-      })
+      body: formData
     });
 
     if (!response.ok) {
@@ -119,7 +116,7 @@ export abstract class NetworkService {
     return json.filename;
   }
 
-  static async downloadEncryptedFile(filename: string, authKey: string): Promise<Uint8Array<ArrayBufferLike>> {
+  static async downloadEncryptedFile(filename: string, authKey: string): Promise<Uint8Array<ArrayBuffer>> {
     const response = await fetch(`https://gluechat.dev/storage/download/`, {
       method: 'POST',
       headers: {

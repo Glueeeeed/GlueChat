@@ -76,14 +76,14 @@ export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, 
               </button>
 
               {(isVideo || isFile || isImage) && (
-                  <button
-                    onClick={handleDownload}
-                    className=" w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg  hover:bg-white/5 text-xs font-medium transition-colors"
-                  >
-                    <Download size={14} />
-                    Download
-                  </button>
-                )}
+                <button
+                  onClick={handleDownload}
+                  className=" w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg  hover:bg-white/5 text-xs font-medium transition-colors"
+                >
+                  <Download size={14} />
+                  Download
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -102,14 +102,14 @@ export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, 
               </div>
             ) : isVideo ? (
               <div className="flex flex-col gap-2">
-                <video src={`glue-image://${text}`} controls style={{ maxWidth: '300px', borderRadius: '2px' }} />
-                <button
-                  onClick={handleDownload}
-                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium transition-colors self-center"
-                >
-                  <Download size={14} />
-                  Download
-                </button>
+                <video
+                  controlsList={'nodownload noplaybackrate'}
+                  disablePictureInPicture={true}
+                  disableRemotePlayback={true}
+                  src={`glue-image://${text}`}
+                  controls
+                  style={{ maxWidth: '300px', borderRadius: '2px' }}
+                />
               </div>
             ) : isFile ? (
               <div className="flex flex-col gap-2 min-w-[250px]">
@@ -120,7 +120,11 @@ export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, 
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{fileName || 'file'}</p>
                     <p className="text-xs text-white/50">
-                      {fileSize ? (fileSize < 1024 * 1024 ? `${(fileSize / 1024).toFixed(1)} KB` : `${(fileSize / (1024 * 1024)).toFixed(1)} MB`) : ''}
+                      {fileSize
+                        ? fileSize < 1024 * 1024
+                          ? `${(fileSize / 1024).toFixed(1)} KB`
+                          : `${(fileSize / (1024 * 1024)).toFixed(1)} MB`
+                        : ''}
                     </p>
                   </div>
                 </div>

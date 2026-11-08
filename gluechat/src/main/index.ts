@@ -183,9 +183,45 @@ if (!gotTheLock) {
 
     ipcMain.on('ping', () => console.log('pong'));
 
-    protocol.handle('glue-image', (request) => {
+    protocol.handle('glue-image', async (request) => {
       const filePath = request.url.replace('glue-image://', '');
-      return net.fetch(`file://${filePath}`);
+      const fileExtension = path.extname(filePath).toLowerCase();
+
+      const mimeTypes: Record<string, string> = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.svg': 'image/svg+xml',
+        '.bmp': 'image/bmp',
+        '.mp4': 'video/mp4',
+        '.webm': 'video/webm',
+        '.ogg': 'video/ogg',
+        '.ogv': 'video/ogg',
+        '.avi': 'video/x-msvideo',
+        '.mov': 'video/quicktime',
+        '.mkv': 'video/x-matroska',
+        '.mp3': 'audio/mpeg',
+        '.wav': 'audio/wav',
+        '.pdf': 'application/pdf',
+      };
+
+      const contentType = mimeTypes[fileExtension] || 'application/octet-stream';
+
+      try {
+        const fileBuffer = fs.readFileSync(filePath);
+        return new Response(fileBuffer, {
+          status: 200,
+          headers: {
+            'Content-Type': contentType,
+            'Content-Length': String(fileBuffer.length),
+          },
+        });
+      } catch (error) {
+        log.error(`Failed to load file from glue-image protocol: ${filePath}`, error);
+        return new Response('', { status: 404 });
+      }
     });
 
     createWindow();

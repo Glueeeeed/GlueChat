@@ -22,6 +22,7 @@ interface Message {
   isFile?: boolean;
   fileName?: string;
   fileSize?: number;
+  status?: 'sending' | 'downloading' | 'complete' | 'error';
 }
 
 interface decryptedResult {
@@ -257,7 +258,6 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
             const msgId = message.messageId || message.id || message.nonce || Date.now().toString();
 
             if (decryptedResult.type === 'file' && message.isFile) {
-              // Handle file message
               const fileName = message.fileName || decryptedResult.fileName || 'file';
               const ext = fileName.split('.').pop()?.toLowerCase();
 
@@ -283,7 +283,8 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
                 isImage,
                 isVideo,
                 isFile,
-                fileName: fileName
+                fileName: fileName,
+                status: 'downloading'
               };
 
               setMessages((prev: Message[]): Message[] => {
@@ -297,6 +298,8 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
               };
 
               await window.e2ee.saveMessage(toIsoString(message.createdAt), chatID, message.senderId || message.senderID || senderID, messageData, msgId, chatName, currentNickname);
+
+              setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, status: 'complete' } : m)));
             } else {
               // Handle text message
               const decryptedText = decryptedResult.content;
@@ -355,7 +358,6 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
   const handleSendFile = async (file: File): Promise<void> => {
     const currentNickname: string = localStorage.getItem('nickname') || 'User';
 
-    // Validate receiverID before sending file
     if (!receiverID) {
       log.error('Cannot send file: receiverID is missing');
       setFileSizeErrorMsg('Cannot send file: recipient not found. Please refresh the chat list.');
@@ -406,7 +408,8 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
         isVideo,
         isFile,
         fileName: file.name,
-        fileSize: file.size
+        fileSize: file.size,
+        status: 'sending'
       };
 
       setMessages((prev) => [...prev, messageData]);
@@ -428,9 +431,11 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
       const result = await window.e2ee.initializeEncryptFile(authKey, fileData, chatID, senderID, receiverID, currentNickname, file.name);
       if (result) {
         window.network.ws.sendMessage(result);
+        setMessages((prev) => prev.map((msg) => (msg.id === msgId ? { ...msg, status: 'complete' } : msg)));
       }
     } catch (error) {
       log.error('Failed to send file:', error);
+      setMessages((prev) => prev.map((msg) => (msg.id === msgId ? { ...msg, status: 'error' } : msg)));
       setFileSizeErrorMsg('Failed to send file. Please try again.');
       setShowFileSizeModal(true);
     }
@@ -440,7 +445,6 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
   const handleSendMessage = async (message: string): Promise<void> => {
     const currentNickname: string = localStorage.getItem('nickname') || 'User';
 
-    // Validate receiverID before sending
     if (!receiverID) {
       log.error('Cannot send message: receiverID is missing');
       setErrorMessages((prev: ErrorMessage[]): ErrorMessage[] => {
@@ -591,6 +595,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
                 isFile={m.isFile || false}
                 fileName={m.fileName}
                 fileSize={m.fileSize}
+                status={m.status}
               />
             ))}
 

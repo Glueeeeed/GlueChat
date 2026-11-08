@@ -1,5 +1,5 @@
 import { JSX } from 'react';
-import { MoreVertical, Trash2, File, Download } from 'lucide-react';
+import { MoreVertical, Trash2, File, Download, Check, X, Loader2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 interface ChatMessage {
@@ -14,10 +14,11 @@ interface ChatMessage {
   messageId: string;
   fileName?: string;
   fileSize?: number;
+  status?: 'sending' | 'downloading' | 'complete' | 'error';
   onDelete?: (messageId: string) => void;
 }
 
-export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, timestamp, nickname, messageId, fileName, fileSize, onDelete }: ChatMessage): JSX.Element {
+export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, timestamp, nickname, messageId, fileName, fileSize, status, onDelete }: ChatMessage): JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +138,17 @@ export function ChatMessage({ avatar, text, isImage, isVideo, isFile, isAuthor, 
 
         <div className={`text-[10px] flex flex-row items-center gap-1 font-medium px-1 text-gray-500 ${isAuthor ? 'justify-end' : 'justify-start'}`}>
           <span>{timestamp}</span>
+          {(isImage || isVideo || isFile) && status && (
+            <div className="flex items-center ml-1">
+              {status === 'sending' || status === 'downloading' ? (
+                <Loader2 size={12} className="animate-spin text-blue-400" />
+              ) : status === 'complete' ? (
+                <Check size={12} className="text-green-400" />
+              ) : status === 'error' ? (
+                <X size={12} className="text-red-400" />
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
     </div>

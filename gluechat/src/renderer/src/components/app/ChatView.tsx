@@ -387,6 +387,7 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
       isFile = true;
     }
 
+    const msgId = Date.now().toString();
     try {
       const bytes = await file.arrayBuffer();
       const fileData = new Uint8Array(bytes);
@@ -395,7 +396,6 @@ export function ChatView({ senderID, authKey, chatID, chatName, receiverID, devi
       const now = new Date();
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const isoString = now.toISOString();
-      const msgId = Date.now().toString();
 
       const messageData = {
         id: msgId,
